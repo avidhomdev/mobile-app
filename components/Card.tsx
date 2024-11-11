@@ -8,7 +8,7 @@ export default function Card({ children, className, ...props }: TCardProps) {
   return (
     <View
       className={twMerge(
-        "p-6 bg-white border border-gray-200 rounded-lg shadow shadow-gray-200 dark:shadow-gray-700 dark:bg-gray-800 dark:border-gray-700",
+        "p-6 bg-white border border-gray-200 rounded-lg shadow shadow-gray-200 dark:shadow-gray-700 dark:bg-gray-800 dark:border-gray-700 overflow-hidden",
         className
       )}
       {...props}

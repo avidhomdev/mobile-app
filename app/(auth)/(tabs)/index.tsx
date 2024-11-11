@@ -22,7 +22,7 @@ const jobs = [
       "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
   },
   {
-    address: "128 Safe St",
+    address: "12300 S 800 E",
     city: "Salt Lake City",
     commission: 2_000,
     id: 2,
@@ -32,7 +32,7 @@ const jobs = [
       "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=600",
   },
   {
-    address: "128 Safe St",
+    address: "128 Martin Luther King Blvd",
     city: "Salt Lake City",
     commission: 3_000,
     id: 3,
@@ -208,7 +208,7 @@ export default function TabOneScreen() {
           </View>
         </Card>
         <Card className="p-4 gap-y-2 basis-1/3 grow">
-          <Text className="text-gray-400 text-sm font-semibold"># of Jobs</Text>
+          <Text className="text-gray-400 text-sm font-semibold">Timer</Text>
           <View className="flex-row gap-x-2 items-center">
             <Ionicons name="timer" size={28} color="#6b7280" />
             <Button size="xs" variant="secondary" className="ml-auto">
@@ -253,7 +253,9 @@ export default function TabOneScreen() {
         showsHorizontalScrollIndicator={false}
       >
         {jobs.map((job) => (
-          <JobCard key={job.id} job={job} />
+          <View key={job.id} className="w-72 flex-1">
+            <JobCard job={job} />
+          </View>
         ))}
       </ScrollView>
       <View className="flex-row gap-x-2 px-6">
