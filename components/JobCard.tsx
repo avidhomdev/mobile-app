@@ -3,19 +3,10 @@ import Card from "./Card";
 import Text from "./Text";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import { Ionicons } from "@expo/vector-icons";
-
-interface IJob {
-  address: string;
-  city: string;
-  commission: number;
-  id: number;
-  postal_code: string;
-  state: string;
-  street_view_image_url: string;
-}
+import { Tables } from "@/supabase";
 
 type TJobCardProps = {
-  job: IJob;
+  job: Tables<"business_location_jobs">;
 };
 
 function formatEmptyAsNa(val: unknown) {
@@ -26,13 +17,7 @@ function formatEmptyAsNa(val: unknown) {
 export default function JobCard({ job }: TJobCardProps) {
   return (
     <Card className="p-0 flex-1">
-      <Image
-        className="aspect-video"
-        resizeMode="cover"
-        source={{
-          uri: job.street_view_image_url,
-        }}
-      />
+      <View className="aspect-video bg-slate-100" />
       <View className="p-4 gap-y-1 relative">
         <Text variant="header">Customer Name</Text>
         <Text variant="subheader" className="flex-wrap">{`${formatEmptyAsNa(

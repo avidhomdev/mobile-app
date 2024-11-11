@@ -1,11 +1,14 @@
+import { UserProvider } from "@/contexts/user-context";
+import { supabase } from "@/lib/supabase";
 import { Redirect, Stack } from "expo-router";
-
-import { useSession } from "../ctx";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
+import { useSession } from "../../contexts/auth-context";
+import { Tables } from "@/supabase";
 
 export default function AppLayout() {
   const { session, isLoading } = useSession();
-  // You can keep the splash screen open, or render a loading screen like we do here.
+
   if (isLoading) {
     return (
       <View className="flex-1 justify-center">
@@ -13,17 +16,16 @@ export default function AppLayout() {
       </View>
     );
   }
-
-  // Only require authentication within the (app) group's layout as users
-  // need to be able to access the (auth) group and sign in again.
   if (!session) {
     return <Redirect href="/login" />;
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-    </Stack>
+    <UserProvider session={session}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+      </Stack>
+    </UserProvider>
   );
 }

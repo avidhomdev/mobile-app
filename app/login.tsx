@@ -3,12 +3,15 @@ import Input from "@/components/Input";
 import Text from "@/components/Text";
 import { Redirect, router } from "expo-router";
 import { View } from "react-native";
-import { useSession } from "./ctx";
+import { useSession } from "@/contexts/auth-context";
+import { useState } from "react";
 
 export default function Login() {
   const { signIn, session } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const handleLogin = () => {
-    signIn();
+    signIn({ email, password });
     router.replace("/");
   };
 
@@ -28,11 +31,19 @@ export default function Login() {
       <View className="gap-y-6">
         <View className="gap-y-2">
           <Text variant="label">Username</Text>
-          <Input placeholder="Username(not required)" />
+          <Input
+            autoCapitalize="none"
+            onChangeText={setEmail}
+            placeholder="Email"
+          />
         </View>
         <View className="gap-y-2">
           <Text variant="label">Password</Text>
-          <Input placeholder="Password(not required)" secureTextEntry />
+          <Input
+            placeholder="Password"
+            secureTextEntry
+            onChangeText={setPassword}
+          />
         </View>
         <Button onPress={handleLogin}>
           <Button.Text className="text-center font-bold">Sign in</Button.Text>

@@ -3,183 +3,24 @@ import Card from "@/components/Card";
 import Input from "@/components/Input";
 import JobCard from "@/components/JobCard";
 import Text from "@/components/Text";
+import { useSession } from "@/contexts/auth-context";
+import { useUserContext } from "@/contexts/user-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCompactNumber } from "@/utils/format-as-compact-number";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const jobs = [
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 1_000,
-    id: 1,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "12300 S 800 E",
-    city: "Salt Lake City",
-    commission: 2_000,
-    id: 2,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Martin Luther King Blvd",
-    city: "Salt Lake City",
-    commission: 3_000,
-    id: 3,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 14_000,
-    id: 4,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 5_000,
-    id: 5,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/164558/pexels-photo-164558.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 6_000,
-    id: 6,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 7_000,
-    id: 7,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 8_000,
-    id: 8,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 1_000,
-    id: 11,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 2_000,
-    id: 12,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 3_000,
-    id: 13,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 14_000,
-    id: 14,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 5_000,
-    id: 15,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 6_000,
-    id: 16,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 7_000,
-    id: 17,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-  {
-    address: "128 Safe St",
-    city: "Salt Lake City",
-    commission: 8_000,
-    id: 18,
-    postal_code: "84020",
-    state: "UT",
-    street_view_image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=600",
-  },
-];
-
-export default function TabOneScreen() {
+export default function Dashboard() {
+  const { signOut } = useSession();
+  const { profile, jobs } = useUserContext();
   const insets = useSafeAreaInsets();
-  const totalCommissions = jobs.reduce((dictionary, job) => {
+  const totalCommissions = jobs?.reduce((dictionary, job) => {
     dictionary += job.commission;
     return dictionary;
   }, 0);
-  const numberOfJobs = jobs.length;
+  const numberOfJobs = jobs?.length;
   const totalCommissionAverage = totalCommissions / numberOfJobs;
 
   return (
@@ -191,8 +32,13 @@ export default function TabOneScreen() {
         className="flex-row justify-between gap-x-6 px-6 pt-6"
         style={{ marginTop: insets.top }}
       >
-        <Text variant="headline">Hi, Name</Text>
-        <View className="rounded-full bg-indigo-300 size-10" />
+        <Text
+          variant="headline"
+          className="flex-1"
+        >{`Hi, ${profile.full_name}`}</Text>
+        <TouchableOpacity onPress={signOut}>
+          <View className="rounded-full bg-indigo-300 size-10" />
+        </TouchableOpacity>
       </View>
       <View className="px-6">
         <Input placeholder="Search for a job..." />
@@ -232,7 +78,7 @@ export default function TabOneScreen() {
           <View className="flex-row gap-x-2 items-center">
             <Ionicons name="construct" size={28} color="#6b7280" />
             <Text className="italic text-xl font-semibold ml-auto">
-              {formatAsCompactNumber(numberOfJobs - 8)}
+              {formatAsCompactNumber(numberOfJobs)}
             </Text>
           </View>
         </Card>
