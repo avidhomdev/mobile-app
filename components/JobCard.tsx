@@ -15,7 +15,7 @@ export default function JobCard({ job }: TJobCardProps) {
     <Card className="p-0 flex-1">
       <View className="aspect-video bg-slate-100" />
       <View className="p-4 gap-y-1 relative">
-        <Text variant="header">Customer Name</Text>
+        <Text variant="header">{job.full_name}</Text>
         <Text variant="subheader" className="flex-wrap">{`${formatEmptyAsNa(
           job.address
         )}, ${formatEmptyAsNa(job.city)}, ${formatEmptyAsNa(

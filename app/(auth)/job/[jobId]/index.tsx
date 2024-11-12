@@ -3,7 +3,9 @@ import Card from "@/components/Card";
 import Text from "@/components/Text";
 import { useJobContext } from "@/contexts/job-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
+import { formatAsCurrency } from "@/utils/format-as-currency";
 import formatEmptyAsNa from "@/utils/format-empty-as-na";
+import { formatMinutesToHoursAndMinutes } from "@/utils/format-minutes-to-hours-and-minutes";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { router, useGlobalSearchParams } from "expo-router";
 import { ScrollView, TouchableOpacity, View } from "react-native";
@@ -57,24 +59,24 @@ export default function JobScreen() {
         </View>
       </View>
       <View className="gap-3 flex-row flex-1 px-6 flex-wrap">
-        <Card className="p-4 gap-y-2 basis-1/3 grow">
-          <Text className="text-gray-400 text-sm font-semibold">
+        <Card className="p-4 basis-1/3 grow bg-indigo-600">
+          <Text variant="subheader" className="text-indigo-300">
             Commission
           </Text>
           <View className="flex-row gap-x-2 items-center">
-            <Ionicons name="cash" size={28} color="#6b7280" />
-            <Text className="italic text-xl font-semibold ml-auto">
-              {formatAsCompactCurrency(1_000)}
+            <Text className="italic font-semibold text-indigo-100">
+              {formatAsCurrency(Number(job?.commission))}
             </Text>
           </View>
         </Card>
-        <Card className="p-4 gap-y-2 basis-1/3 grow">
-          <Text className="text-gray-400 text-sm font-semibold">Timesheet</Text>
+        <Card className="p-4 basis-1/3 grow bg-indigo-600">
+          <Text variant="subheader" className="text-indigo-300">
+            Hours
+          </Text>
           <View className="flex-row gap-x-2 items-center">
-            <Ionicons name="timer" size={28} color="#6b7280" />
-            <Button size="xs" variant="secondary" className="ml-auto">
-              <Button.Text>Start</Button.Text>
-            </Button>
+            <Text className="italic font-semibold text-indigo-100">
+              {formatMinutesToHoursAndMinutes(Number(job?.commission) / 20)}
+            </Text>
           </View>
         </Card>
       </View>
