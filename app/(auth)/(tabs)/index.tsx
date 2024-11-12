@@ -9,6 +9,7 @@ import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCompactNumber } from "@/utils/format-as-compact-number";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -99,9 +100,13 @@ export default function Dashboard() {
         showsHorizontalScrollIndicator={false}
       >
         {jobs.map((job) => (
-          <View key={job.id} className="w-72 flex-1">
+          <TouchableOpacity
+            className="w-72 flex-1"
+            key={job.id}
+            onPress={() => router.push(`/job/${job.id}`)}
+          >
             <JobCard job={job} />
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
       <View className="flex-row gap-x-2 px-6">

@@ -4,15 +4,11 @@ import Text from "./Text";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import { Ionicons } from "@expo/vector-icons";
 import { Tables } from "@/supabase";
+import formatEmptyAsNa from "@/utils/format-empty-as-na";
 
 type TJobCardProps = {
   job: Tables<"business_location_jobs">;
 };
-
-function formatEmptyAsNa(val: unknown) {
-  if (Boolean(val)) return val;
-  return "NA";
-}
 
 export default function JobCard({ job }: TJobCardProps) {
   return (
