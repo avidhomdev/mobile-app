@@ -57,12 +57,12 @@ export default function JobsScreen() {
       </View>
       {Object.entries(jobsByStatus).map(([status, jobs]) => {
         return (
-          <View className="px-6 gap-y-2" key={status}>
-            <Text variant="header">
+          <View className="gap-y-2" key={status}>
+            <Text variant="header" className="px-6">
               {STATUS_NAME_DICTIONARY[status as STATUS_NAME_DICTIONARY_KEYS]}
             </Text>
             <ScrollView
-              contentContainerClassName="gap-x-3 flex-row"
+              contentContainerClassName="gap-x-3 flex-row px-2"
               horizontal
               showsHorizontalScrollIndicator={false}
             >

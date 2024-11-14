@@ -12,6 +12,7 @@ import {
   RefreshControl,
   ScrollView,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -214,7 +215,9 @@ function PopoverButton() {
               </Text>
             </TouchableOpacity>
           </View>
-          <View className="absolute inset-0 bg-black/70 w-full h-full z-0" />
+          <TouchableWithoutFeedback onPress={toggle}>
+            <View className="absolute inset-0 bg-black/70 w-full h-full z-0" />
+          </TouchableWithoutFeedback>
         </>
       )}
     </>
