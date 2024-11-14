@@ -12,8 +12,13 @@ type TJobCardProps = {
 
 export default function JobCard({ job }: TJobCardProps) {
   return (
-    <Card className="p-0 flex-1">
-      <View className="aspect-video bg-slate-100" />
+    <Card className="p-0 grow">
+      <Image
+        className="aspect-video"
+        source={{
+          uri: "https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        }}
+      />
       <View className="p-4 gap-y-1 relative">
         <Text variant="header">{job.full_name}</Text>
         <Text variant="subheader" className="flex-wrap">{`${formatEmptyAsNa(

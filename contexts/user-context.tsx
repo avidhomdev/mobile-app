@@ -1,6 +1,12 @@
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
-import React, { PropsWithChildren, useEffect, useState } from "react";
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 interface IProfile extends Omit<Tables<"profiles">, "created_at" | "id"> {
   created_at?: string;
@@ -12,6 +18,7 @@ type TUserContextProps = {
   jobs: Tables<"business_location_jobs">[];
   locations: Tables<"business_locations">[];
   profile: IProfile;
+  refreshData: () => void;
 };
 
 const defaultContext = {
@@ -27,7 +34,10 @@ const defaultContext = {
   },
 };
 
-const UserContext = React.createContext<TUserContextProps>(defaultContext);
+const UserContext = React.createContext<TUserContextProps>({
+  ...defaultContext,
+  refreshData: () => null,
+});
 
 export function useUserContext() {
   const value = React.useContext(UserContext);
@@ -39,7 +49,9 @@ export function useUserContext() {
   return value;
 }
 
-const fetchProfileData = async (id: string): Promise<TUserContextProps> => {
+const fetchProfileData = async (
+  id: string
+): Promise<Omit<TUserContextProps, "refreshData">> => {
   const [
     { data: profile },
     { data: businesses },
@@ -64,11 +76,25 @@ export function UserProvider({
   children,
   session,
 }: PropsWithChildren<{ session: string }>) {
-  const [data, setData] = useState<TUserContextProps>(defaultContext);
+  const [data, setData] =
+    useState<Omit<TUserContextProps, "refreshData">>(defaultContext);
+
+  const refreshData = useCallback(
+    () => fetchProfileData(session).then(setData),
+    [session]
+  );
 
   useEffect(() => {
-    fetchProfileData(session).then(setData);
-  }, [session]);
+    refreshData();
+  }, [refreshData]);
 
-  return <UserContext.Provider value={data}>{children}</UserContext.Provider>;
+  const value = useMemo(
+    () => ({
+      ...data,
+      refreshData,
+    }),
+    [data, refreshData]
+  );
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }

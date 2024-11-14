@@ -1,10 +1,10 @@
 import { JobProvider } from "@/contexts/job-context";
-import { Stack, useGlobalSearchParams } from "expo-router";
+import { Stack } from "expo-router";
 
 export default function Layout() {
   return (
     <JobProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, headerLargeTitle: true }} />
     </JobProvider>
   );
 }

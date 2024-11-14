@@ -9,6 +9,7 @@ const variants = {
     "text-lg font-semibold text-gray-700 dark:text-gray-200 tracking-wide",
   label: "text-gray-900 dark:text-white text-sm font-medium tracking-wide",
   subheader: "text-sm text-gray-500 dark:text-gray-400",
+  menuitem: "text-sm tracking-wide",
 };
 
 type TVariantKey = keyof typeof variants;
