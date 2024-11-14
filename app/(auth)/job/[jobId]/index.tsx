@@ -24,7 +24,7 @@ function Header() {
 
   return (
     <View
-      className="aspect-video bg-gray-900 w-full relative"
+      className="bg-gray-900 w-full relative"
       style={{ paddingTop: insets.top }}
     >
       <View className="flex-row items-center justify-between px-6">
@@ -47,7 +47,7 @@ function Header() {
           <FontAwesome name="gear" size={26} color="white" />
         </TouchableOpacity>
       </View>
-      <View className="absolute bottom-4 gap-y-2 w-4/5">
+      <View className="gap-y-2 w-4/5 py-4">
         <Text className="bg-white p-1 pl-6 grow" variant="headline">
           {job?.full_name}
         </Text>
@@ -96,10 +96,12 @@ function Products() {
   const { job } = useJobContext();
 
   return (
-    <View className="gap-y-2 px-6">
-      <Text variant="header">Products</Text>
+    <View className="gap-y-2">
+      <Text variant="header" className="px-6">
+        Products
+      </Text>
       <ScrollView
-        contentContainerClassName="gap-x-3 flex-row"
+        contentContainerClassName="gap-x-3 flex-row px-2"
         horizontal
         showsHorizontalScrollIndicator={false}
       >
@@ -208,7 +210,7 @@ function PopoverButton() {
             >
               <Ionicons name="chatbubble" size={18} color="#f3f4f6" />
               <Text variant="menuitem" className="text-gray-100">
-                Notes
+                Take Notes
               </Text>
             </TouchableOpacity>
           </View>
@@ -225,8 +227,9 @@ export default function JobScreen() {
 
   return (
     <>
+      <Header />
       <ScrollView
-        contentContainerClassName="gap-y-6 pb-6"
+        contentContainerClassName="gap-y-6 py-6"
         refreshControl={
           <RefreshControl
             onRefresh={async () => {
@@ -239,7 +242,6 @@ export default function JobScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <Header />
         <Tiles />
         <Products />
         <TodoList />
