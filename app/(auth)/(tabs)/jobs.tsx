@@ -16,6 +16,10 @@ const STATUS_NAME_DICTIONARY = {
   new: "New",
   scheduled: "Scheduled",
   pending: "Pending",
+  approved: "Approved",
+  billed: "Billed",
+  canceled: "Canceled",
+  complete: "Complete",
 };
 
 type STATUS_NAME_DICTIONARY_KEYS = keyof typeof STATUS_NAME_DICTIONARY;
