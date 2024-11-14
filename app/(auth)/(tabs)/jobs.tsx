@@ -53,7 +53,7 @@ export default function JobsScreen() {
       </View>
       {Object.entries(jobsByStatus).map(([status, jobs]) => {
         return (
-          <View className="px-6 gap-y-2">
+          <View className="px-6 gap-y-2" key={status}>
             <Text variant="header">
               {STATUS_NAME_DICTIONARY[status as STATUS_NAME_DICTIONARY_KEYS]}
             </Text>
