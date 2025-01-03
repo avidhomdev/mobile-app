@@ -11,23 +11,28 @@ import React, {
 interface IProfile extends Omit<Tables<"profiles">, "created_at" | "id"> {
   created_at?: string;
   id?: string;
+  location_profiles: Tables<"business_location_profiles">[];
+}
+
+interface ILocation extends Partial<Tables<"business_locations">> {
+  jobs: Tables<"business_location_jobs">[];
+  customers: Tables<"business_location_customers">[];
 }
 
 type TUserContextProps = {
-  businesses: Tables<"businesses">[];
-  jobs: Tables<"business_location_jobs">[];
-  locations: Tables<"business_locations">[];
+  locations: ILocation[];
   profile: IProfile;
-  refreshData: () => void;
+  refreshData: () => void | Promise<void>;
+  location: ILocation & Partial<Tables<"business_location_profiles">>;
 };
 
 const defaultContext = {
-  businesses: [],
-  jobs: [],
+  location: { jobs: [], customers: [] },
   locations: [],
   profile: {
     avatar_url: null,
     full_name: null,
+    location_profiles: [],
     updated_at: null,
     username: null,
     website: null,
@@ -36,7 +41,7 @@ const defaultContext = {
 
 const UserContext = React.createContext<TUserContextProps>({
   ...defaultContext,
-  refreshData: () => null,
+  refreshData: () => {},
 });
 
 export function useUserContext() {
@@ -49,26 +54,27 @@ export function useUserContext() {
   return value;
 }
 
-const fetchProfileData = async (
+const fetchUserContextData = async (
   id: string
 ): Promise<Omit<TUserContextProps, "refreshData">> => {
-  const [
-    { data: profile },
-    { data: businesses },
-    { data: locations },
-    { data: jobs },
-  ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", id).limit(1).maybeSingle(),
-    supabase.from("businesses").select("*"),
-    supabase.from("business_locations").select("*"),
-    supabase.from("business_location_jobs").select("*"),
+  const [{ data: profile }, { data: locations }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("*, location_profiles: business_location_profiles!profile_id(*)")
+      .eq("id", id)
+      .limit(1)
+      .single(),
+    supabase
+      .from("business_locations")
+      .select(
+        "*, customers: business_location_customers(*), jobs: business_location_jobs(*)"
+      ),
   ]);
 
   return {
-    profile,
-    businesses: businesses || [],
-    locations: locations || [],
-    jobs: jobs || [],
+    location: locations ? locations[0] : { jobs: [], customers: [] },
+    locations: locations ?? [],
+    profile: profile ?? {},
   };
 };
 
@@ -80,7 +86,7 @@ export function UserProvider({
     useState<Omit<TUserContextProps, "refreshData">>(defaultContext);
 
   const refreshData = useCallback(
-    () => fetchProfileData(session).then(setData),
+    async () => fetchUserContextData(session).then(setData),
     [session]
   );
 

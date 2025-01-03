@@ -9,17 +9,18 @@ import { formatAsCompactNumber } from "@/utils/format-as-compact-number";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   RefreshControl,
   ScrollView,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function Tiles() {
-  const { jobs } = useUserContext();
+  const {
+    location: { jobs },
+  } = useUserContext();
   const totalCommissions = jobs?.reduce((dictionary, job) => {
     dictionary += job.commission;
     return dictionary;
@@ -61,7 +62,7 @@ function Tiles() {
           <Ionicons name="construct" size={28} color="#6b7280" />
           <Text className="italic text-xl font-semibold ml-auto">
             {formatAsCompactNumber(
-              jobs.filter((job) => job.status === "new").length
+              jobs?.filter((job) => job.status === "new").length
             )}
           </Text>
         </View>
@@ -84,10 +85,12 @@ function Quote() {
 
 function RecentJobsFeed() {
   const router = useRouter();
-  const { jobs } = useUserContext();
+  const {
+    location: { jobs },
+  } = useUserContext();
 
   return (
-    <>
+    <Fragment>
       <View className="px-6 -mb-3">
         <Text variant="header">Jobs</Text>
         <Text variant="subheader">Recently started jobs</Text>
@@ -97,7 +100,7 @@ function RecentJobsFeed() {
         horizontal
         showsHorizontalScrollIndicator={false}
       >
-        {jobs.map((job) => (
+        {jobs?.map((job) => (
           <TouchableOpacity
             className="w-72 flex-1"
             key={job.id}
@@ -107,12 +110,14 @@ function RecentJobsFeed() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </>
+    </Fragment>
   );
 }
 
 function Averages() {
-  const { jobs } = useUserContext();
+  const {
+    location: { jobs },
+  } = useUserContext();
   const totalCommissions = jobs?.reduce((dictionary, job) => {
     dictionary += job.commission;
     return dictionary;
@@ -151,14 +156,10 @@ function UpcomingSchedule() {
 
 function WelcomeBanner() {
   const { signOut } = useSession();
-  const insets = useSafeAreaInsets();
   const { profile } = useUserContext();
 
   return (
-    <View
-      className="flex-row justify-between gap-x-6 px-6 pt-6"
-      style={{ marginTop: insets.top }}
-    >
+    <View className="flex-row justify-between gap-x-6 px-6 pt-6">
       <Text
         variant="headline"
         className="flex-1"
