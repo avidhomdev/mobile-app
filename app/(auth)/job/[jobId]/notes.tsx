@@ -1,16 +1,15 @@
-import Input from "@/components/Input";
 import Text from "@/components/Text";
+import { TextareaInput } from "@/components/ui/textarea";
 import { useJobContext } from "@/contexts/job-context";
 import { useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { router, useGlobalSearchParams } from "expo-router";
-import { LegacyRef, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   View,
@@ -47,14 +46,11 @@ function NewMessage() {
   return (
     <View className="bg-gray-800 p-6" style={{ paddingBottom: insets.bottom }}>
       <View className="relative">
-        <Input
-          editable={!isSending}
+        <TextareaInput
           multiline
           onChangeText={setMessage}
           onSubmitEditing={handleNewMessage}
-          ref={inputRef}
           textAlignVertical="top"
-          withSendIcon
         />
         <View className="absolute bottom-1 right-1">
           <TouchableOpacity

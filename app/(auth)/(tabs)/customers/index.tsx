@@ -7,6 +7,7 @@ import {
   ActionsheetIcon,
   ActionsheetItem,
   ActionsheetItemText,
+  ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
 import {
   Avatar,
@@ -35,12 +36,7 @@ import { Text } from "@/components/ui/text";
 import { useUserContext } from "@/contexts/user-context";
 import { Tables } from "@/supabase";
 import { useRouter } from "expo-router";
-import {
-  Calendar,
-  TrashIcon,
-  UserRoundPen,
-  UserSearch,
-} from "lucide-react-native";
+import { Calendar, TrashIcon, UserSearch } from "lucide-react-native";
 import { Fragment, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -110,8 +106,11 @@ function CustomerCard({
       <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
         <ActionsheetBackdrop />
         <ActionsheetContent style={{ paddingBottom: bottom }}>
-          <ActionsheetDragIndicatorWrapper className="pb-4">
+          <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>
+              {customer.full_name}
+            </ActionsheetSectionHeaderText>
           </ActionsheetDragIndicatorWrapper>
           <ActionsheetItem
             onPress={() => {
@@ -122,36 +121,40 @@ function CustomerCard({
               handleClose();
             }}
           >
-            <ActionsheetIcon as={UserSearch} size="lg" />
-            <ActionsheetItemText size="lg">View Customer</ActionsheetItemText>
-          </ActionsheetItem>
-          <ActionsheetItem onPress={handleClose}>
-            <ActionsheetIcon as={Calendar} size="lg" />
-            <ActionsheetItemText size="lg">
-              Schedule Appointment
+            <ActionsheetIcon as={UserSearch} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              View Customer
             </ActionsheetItemText>
           </ActionsheetItem>
-          <ActionsheetItem onPress={() => {}}>
-            <ActionsheetIcon as={UserRoundPen} size="lg" />
-            <ActionsheetItemText size="lg">Update Customer</ActionsheetItemText>
+          <ActionsheetItem
+            onPress={() => {
+              router.push({
+                pathname:
+                  "/(auth)/(tabs)/customers/[customerId]/schedule-appointment",
+                params: { customerId: customer.id },
+              });
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={Calendar} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              Schedule Appointment
+            </ActionsheetItemText>
           </ActionsheetItem>
           <ActionsheetItem
             onPress={() => {
               setShowModal(true);
             }}
           >
-            <ActionsheetIcon
-              as={TrashIcon}
-              className="text-red-400"
-              size="lg"
-            />
-            <ActionsheetItemText className="text-red-600" size="lg">
+            <ActionsheetIcon as={TrashIcon} className="text-red-500" />
+            <ActionsheetItemText className="text-red-700">
               Delete
             </ActionsheetItemText>
           </ActionsheetItem>
         </ActionsheetContent>
       </Actionsheet>
       <TouchableOpacity
+        onLongPress={() => setIsActionSheetVisible(true)}
         onPress={() =>
           router.push({
             pathname: "/(auth)/(tabs)/customers/[customerId]",

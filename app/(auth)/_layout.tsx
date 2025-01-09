@@ -30,10 +30,6 @@ export default function AppLayout() {
           name="(modals)/new-proposal-modal"
           options={{ presentation: "modal" }}
         />
-        <Stack.Screen
-          name="(modals)/new-lead-schedule-modal"
-          options={{ presentation: "modal" }}
-        />
       </Stack>
     </UserProvider>
   );

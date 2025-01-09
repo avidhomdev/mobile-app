@@ -1,25 +1,42 @@
-import Button from "@/components/Button";
-import Input from "@/components/Input";
-import Text from "@/components/Text";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { CloseIcon, Icon } from "@/components/ui/icon";
+import { Input, InputField } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { AlertCircleIcon } from "lucide-react-native";
 import { useReducer } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
-type FormReducerActionTypes =
-  | "SET_IS_SUBMITTING"
-  | "SET_INPUT_VALUE"
-  | "SET_FORM_ERROR";
-
-interface IFormReducerAction {
-  type: FormReducerActionTypes;
-  payload: any;
+enum FormReducerActionTypes {
+  SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
+  SET_INPUT_VALUE = "SET_INPUT_VALUE",
+  SET_FORM_ERROR = "SET_FORM_ERROR",
 }
+
+type TFormReducerAction =
+  | { type: FormReducerActionTypes.SET_IS_SUBMITTING; payload: boolean }
+  | {
+      type: FormReducerActionTypes.SET_INPUT_VALUE;
+      payload: {
+        input: string;
+        value: string;
+      };
+    }
+  | { type: FormReducerActionTypes.SET_FORM_ERROR; payload: string };
 
 interface IFormReducerState
   extends Partial<Tables<"business_location_customers">> {
@@ -28,7 +45,10 @@ interface IFormReducerState
   submitted: boolean;
 }
 
-function formReducer(state: IFormReducerState, action: IFormReducerAction) {
+function formReducer(
+  state: IFormReducerState,
+  action: TFormReducerAction
+): IFormReducerState {
   switch (action.type) {
     case "SET_INPUT_VALUE":
       return {
@@ -83,7 +103,7 @@ export default function ModalScreen() {
 
   const handleSubmit = async () => {
     dispatch({
-      type: "SET_IS_SUBMITTING",
+      type: FormReducerActionTypes.SET_IS_SUBMITTING,
       payload: true,
     });
     if (!requiredFields.some((field) => state[field] === "")) {
@@ -101,203 +121,215 @@ export default function ModalScreen() {
           notes: state.notes,
           disposition_status: state.disposition_status,
         })
-        .then(async ({ error }) => {
+        .select("id")
+        .single()
+        .then(async ({ data, error }) => {
           if (error)
-            return dispatch({ type: "SET_FORM_ERROR", payload: error.message });
+            return dispatch({
+              type: FormReducerActionTypes.SET_FORM_ERROR,
+              payload: error.message,
+            });
 
           await refreshData();
           router.back();
+          router.push({
+            pathname:
+              "/(auth)/(tabs)/customers/[customerId]/schedule-appointment",
+            params: { customerId: data.id },
+          });
         });
     }
     dispatch({
-      type: "SET_IS_SUBMITTING",
+      type: FormReducerActionTypes.SET_IS_SUBMITTING,
       payload: false,
     });
   };
   return (
     <ScrollView
       contentContainerClassName="gap-y-4"
-      contentContainerStyle={{ paddingBottom: bottom * 2 }}
+      contentContainerStyle={{ paddingBottom: bottom }}
       stickyHeaderHiddenOnScroll
     >
-      <View className="bg-gray-50 p-4 flex-row justify-between">
+      <View className="bg-slate-800 p-4 flex-row justify-between">
         <View>
-          <Text variant="header">New Lead</Text>
-          <Text variant="subheader">More information about the lead</Text>
+          <Text className="text-typography-white" size="xl">
+            New Lead
+          </Text>
+          <Text className="text-typography-gray">
+            More information about the customer
+          </Text>
         </View>
         <TouchableOpacity onPress={router.back}>
-          <Ionicons name="close-circle-outline" size={32} />
+          <Icon as={CloseIcon} className="text-white" size="xl" />
         </TouchableOpacity>
       </View>
       <View
-        className={twMerge(state.isSubmitting && "opacity-50", "gap-y-4 px-4")}
+        className={twMerge(state.isSubmitting && "opacity-50", "gap-y-6 px-6")}
       >
-        <View className="gap-y-2">
-          <Text
-            variant="label"
-            className={twMerge(
-              state.submitted && !state.full_name ? "text-red-600" : ""
-            )}
-          >
-            {`Full name ${
-              state.submitted && !state.full_name ? "is required" : ""
-            }`}
-          </Text>
-          <Input
-            autoCapitalize="none"
-            className={twMerge(
-              state.submitted && !state.full_name ? "border-red-300" : ""
-            )}
-            onChangeText={(text) =>
-              dispatch({
-                type: "SET_INPUT_VALUE" as FormReducerActionTypes,
-                payload: { input: "full_name", value: text },
-              })
-            }
-            placeholder="John Doe"
-            readOnly={state.isSubmitting}
-            value={state.full_name}
-          />
-        </View>
-        <View className="gap-y-2">
-          <Text variant="label">Email</Text>
-          <Input
-            autoCapitalize="none"
-            onChangeText={(text) =>
-              dispatch({
-                type: "SET_INPUT_VALUE" as FormReducerActionTypes,
-                payload: { input: "email", value: text },
-              })
-            }
-            placeholder="email@example.com"
-            readOnly={state.isSubmitting}
-            value={state.email}
-          />
-        </View>
-        <View className="gap-y-2">
-          <Text
-            variant="label"
-            className={twMerge(
-              state.submitted && !state.address ? "text-red-600" : ""
-            )}
-          >{`Address ${
-            state.submitted && !state.address ? "is required" : ""
-          }`}</Text>
-          <Input
-            autoCapitalize="none"
-            className={twMerge(
-              state.submitted && !state.address ? "border-red-300" : ""
-            )}
-            onChangeText={(text) =>
-              dispatch({
-                type: "SET_INPUT_VALUE" as FormReducerActionTypes,
-                payload: { input: "address", value: text },
-              })
-            }
-            placeholder="1234 Fake St"
-            readOnly={state.isSubmitting}
-            value={state.address ?? ""}
-          />
-        </View>
-        <View className="gap-y-2">
-          <Text
-            variant="label"
-            className={twMerge(
-              state.submitted && !state.city ? "text-red-600" : ""
-            )}
-          >{`City ${
-            state.submitted && !state.city ? "is required" : ""
-          }`}</Text>
-          <Input
-            autoCapitalize="none"
-            className={twMerge(
-              state.submitted && !state.city ? "border-red-300" : ""
-            )}
-            onChangeText={(text) =>
-              dispatch({
-                type: "SET_INPUT_VALUE" as FormReducerActionTypes,
-                payload: { input: "city", value: text },
-              })
-            }
-            placeholder="City"
-            readOnly={state.isSubmitting}
-            value={state.city ?? ""}
-          />
-        </View>
-        <View className="flex-row gap-x-2">
-          <View className="gap-y-2 grow">
-            <Text
-              variant="label"
-              className={twMerge(
-                state.submitted && !state.state ? "text-red-600" : ""
-              )}
-            >{`State ${
-              state.submitted && !state.state ? "is required" : ""
-            }`}</Text>
-            <Input
-              autoCapitalize="none"
-              className={twMerge(
-                state.submitted && !state.state ? "border-red-300" : ""
-              )}
+        <FormControl isInvalid={state.submitted && !state.full_name} isRequired>
+          <FormControlLabel>
+            <FormControlLabelText>Full Name</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField
               onChangeText={(text) =>
                 dispatch({
-                  type: "SET_INPUT_VALUE" as FormReducerActionTypes,
-                  payload: { input: "state", value: text },
+                  type: FormReducerActionTypes.SET_INPUT_VALUE,
+                  payload: { input: "full_name", value: text },
                 })
               }
-              placeholder="UT"
-              readOnly={state.isSubmitting}
-              value={state.state ?? ""}
+              placeholder="John Doe"
             />
-          </View>
-          <View className="gap-y-2 grow">
-            <Text
-              variant="label"
-              className={twMerge(
-                state.submitted && !state.postal_code ? "text-red-600" : ""
-              )}
-            >{`Postal Code ${
-              state.submitted && !state.postal_code ? "is required" : ""
-            }`}</Text>
-            <Input
+          </Input>
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} />
+            <FormControlErrorText>Full name is required</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+        <FormControl>
+          <FormControlLabel>
+            <FormControlLabelText>Email</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField
               autoCapitalize="none"
-              className={twMerge(
-                state.submitted && !state.postal_code ? "border-red-300" : ""
-              )}
               onChangeText={(text) =>
                 dispatch({
-                  type: "SET_INPUT_VALUE" as FormReducerActionTypes,
+                  type: FormReducerActionTypes.SET_INPUT_VALUE,
+                  payload: { input: "email", value: text },
+                })
+              }
+              placeholder="johndoe@example.com"
+            />
+          </Input>
+        </FormControl>
+        <FormControl>
+          <FormControlLabel>
+            <FormControlLabelText>Phone</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField
+              onChangeText={(text) =>
+                dispatch({
+                  type: FormReducerActionTypes.SET_INPUT_VALUE,
+                  payload: { input: "phone", value: text },
+                })
+              }
+              placeholder="555-555-5555"
+            />
+          </Input>
+        </FormControl>
+        <FormControl isInvalid={state.submitted && !state.address} isRequired>
+          <FormControlLabel>
+            <FormControlLabelText>Address</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField
+              onChangeText={(text) =>
+                dispatch({
+                  type: FormReducerActionTypes.SET_INPUT_VALUE,
+                  payload: { input: "address", value: text },
+                })
+              }
+              placeholder="1234 Fake St"
+            />
+          </Input>
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} />
+            <FormControlErrorText>Address is required</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+        <FormControl isInvalid={state.submitted && !state.city} isRequired>
+          <FormControlLabel>
+            <FormControlLabelText>City</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField
+              onChangeText={(text) =>
+                dispatch({
+                  type: FormReducerActionTypes.SET_INPUT_VALUE,
+                  payload: { input: "city", value: text },
+                })
+              }
+              placeholder="Los Angeles"
+            />
+          </Input>
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} />
+            <FormControlErrorText>City is required</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+        <View className="flex-row gap-x-2">
+          <FormControl
+            className="basis-1/2"
+            isInvalid={state.submitted && !state.state}
+            isRequired
+          >
+            <FormControlLabel>
+              <FormControlLabelText>State</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "state", value: text },
+                  })
+                }
+                placeholder="CA"
+              />
+            </Input>
+            <FormControlError>
+              <FormControlErrorIcon as={AlertCircleIcon} />
+              <FormControlErrorText>State is required</FormControlErrorText>
+            </FormControlError>
+          </FormControl>
+          <FormControl
+            className="basis-1/2"
+            isInvalid={state.submitted && !state.postal_code}
+            isRequired
+          >
+            <FormControlLabel>
+              <FormControlLabelText>Postal Code</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "postal_code", value: text },
+                  })
+                }
+                placeholder="90650"
+              />
+            </Input>
+            <FormControlError>
+              <FormControlErrorIcon as={AlertCircleIcon} />
+              <FormControlErrorText>
+                Postal Code is required
+              </FormControlErrorText>
+            </FormControlError>
+          </FormControl>
+        </View>
+        <FormControl>
+          <FormControlLabel>
+            <FormControlLabelText>Notes</FormControlLabelText>
+          </FormControlLabel>
+          <Textarea size="md">
+            <TextareaInput
+              onChangeText={(text) =>
+                dispatch({
+                  type: FormReducerActionTypes.SET_INPUT_VALUE,
                   payload: { input: "postal_code", value: text },
                 })
               }
-              placeholder="UT"
-              readOnly={state.isSubmitting}
-              value={state.postal_code ?? ""}
+              placeholder="Share notes that may be helpful"
             />
-          </View>
-        </View>
-        <View className="gap-y-2">
-          <Text variant="label">Notes</Text>
-          <Input
-            autoCapitalize="none"
-            multiline
-            numberOfLines={4}
-            onChangeText={(text) =>
-              dispatch({
-                type: "SET_INPUT_VALUE" as FormReducerActionTypes,
-                payload: { input: "notes", value: text },
-              })
-            }
-            placeholder="notes"
-          />
-        </View>
-        <Button
-          disabled={state.isSubmitting}
-          className={state.isSubmitting && "bg-gray-600"}
-          size="lg"
-          onPress={handleSubmit}
-        >
-          <Text className="font-bold text-white text-center">Submit</Text>
+          </Textarea>
+        </FormControl>
+
+        <Button disabled={state.isSubmitting} size="lg" onPress={handleSubmit}>
+          <ButtonText>Submit</ButtonText>
         </Button>
       </View>
       <View style={{ height: bottom }} />

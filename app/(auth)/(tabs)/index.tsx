@@ -1,7 +1,7 @@
-import Button from "@/components/Button";
 import Card from "@/components/Card";
 import JobCard from "@/components/JobCard";
 import Text from "@/components/Text";
+import { Button, ButtonText } from "@/components/ui/button";
 import { useSession } from "@/contexts/auth-context";
 import { useUserContext } from "@/contexts/user-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
@@ -42,8 +42,8 @@ function Tiles() {
         <Text className="text-gray-400 text-sm font-semibold">Timer</Text>
         <View className="flex-row gap-x-2 items-center">
           <Ionicons name="timer" size={28} color="#6b7280" />
-          <Button size="xs" variant="secondary" className="ml-auto">
-            <Button.Text>Start</Button.Text>
+          <Button size="xs" action="secondary" className="ml-auto">
+            <ButtonText>Start</ButtonText>
           </Button>
         </View>
       </Card>
@@ -74,7 +74,7 @@ function Tiles() {
 function Quote() {
   return (
     <Card className="bg-gray-800 gap-y-2 mx-6 flex-1">
-      <Text className="text-gray-300 text-sm">Today's quote</Text>
+      <Text className="text-gray-300 text-sm">Today&apos;s quote</Text>
       <Text className="text-white italic text-xl font-semibold">
         I find that the harder I work, the more luck I seem to have
       </Text>

@@ -8,7 +8,7 @@ const AuthContext = React.createContext<{
   session?: string | null;
   isLoading: boolean;
 }>({
-  signIn: async ({ email = "", password = "" }) => null,
+  signIn: async () => null,
   signOut: () => null,
   session: null,
   isLoading: false,

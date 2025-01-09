@@ -22,6 +22,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
@@ -41,14 +42,6 @@ export default function RootLayout() {
     return null;
   }
 
-  return (
-    <GluestackUIProvider mode="light">
-      <RootLayoutNav />
-    </GluestackUIProvider>
-  );
-}
-
-function RootLayoutNav() {
   return (
     <GluestackUIProvider mode="light">
       <SessionProvider>

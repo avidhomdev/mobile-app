@@ -35,6 +35,7 @@ import {
 } from "lucide-react-native";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "@/lib/supabase";
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -154,9 +155,10 @@ function ScreenHeader() {
           </DrawerBody>
           <DrawerFooter>
             <Button
-              className="w-full gap-2"
-              variant="outline"
               action="secondary"
+              className="w-full gap-2"
+              onPress={() => supabase.auth.signOut()}
+              variant="outline"
             >
               <ButtonText>Logout</ButtonText>
               <ButtonIcon as={LogOut} />

@@ -1,4 +1,4 @@
 export default function formatEmptyAsNa(val: unknown) {
-  if (Boolean(val)) return val;
+  if (val) return val;
   return "NA";
 }
