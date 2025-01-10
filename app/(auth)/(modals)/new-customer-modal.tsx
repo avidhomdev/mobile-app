@@ -76,7 +76,7 @@ function formReducer(
 }
 
 export default function ModalScreen() {
-  const { location, refreshData } = useUserContext();
+  const { location, refreshData, profile } = useUserContext();
   const { bottom } = useSafeAreaInsets();
   const router = useRouter();
   const requiredFields: (keyof IFormReducerState)[] = [
@@ -110,25 +110,27 @@ export default function ModalScreen() {
       await supabase
         .from("business_location_customers")
         .insert({
-          business_id: location.business_id,
-          location_id: location.id,
-          full_name: state.full_name,
           address: state.address,
+          business_id: location.business_id,
           city: state.city,
-          state: state.state,
-          postal_code: state.postal_code,
-          lead_source: state.lead_source,
-          notes: state.notes,
+          creator_id: profile.id,
           disposition_status: state.disposition_status,
+          full_name: state.full_name,
+          lead_source: state.lead_source,
+          location_id: location.id,
+          notes: state.notes,
+          postal_code: state.postal_code,
+          state: state.state,
         })
         .select("id")
         .single()
         .then(async ({ data, error }) => {
-          if (error)
+          if (error) {
             return dispatch({
               type: FormReducerActionTypes.SET_FORM_ERROR,
               payload: error.message,
             });
+          }
 
           await refreshData();
           router.back();
@@ -320,7 +322,7 @@ export default function ModalScreen() {
               onChangeText={(text) =>
                 dispatch({
                   type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "postal_code", value: text },
+                  payload: { input: "notes", value: text },
                 })
               }
               placeholder="Share notes that may be helpful"
