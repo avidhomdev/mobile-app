@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
+import { useLocationContext } from "@/contexts/location-context";
 import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
 import { useRouter } from "expo-router";
 import { Calendar, TrashIcon, UserSearch } from "lucide-react-native";
@@ -47,6 +48,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const handleClose = () => setIsActionSheetVisible(false);
   const [showModal, setShowModal] = useState(false);
+  const { location } = useLocationContext();
 
   return (
     <Fragment>
@@ -180,10 +182,12 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
                 {`${customer.address}, ${customer.city} ${customer.state} ${customer.postal_code}`}
               </Text>
             </View>
-            <Avatar className="bg-gray-200" size="md">
-              <AvatarFallbackText>{customer.closer_id}</AvatarFallbackText>
-              <AvatarImage />
-            </Avatar>
+            {location.is_setter && (
+              <Avatar className="bg-gray-200" size="md">
+                <AvatarFallbackText>{customer.closer_id}</AvatarFallbackText>
+                <AvatarImage />
+              </Avatar>
+            )}
           </View>
         </Card>
       </TouchableOpacity>
@@ -197,7 +201,7 @@ function CustomersList() {
   } = useUserContext();
 
   return (
-    <ScrollView contentContainerClassName="px-4 gap-2">
+    <ScrollView contentContainerClassName="px-6 pb-6 gap-2">
       {customers.toReversed().map((customer) => (
         <CustomerCard customer={customer} key={customer.id} />
       ))}
@@ -210,7 +214,7 @@ export default function CustomersScreen() {
   const router = useRouter();
 
   return (
-    <View className="gap-4 flex-1">
+    <View className="gap-6 flex-1">
       <HStack space="md" className="justify-between p-4 bg-white items-center">
         <Box>
           <Heading size="xl">Customers</Heading>
