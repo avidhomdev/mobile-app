@@ -89,7 +89,7 @@ export default function ModalScreen() {
   const [state, dispatch] = useReducer(formReducer, {
     address: "",
     city: "",
-    disposition_status: "new",
+    disposition_status: "NEW",
     email: "",
     error: null,
     full_name: "",

@@ -45,7 +45,7 @@ export function SessionProvider(props: React.PropsWithChildren) {
           supabase.auth.signInWithPassword({ email, password }),
         signOut: async () => {
           setSession(null);
-          supabase.auth.signOut().catch(console.error);
+          supabase.auth.signOut();
         },
         session,
         isLoading,

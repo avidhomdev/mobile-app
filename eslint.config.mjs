@@ -26,6 +26,7 @@ export default [
       "react/display-name": "off",
       "@typescript-eslint/ban-ts-comment": "off",
       "react/prop-types": "off",
+      "no-console": "error",
     },
   },
   { ignores: [".expo/", "ios", "metro.config.js"] },

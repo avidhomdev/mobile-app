@@ -33,6 +33,7 @@ import { Icon } from "@/components/ui/icon";
 import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCustomerContext } from "@/contexts/customer-context";
 
 enum FormReducerActionTypes {
   SET_CLOSER_ID = "SET_CLOSER_ID",
@@ -140,7 +141,7 @@ function formReducer(
 
 export default function ScheduleAppointmentScreen() {
   const params = useLocalSearchParams();
-
+  const { updateCustomer } = useCustomerContext();
   const { closers, location, refreshData } = useUserContext();
   const router = useRouter();
   const [state, dispatch] = useReducer(formReducer, {
@@ -175,8 +176,11 @@ export default function ScheduleAppointmentScreen() {
       .then(({ error }) => {
         if (error) throw error;
 
-        return refreshData();
+        return updateCustomer(Number(params.customerId), {
+          disposition_status: "SCHEDULED",
+        });
       })
+      .then(refreshData)
       .then(() =>
         router.push({
           pathname:

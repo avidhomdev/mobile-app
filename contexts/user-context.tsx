@@ -8,22 +8,26 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { LocationProvider } from "./location-context";
+import { DISPOSITION_STATUS_KEYS } from "@/constants/disposition_statuses";
 
 interface IProfile extends Omit<Tables<"profiles">, "created_at" | "id"> {
   created_at?: string;
-  id?: string;
+  id: string;
   location_profiles: Tables<"business_location_profiles">[];
 }
 
-interface ILocationProfile extends Tables<"business_location_profiles"> {
+export interface ILocationProfile extends Tables<"business_location_profiles"> {
   profile: Tables<"profiles">;
 }
 
-interface ILocationCustomer extends Tables<"business_location_customers"> {
+export interface ILocationCustomer
+  extends Tables<"business_location_customers"> {
+  disposition_status: DISPOSITION_STATUS_KEYS;
   appointments: Tables<"business_appointments">[];
 }
 
-interface ILocation extends Partial<Tables<"business_locations">> {
+export interface ILocation extends Partial<Tables<"business_locations">> {
   jobs: Tables<"business_location_jobs">[];
   customers: ILocationCustomer[];
   profiles: ILocationProfile[];
@@ -52,6 +56,7 @@ const defaultContext = {
     updated_at: null,
     username: null,
     website: null,
+    id: "",
   },
 };
 
@@ -76,7 +81,9 @@ const fetchUserContextData = async (
   const [{ data: profile }, { data: locations }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("*, location_profiles: business_location_profiles!profile_id(*)")
+      .select(
+        "*, location_profiles: business_location_profiles!profile_id(*, location: location_id(*, customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))))"
+      )
       .eq("id", id)
       .limit(1)
       .single(),
@@ -93,7 +100,7 @@ const fetchUserContextData = async (
     jobs: [],
     location: locations ? locations[0] : { jobs: [], customers: [] },
     locations: locations ?? [],
-    profile: profile ?? {},
+    profile,
   };
 };
 
@@ -133,5 +140,15 @@ export function UserProvider({
     [closers, customer, data, refreshData]
   );
 
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={value}>
+      <LocationProvider
+        key={data.profile.id}
+        locations={data.locations}
+        profile_id={data.profile.id}
+      >
+        {children}
+      </LocationProvider>
+    </UserContext.Provider>
+  );
 }

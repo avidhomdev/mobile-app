@@ -33,19 +33,15 @@ import {
   ModalHeader,
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
-import { useUserContext } from "@/contexts/user-context";
-import { Tables } from "@/supabase";
+import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
+import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
 import { useRouter } from "expo-router";
 import { Calendar, TrashIcon, UserSearch } from "lucide-react-native";
 import { Fragment, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function CustomerCard({
-  customer,
-}: {
-  customer: Tables<"business_location_customers">;
-}) {
+function CustomerCard({ customer }: { customer: ILocationCustomer }) {
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
@@ -164,9 +160,18 @@ function CustomerCard({
       >
         <Card size="sm" variant="elevated">
           <View className="self-start">
-            <Badge action="success">
-              <BadgeText>{customer.disposition_status}</BadgeText>
-            </Badge>
+            {customer?.disposition_status &&
+              DISPOSITION_STATUSES[customer.disposition_status] && (
+                <Badge
+                  action={
+                    DISPOSITION_STATUSES[customer.disposition_status].action
+                  }
+                >
+                  <BadgeText>
+                    {DISPOSITION_STATUSES[customer.disposition_status].label}
+                  </BadgeText>
+                </Badge>
+              )}
           </View>
           <View className="flex-row justify-between items-center">
             <View>

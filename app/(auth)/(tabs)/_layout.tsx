@@ -36,6 +36,7 @@ import {
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSession } from "@/contexts/auth-context";
+import { useLocationContext } from "@/contexts/location-context";
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -48,7 +49,8 @@ function TabBarIcon(props: {
 function ScreenHeader() {
   const [showDrawer, setShowDrawer] = useState(false);
   const { bottom, top } = useSafeAreaInsets();
-  const { location, locations, profile } = useUserContext();
+  const { location, changeLocation } = useLocationContext();
+  const { locations, profile } = useUserContext();
   const { signOut } = useSession();
   return (
     <View
@@ -56,7 +58,9 @@ function ScreenHeader() {
       style={{ paddingTop: top }}
     >
       <Menu
+        closeOnSelect
         placement="bottom left"
+        onSelectionChange={changeLocation}
         offset={5}
         trigger={({ ...triggerProps }) => (
           <Button {...triggerProps} className="bg-slate-700 px-4">

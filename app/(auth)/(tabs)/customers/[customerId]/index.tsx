@@ -1,8 +1,24 @@
+import {
+  Actionsheet,
+  ActionsheetBackdrop,
+  ActionsheetContent,
+  ActionsheetDragIndicator,
+  ActionsheetDragIndicatorWrapper,
+  ActionsheetItem,
+  ActionsheetItemText,
+  ActionsheetSectionHeaderText,
+} from "@/components/ui/actionsheet";
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { SHORT_FRIENDLY_DATE_TIME_FORMAT } from "@/constants/date-formats";
+import {
+  DISPOSITION_STATUS_KEYS,
+  DISPOSITION_STATUSES,
+} from "@/constants/disposition_statuses";
+import { useCustomerContext } from "@/contexts/customer-context";
 import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
 import {
@@ -20,8 +36,11 @@ import {
   Clock7,
   Clock8,
   Clock9,
+  InfoIcon,
 } from "lucide-react-native";
-import { ScrollView, View } from "react-native";
+import { Fragment, useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const clocks = {
   0: Clock,
@@ -39,11 +58,61 @@ const clocks = {
   12: Clock12,
 };
 
-export default function CustomerScreen() {
-  const { customer } = useUserContext();
+function CustomerDisposition() {
+  const { bottom: paddingBlockEnd } = useSafeAreaInsets();
+  const { refreshData } = useUserContext();
+  const { customer, updateCustomer } = useCustomerContext();
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+  const handleClose = () => setIsActionSheetVisible(false);
+  const handleUpdate = (disposition_status: DISPOSITION_STATUS_KEYS) => () =>
+    updateCustomer(Number(customer?.id), { disposition_status })
+      .then(refreshData)
+      .then(handleClose);
 
   return (
-    <View className="p-4 gap-y-4">
+    <Fragment>
+      {customer?.disposition_status && (
+        <TouchableOpacity onPress={() => setIsActionSheetVisible(true)}>
+          <Alert
+            action={DISPOSITION_STATUSES[customer?.disposition_status]?.action}
+            variant="solid"
+          >
+            <AlertIcon as={InfoIcon} />
+            <AlertText className="capitalize pr-2">
+              {customer?.disposition_status?.replaceAll("_", " ")}
+            </AlertText>
+          </Alert>
+        </TouchableOpacity>
+      )}
+      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>
+              Select a status
+            </ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          {Object.entries(DISPOSITION_STATUSES).map(([key, status]) => (
+            <ActionsheetItem
+              key={key}
+              onPress={handleUpdate(key as DISPOSITION_STATUS_KEYS)}
+            >
+              <ActionsheetItemText>{status.label}</ActionsheetItemText>
+            </ActionsheetItem>
+          ))}
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
+export default function CustomerScreen() {
+  const { customer } = useCustomerContext();
+
+  return (
+    <View className="p-6 gap-y-6">
+      <CustomerDisposition />
       <Card>
         <Heading>Appointments</Heading>
         <Text>Scheduled appointments for this customer</Text>
@@ -52,7 +121,7 @@ export default function CustomerScreen() {
           contentContainerClassName="gap-x-2 py-4"
           showsHorizontalScrollIndicator={false}
         >
-          {customer?.appointments.map((appointment) => {
+          {customer?.appointments?.map((appointment) => {
             const startDayjs = dayjs(appointment.start_datetime);
             const StartIcon =
               clocks[Number(startDayjs.format("h")) as keyof typeof clocks];
