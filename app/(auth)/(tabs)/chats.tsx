@@ -4,19 +4,19 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { View } from "react-native";
 
-export default function JobsScreen() {
+export default function ChatsScreen() {
   return (
     <View className="gap-6">
       <HStack space="md" className="justify-between p-6 bg-white items-center">
         <Box>
-          <Heading size="xl">Jobs</Heading>
+          <Heading size="xl">Chats</Heading>
           <Text size="sm" className="text-gray-400">
-            Manage jobs for your have customers.
+            Manage chats between you and others
           </Text>
         </Box>
       </HStack>
       <View className="px-6">
-        <Text>No jobs found</Text>
+        <Text>No chats found</Text>
       </View>
     </View>
   );

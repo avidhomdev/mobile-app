@@ -45,6 +45,7 @@ import {
   HomeIcon,
   LogOut,
   MapPin,
+  MessagesSquare,
   PhoneIcon,
   PlusIcon,
   ShoppingCart,
@@ -343,6 +344,13 @@ export default function TabLayout() {
         options={{
           title: "Schedule",
           tabBarIcon: Calendar1,
+        }}
+      />
+      <Tabs.Screen
+        name="chats"
+        options={{
+          title: "Chats",
+          tabBarIcon: MessagesSquare,
         }}
       />
     </Tabs>
