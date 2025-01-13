@@ -1,7 +1,7 @@
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { CustomerProvider } from "@/contexts/customer-context";
-import { useUserContext } from "@/contexts/user-context";
+import { useLocationContext } from "@/contexts/location-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Stack } from "expo-router/stack";
 import { ChevronLeft } from "lucide-react-native";
@@ -9,9 +9,9 @@ import { Pressable } from "react-native";
 
 export default function Layout() {
   const params = useLocalSearchParams();
-  const { location } = useUserContext();
+  const { location } = useLocationContext();
   const router = useRouter();
-  const customer = location.customers.find(
+  const customer = location.customers?.find(
     (c) => c.id === Number(params.customerId)
   );
 

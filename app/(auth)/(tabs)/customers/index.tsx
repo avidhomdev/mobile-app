@@ -18,10 +18,10 @@ import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Fab, FabIcon, FabLabel } from "@/components/ui/fab";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { AddIcon, CloseIcon, Icon } from "@/components/ui/icon";
+import { CloseIcon, Icon } from "@/components/ui/icon";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 
 import {
   Modal,
@@ -36,8 +36,9 @@ import { Text } from "@/components/ui/text";
 import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
+import { debounce } from "@/utils/debounce";
 import { useRouter } from "expo-router";
-import { Calendar, TrashIcon, UserSearch } from "lucide-react-native";
+import { Calendar, Search, TrashIcon, UserSearch } from "lucide-react-native";
 import { Fragment, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -196,13 +197,29 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
 }
 
 function CustomersList() {
+  const [searchTerm, setSearchTerm] = useState("");
   const {
     location: { customers },
   } = useUserContext();
 
+  const customerResults = customers
+    .toReversed()
+    .filter((customer) =>
+      customer.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
   return (
     <ScrollView contentContainerClassName="px-6 pb-6 gap-2">
-      {customers.toReversed().map((customer) => (
+      <Input className="grow" size="xl" variant="underlined">
+        <InputSlot className="pl-3 mr-2">
+          <InputIcon as={Search} />
+        </InputSlot>
+        <InputField
+          onChangeText={debounce(setSearchTerm, 500)}
+          placeholder="Search..."
+        />
+      </Input>
+      {customerResults.map((customer) => (
         <CustomerCard customer={customer} key={customer.id} />
       ))}
       <View />
@@ -211,11 +228,9 @@ function CustomersList() {
 }
 
 export default function CustomersScreen() {
-  const router = useRouter();
-
   return (
     <View className="gap-6 flex-1">
-      <HStack space="md" className="justify-between p-4 bg-white items-center">
+      <HStack space="md" className="justify-between p-6 bg-white items-center">
         <Box>
           <Heading size="xl">Customers</Heading>
           <Text size="sm" className="text-gray-400">
@@ -223,18 +238,8 @@ export default function CustomersScreen() {
           </Text>
         </Box>
       </HStack>
+
       <CustomersList />
-      <Fab
-        size="md"
-        placement="bottom right"
-        isHovered={false}
-        isDisabled={false}
-        isPressed={false}
-        onPress={() => router.push(`/(auth)/(modals)/new-customer-modal`)}
-      >
-        <FabIcon as={AddIcon} />
-        <FabLabel>New</FabLabel>
-      </Fab>
     </View>
   );
 }

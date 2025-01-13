@@ -29,5 +29,5 @@ export default [
       "no-console": "error",
     },
   },
-  { ignores: [".expo/", "ios", "metro.config.js"] },
+  { ignores: [".expo/", "ios", "metro.config.js", "node_modules/"] },
 ];

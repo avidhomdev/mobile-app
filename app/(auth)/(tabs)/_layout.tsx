@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-
+import {
+  Actionsheet,
+  ActionsheetBackdrop,
+  ActionsheetContent,
+  ActionsheetDragIndicator,
+  ActionsheetDragIndicatorWrapper,
+  ActionsheetIcon,
+  ActionsheetItem,
+  ActionsheetItemText,
+} from "@/components/ui/actionsheet";
 import {
   Avatar,
   AvatarFallbackText,
@@ -19,32 +28,36 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
 import { Text } from "@/components/ui/text";
+import { useSession } from "@/contexts/auth-context";
+import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
 import {
+  NavigationHelpers,
+  ParamListBase,
+  TabNavigationState,
+} from "@react-navigation/native";
+import { Tabs, useRouter } from "expo-router";
+import {
+  Calendar1,
   ChevronDown,
+  Construction,
   Home,
+  HomeIcon,
   LogOut,
   MapPin,
   PhoneIcon,
+  PlusIcon,
   ShoppingCart,
   StarIcon,
   User,
+  User2,
+  UserPlus2,
   Wallet,
 } from "lucide-react-native";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSession } from "@/contexts/auth-context";
-import { useLocationContext } from "@/contexts/location-context";
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof Ionicons>["name"];
-  color: string;
-}) {
-  return <Ionicons size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { twMerge } from "tailwind-merge";
+import { Heading } from "@/components/ui/heading";
 
 function ScreenHeader() {
   const [showDrawer, setShowDrawer] = useState(false);
@@ -54,16 +67,22 @@ function ScreenHeader() {
   const { signOut } = useSession();
   return (
     <View
-      className="bg-slate-800 px-4 pb-4 flex-row items-center justify-between"
+      className="bg-black px-4 pb-4 flex-row items-center justify-evenly gap-x-6"
       style={{ paddingTop: top }}
     >
+      <View>
+        <Heading className="text-white">AVID</Heading>
+        <Text className="-mt-2 tracking-widest text-success-200 uppercase font-semibold text-center">
+          Turf
+        </Text>
+      </View>
       <Menu
         closeOnSelect
         placement="bottom left"
         onSelectionChange={changeLocation}
         offset={5}
         trigger={({ ...triggerProps }) => (
-          <Button {...triggerProps} className="bg-slate-700 px-4">
+          <Button {...triggerProps} className="bg-gray-900 px-4 grow">
             <ButtonText className="text-white">{location.name}</ButtonText>
             <ButtonIcon as={ChevronDown} className="text-white" />
           </Button>
@@ -84,7 +103,7 @@ function ScreenHeader() {
 
       <View className="flex-row items-center gap-2">
         <TouchableOpacity onPress={() => setShowDrawer(true)}>
-          <Avatar className="bg-slate-600" size="md">
+          <Avatar className="bg-gray-700" size="md">
             <AvatarFallbackText>{profile.full_name}</AvatarFallbackText>
             <AvatarImage
               source={{
@@ -175,32 +194,139 @@ function ScreenHeader() {
   );
 }
 
+type TTabBar = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  descriptors: any;
+  paddingBlockEnd: number;
+  navigation: NavigationHelpers<ParamListBase>;
+  state: TabNavigationState<ParamListBase>;
+};
+
+function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+  const handleClose = () => setIsActionSheetVisible(false);
+  const router = useRouter();
+  return (
+    <View className="flex-row justify-between">
+      <View className="bg-black rounded-full p-2 px-4 flex-row gap-x-2">
+        {state.routes.flatMap((route, index) => {
+          const { options } = descriptors[route.key];
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            if (!isFocused) navigation.navigate(route.name);
+          };
+
+          return (
+            <TouchableOpacity className="p-2" key={index} onPress={onPress}>
+              <Icon
+                as={options.tabBarIcon}
+                className={twMerge(
+                  isFocused ? "text-typography-white" : "text-typography-400"
+                )}
+                size="2xl"
+              />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      <TouchableOpacity
+        className="rounded-full bg-black aspect-square items-center justify-center"
+        onPress={() => setIsActionSheetVisible(true)}
+      >
+        <Icon as={PlusIcon} className="text-typography-white" size="2xl" />
+      </TouchableOpacity>
+      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/(auth)/(modals)/new-customer-modal`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              New Customer
+            </ActionsheetItemText>
+          </ActionsheetItem>
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/(auth)/(modals)/new-customer-modal`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={Calendar1} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              New Appointment
+            </ActionsheetItemText>
+          </ActionsheetItem>
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/(auth)/(modals)/new-job-modal`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon
+              as={Construction}
+              className="text-typography-500"
+            />
+            <ActionsheetItemText className="text-typography-700">
+              New Job
+            </ActionsheetItemText>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+    </View>
+  );
+}
+
 export default function TabLayout() {
-  const { location } = useUserContext();
+  const { bottom } = useSafeAreaInsets();
+  const { location } = useLocationContext();
 
   return (
     <Tabs
       screenOptions={{
+        sceneStyle: {
+          backgroundColor: "#f1f5f9",
+          paddingBottom: bottom + 60,
+        },
         header: () => <ScreenHeader />,
-        tabBarShowLabel: false,
+      }}
+      tabBar={({ descriptors, insets, navigation, state }) => {
+        const { bottom } = insets;
+
+        return (
+          <View
+            className="px-4 pt-2 bg-transparent absolute w-full"
+            style={{ bottom }}
+          >
+            <TabBar
+              paddingBlockEnd={bottom}
+              descriptors={descriptors}
+              navigation={navigation}
+              state={state}
+            />
+          </View>
+        );
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Dashboard",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="home-outline" color={color} />
-          ),
+          tabBarIcon: HomeIcon,
         }}
       />
       <Tabs.Screen
         name="customers"
         options={{
           title: "Customers",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="people-circle-outline" color={color} />
-          ),
+          tabBarIcon: User2,
         }}
       />
       <Tabs.Screen
@@ -208,29 +334,15 @@ export default function TabLayout() {
         name="jobs"
         options={{
           title: "Jobs",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="construct-outline" color={color} />
-          ),
+          tabBarIcon: Construction,
         }}
       />
       <Tabs.Screen
         redirect={!location?.is_closer}
-        name="schedule"
+        name="schedule/index"
         options={{
           title: "Schedule",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="calendar-outline" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        redirect={!location?.is_closer}
-        name="timesheets"
-        options={{
-          title: "Timesheets",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="timer-outline" color={color} />
-          ),
+          tabBarIcon: Calendar1,
         }}
       />
     </Tabs>
