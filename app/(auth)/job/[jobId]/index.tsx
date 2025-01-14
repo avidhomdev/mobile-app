@@ -7,7 +7,7 @@ import formatEmptyAsNa from "@/utils/format-empty-as-na";
 import { formatMinutesToHoursAndMinutes } from "@/utils/format-minutes-to-hours-and-minutes";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { router, useGlobalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   RefreshControl,
   ScrollView,
@@ -110,11 +110,11 @@ function Products() {
           <Card className="w-72 flex-1 p-3 gap-y-2" key={product.id}>
             <View>
               <Text>{product.product.name}</Text>
-              <Text variant="subheader">{`${product.number_of_units} x ${product.product.measurement}`}</Text>
+              <Text variant="subheader">{`${product.number_of_units} x ${product.product.unit}`}</Text>
             </View>
             <Text className="font-bold text-green-600">
               {formatAsCompactCurrency(
-                product.number_of_units * product.product.price_per_measurement
+                product.number_of_units * Number(product.product.unit_price)
               )}
             </Text>
           </Card>
@@ -125,8 +125,6 @@ function Products() {
 }
 
 function TodoList() {
-  const { job } = useJobContext();
-
   return (
     <View className="gap-y-2 px-6">
       <Text variant="header">Todos</Text>
@@ -158,7 +156,7 @@ function PopoverButton() {
   const toggle = () => setIsOpen((prevState) => !prevState);
 
   return (
-    <>
+    <Fragment>
       <TouchableOpacity
         className={twMerge(
           isOpen ? "rounded-b-full " : "rounded-full",
@@ -173,7 +171,7 @@ function PopoverButton() {
         )}
       </TouchableOpacity>
       {isOpen && (
-        <>
+        <Fragment>
           <View className="absolute bottom-16 right-4 bg-gray-900 w-2/3 p-4 rounded rounded-br-none gap-y-4 z-10">
             <TouchableOpacity className="flex-row gap-x-2 items-center p-2">
               <Ionicons name="camera" size={18} color="#f3f4f6" />
@@ -218,9 +216,9 @@ function PopoverButton() {
           <TouchableWithoutFeedback onPress={toggle}>
             <View className="absolute inset-0 bg-black/70 w-full h-full z-0" />
           </TouchableWithoutFeedback>
-        </>
+        </Fragment>
       )}
-    </>
+    </Fragment>
   );
 }
 
@@ -229,7 +227,7 @@ export default function JobScreen() {
   const { refreshData } = useJobContext();
 
   return (
-    <>
+    <Fragment>
       <Header />
       <ScrollView
         contentContainerClassName="gap-y-6 py-6"
@@ -250,6 +248,6 @@ export default function JobScreen() {
         <TodoList />
       </ScrollView>
       <PopoverButton />
-    </>
+    </Fragment>
   );
 }

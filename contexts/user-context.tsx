@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
+import { useGlobalSearchParams } from "expo-router";
 import React, {
   PropsWithChildren,
   useCallback,
@@ -7,36 +8,61 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { LocationProvider } from "./location-context";
+import { DISPOSITION_STATUS_KEYS } from "@/constants/disposition_statuses";
 
 interface IProfile extends Omit<Tables<"profiles">, "created_at" | "id"> {
   created_at?: string;
-  id?: string;
+  id: string;
+  location_profiles: Tables<"business_location_profiles">[];
+}
+
+export interface ILocationProfile extends Tables<"business_location_profiles"> {
+  profile: Tables<"profiles">;
+}
+
+export interface ILocationCustomer
+  extends Tables<"business_location_customers"> {
+  disposition_status: DISPOSITION_STATUS_KEYS;
+  appointments: Tables<"business_appointments">[];
+}
+
+export interface ILocation extends Partial<Tables<"business_locations">> {
+  jobs: Tables<"business_location_jobs">[];
+  customers: ILocationCustomer[];
+  profiles: ILocationProfile[];
 }
 
 type TUserContextProps = {
-  businesses: Tables<"businesses">[];
+  closers: Tables<"profiles">[] | null;
+  customer: ILocationCustomer | null;
   jobs: Tables<"business_location_jobs">[];
-  locations: Tables<"business_locations">[];
+  locations: ILocation[];
   profile: IProfile;
-  refreshData: () => void;
+  refreshData: () => void | Promise<void>;
+  location: ILocation & Partial<Tables<"business_location_profiles">>;
 };
 
 const defaultContext = {
-  businesses: [],
+  closers: null,
+  customer: null,
   jobs: [],
+  location: { jobs: [], customers: [], profiles: [] },
   locations: [],
   profile: {
     avatar_url: null,
     full_name: null,
+    location_profiles: [],
     updated_at: null,
     username: null,
     website: null,
+    id: "",
   },
 };
 
 const UserContext = React.createContext<TUserContextProps>({
   ...defaultContext,
-  refreshData: () => null,
+  refreshData: () => {},
 });
 
 export function useUserContext() {
@@ -49,26 +75,32 @@ export function useUserContext() {
   return value;
 }
 
-const fetchProfileData = async (
+const fetchUserContextData = async (
   id: string
 ): Promise<Omit<TUserContextProps, "refreshData">> => {
-  const [
-    { data: profile },
-    { data: businesses },
-    { data: locations },
-    { data: jobs },
-  ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", id).limit(1).maybeSingle(),
-    supabase.from("businesses").select("*"),
-    supabase.from("business_locations").select("*"),
-    supabase.from("business_location_jobs").select("*"),
+  const [{ data: profile }, { data: locations }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "*, location_profiles: business_location_profiles!profile_id(*, location: location_id(*, customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))))"
+      )
+      .eq("id", id)
+      .limit(1)
+      .single(),
+    supabase
+      .from("business_locations")
+      .select(
+        "*, customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
+      ),
   ]);
 
   return {
+    closers: null,
+    customer: null,
+    jobs: [],
+    location: locations ? locations[0] : { jobs: [], customers: [] },
+    locations: locations ?? [],
     profile,
-    businesses: businesses || [],
-    locations: locations || [],
-    jobs: jobs || [],
   };
 };
 
@@ -76,11 +108,12 @@ export function UserProvider({
   children,
   session,
 }: PropsWithChildren<{ session: string }>) {
+  const params = useGlobalSearchParams();
   const [data, setData] =
     useState<Omit<TUserContextProps, "refreshData">>(defaultContext);
 
   const refreshData = useCallback(
-    () => fetchProfileData(session).then(setData),
+    async () => fetchUserContextData(session).then(setData),
     [session]
   );
 
@@ -88,13 +121,34 @@ export function UserProvider({
     refreshData();
   }, [refreshData]);
 
+  const customer =
+    params.customerId &&
+    data.location &&
+    data.location.customers.find((c) => c.id === Number(params.customerId));
+
+  const closers = data.location?.profiles.flatMap((profile) =>
+    profile.is_closer ? profile.profile : []
+  );
+
   const value = useMemo(
     () => ({
       ...data,
+      closers: closers || null,
+      customer: customer || null,
       refreshData,
     }),
-    [data, refreshData]
+    [closers, customer, data, refreshData]
   );
 
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={value}>
+      <LocationProvider
+        key={data.profile.id}
+        locations={data.locations}
+        profile_id={data.profile.id}
+      >
+        {children}
+      </LocationProvider>
+    </UserContext.Provider>
+  );
 }

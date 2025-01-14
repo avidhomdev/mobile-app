@@ -25,6 +25,7 @@ export async function setStorageItemAsync(key: string, value: string | null) {
         localStorage.setItem(key, value);
       }
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error("Local storage is unavailable:", e);
     }
   } else {
@@ -48,6 +49,7 @@ export function useStorageState(key: string): UseStateHook<string> {
           setState(localStorage.getItem(key));
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error("Local storage is unavailable:", e);
       }
     } else {

@@ -1,10 +1,20 @@
-import Button from "@/components/Button";
-import Input from "@/components/Input";
-import Text from "@/components/Text";
 import { Redirect, router } from "expo-router";
 import { View } from "react-native";
 import { useSession } from "@/contexts/auth-context";
 import { useState } from "react";
+import { Text } from "@/components/ui/text";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+
+import { Input, InputField } from "@/components/ui/input";
+import { AlertCircleIcon } from "lucide-react-native";
+import { Button, ButtonText } from "@/components/ui/button";
 
 export default function Login() {
   const { signIn, session } = useSession();
@@ -22,31 +32,44 @@ export default function Login() {
   return (
     <View className="flex-1 justify-center p-4 gap-y-6">
       <View>
-        <Text variant="header">Welcome back!</Text>
+        <Text size="xl">Welcome back!</Text>
         <Text>
           Sign in to view your jobs, manage your schedule and start tracking
           time.
         </Text>
       </View>
       <View className="gap-y-6">
-        <View className="gap-y-2">
-          <Text variant="label">Username</Text>
-          <Input
-            autoCapitalize="none"
-            onChangeText={setEmail}
-            placeholder="Email"
-          />
-        </View>
-        <View className="gap-y-2">
-          <Text variant="label">Password</Text>
-          <Input
-            placeholder="Password"
-            secureTextEntry
-            onChangeText={setPassword}
-          />
-        </View>
+        <FormControl isRequired>
+          <FormControlLabel>
+            <FormControlLabelText>Email</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={setEmail}
+              placeholder="johndoe@exmaple.com"
+            />
+          </Input>
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} />
+            <FormControlErrorText>Email is required</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+        <FormControl isRequired>
+          <FormControlLabel>
+            <FormControlLabelText>Password</FormControlLabelText>
+          </FormControlLabel>
+          <Input variant="outline" size="lg">
+            <InputField onChangeText={setPassword} type="password" />
+          </Input>
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} />
+            <FormControlErrorText>Password is required</FormControlErrorText>
+          </FormControlError>
+        </FormControl>
         <Button onPress={handleLogin}>
-          <Button.Text className="text-center font-bold">Sign in</Button.Text>
+          <ButtonText className="text-center font-bold">Sign in</ButtonText>
         </Button>
       </View>
     </View>

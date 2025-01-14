@@ -22,6 +22,18 @@ export default function AppLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="(modals)/new-customer-modal"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="(modals)/new-proposal-modal"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="(modals)/new-job-modal"
+          options={{ presentation: "modal" }}
+        />
       </Stack>
     </UserProvider>
   );

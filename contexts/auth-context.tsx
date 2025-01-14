@@ -8,7 +8,7 @@ const AuthContext = React.createContext<{
   session?: string | null;
   isLoading: boolean;
 }>({
-  signIn: async ({ email = "", password = "" }) => null,
+  signIn: async () => null,
   signOut: () => null,
   session: null,
   isLoading: false,
@@ -45,7 +45,7 @@ export function SessionProvider(props: React.PropsWithChildren) {
           supabase.auth.signInWithPassword({ email, password }),
         signOut: async () => {
           setSession(null);
-          supabase.auth.signOut().catch(console.error);
+          supabase.auth.signOut();
         },
         session,
         isLoading,

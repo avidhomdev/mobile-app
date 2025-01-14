@@ -23,7 +23,7 @@ export default function JobEditScreen() {
         </TouchableOpacity>
 
         <Text className="text-white" variant="headline">
-          Edit
+          {`Edit ${jobId}`}
         </Text>
       </View>
       <Text>Some fields here</Text>
