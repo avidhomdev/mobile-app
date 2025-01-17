@@ -1,8 +1,8 @@
 import { Box } from "@/components/ui/box";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import dayjs from "dayjs";
 import { Home } from "lucide-react-native";
@@ -34,14 +34,20 @@ export default function ScheduleScreen() {
       </HStack>
 
       <View>
-        {!selectedDayjs.isSame(dayjs(), "date") && (
-          <View className="self-start px-6">
-            <Button onPress={() => setSelectedDayjs(dayjs())} variant="link">
-              <ButtonIcon as={Home} />
-              <ButtonText>Back to Today</ButtonText>
-            </Button>
-          </View>
-        )}
+        <View className="flex-row items-center gap-x-2 px-6 justify-between">
+          <Text className="text-typography-800 font-semibold">
+            {selectedDayjs.format("MMM YYYY")}
+          </Text>
+          {!selectedDayjs.isSame(dayjs(), "date") && (
+            <TouchableOpacity
+              className="flex-row items-center gap-x-1"
+              onPress={() => setSelectedDayjs(dayjs())}
+            >
+              <Icon size="xs" as={Home} className="text-typography-800" />
+              <Text size="xs">Today</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <ScrollView
           contentContainerClassName="gap-x-2 p-2"
           horizontal
@@ -53,12 +59,7 @@ export default function ScheduleScreen() {
 
             return (
               <TouchableOpacity
-                className={twMerge(
-                  isToday
-                    ? "bg-white border-gray-200 border-t-sky-400"
-                    : "bg-gray-200 border-gray-300 opacity-70",
-                  "border border-t-8 py-2 w-14 rounded"
-                )}
+                className="p-2 gap-y-2"
                 key={day.toISOString()}
                 onLayout={(event) => {
                   const layout = event.nativeEvent.layout;
@@ -72,21 +73,22 @@ export default function ScheduleScreen() {
                 onPress={() => setSelectedDayjs(day)}
               >
                 <Text
-                  className="text-center text-typography-400 uppercase"
-                  size="2xs"
-                >
-                  {day.format("MMM")}
-                </Text>
-                <Text
-                  className="text-center text-typography-500 uppercase tracking-tighter font-semibold"
-                  size="sm"
+                  className={twMerge(
+                    isToday ? "text-typography-900" : "text-typography-500",
+                    "text-center uppercase tracking-tighter font-semibold"
+                  )}
+                  size="xs"
                 >
                   {day.format("ddd")}
                 </Text>
                 <Text
                   bold
-                  className="text-center text-typography-800"
-                  size="xl"
+                  className={twMerge(
+                    isToday
+                      ? "bg-slate-900 text-typography-white"
+                      : "text-typography-800",
+                    "text-center p-1 px-2 rounded"
+                  )}
                 >
                   {day.format("DD")}
                 </Text>
