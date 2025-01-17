@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { SHORT_FRIENDLY_DATE_TIME_FORMAT } from "@/constants/date-formats";
+import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
 import {
   DISPOSITION_STATUS_KEYS,
   DISPOSITION_STATUSES,
@@ -37,6 +37,7 @@ import {
   Clock8,
   Clock9,
   InfoIcon,
+  Timer,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
@@ -111,15 +112,17 @@ export default function CustomerScreen() {
   const { customer } = useCustomerContext();
 
   return (
-    <View className="p-6 gap-y-6">
+    <ScrollView contentContainerClassName="p-6 gap-y-6">
       <CustomerDisposition />
-      <Card>
-        <Heading>Appointments</Heading>
-        <Text>Scheduled appointments for this customer</Text>
+      <View>
+        <View>
+          <Heading>Appointments</Heading>
+          <Text>Scheduled appointments for this customer</Text>
+        </View>
         <ScrollView
           horizontal
-          contentContainerClassName="gap-x-2 py-4"
           showsHorizontalScrollIndicator={false}
+          contentContainerClassName="gap-x-2 py-2"
         >
           {customer?.appointments?.map((appointment) => {
             const startDayjs = dayjs(appointment.start_datetime);
@@ -130,28 +133,34 @@ export default function CustomerScreen() {
               clocks[Number(endDayjs.format("h")) as keyof typeof clocks];
 
             return (
-              <Card key={appointment.id} variant="filled">
-                <View className="flex-row items-center gap-x-1">
+              <Card key={appointment.id}>
+                <Text className="mb-2" isTruncated>
+                  {appointment.name ?? "Appointment"}
+                </Text>
+                <View className="flex-row items-center gap-x-2">
                   <Icon as={Calendar1} />
-                  <Text isTruncated>{appointment.name}</Text>
+                  <Text>{dayjs(startDayjs).format(FRIENDLY_DATE_FORMAT)}</Text>
                 </View>
-                <View className="flex-row items-center gap-x-1">
-                  <Icon as={StartIcon} />
-                  <Text>
-                    {dayjs(startDayjs).format(SHORT_FRIENDLY_DATE_TIME_FORMAT)}
-                  </Text>
+                <View className="flex-row items-center gap-x-2">
+                  <View className="flex-row items-center gap-x-1">
+                    <Icon as={StartIcon} />
+                    <Text>{dayjs(startDayjs).format(TIME_FORMAT)}</Text>
+                  </View>
+                  <Text>-</Text>
+                  <View className="flex-row items-center gap-x-1">
+                    <Icon as={EndIcon} />
+                    <Text>{dayjs(endDayjs).format(TIME_FORMAT)}</Text>
+                  </View>
                 </View>
-                <View className="flex-row items-center gap-x-1">
-                  <Icon as={EndIcon} />
-                  <Text>
-                    {dayjs(endDayjs).format(SHORT_FRIENDLY_DATE_TIME_FORMAT)}
-                  </Text>
+                <View className="flex-row items-center gap-x-2">
+                  <Icon as={Timer} />
+                  <Text>{`${appointment.duration ?? 0} minutes`}</Text>
                 </View>
               </Card>
             );
           })}
         </ScrollView>
-      </Card>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
