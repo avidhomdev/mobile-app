@@ -85,6 +85,7 @@ export type Database = {
           business_id: string
           created_at: string
           customer_id: number | null
+          duration: number | null
           end_datetime: string
           id: number
           job_id: number | null
@@ -96,6 +97,7 @@ export type Database = {
           business_id: string
           created_at?: string
           customer_id?: number | null
+          duration?: number | null
           end_datetime: string
           id?: number
           job_id?: number | null
@@ -107,6 +109,7 @@ export type Database = {
           business_id?: string
           created_at?: string
           customer_id?: number | null
+          duration?: number | null
           end_datetime?: string
           id?: number
           job_id?: number | null
@@ -182,58 +185,58 @@ export type Database = {
       }
       business_location_customers: {
         Row: {
-          address: string | null
+          address: string
           business_id: string
-          city: string | null
+          city: string
           closer_id: string | null
           created_at: string
           creator_id: string | null
           disposition_status: string | null
-          email: string
+          email: string | null
           full_name: string
           id: number
           lead_source: string | null
           location_id: number
           notes: string | null
           phone: string | null
-          postal_code: string | null
-          state: string | null
+          postal_code: string
+          state: string
         }
         Insert: {
-          address?: string | null
+          address: string
           business_id: string
-          city?: string | null
+          city: string
           closer_id?: string | null
           created_at?: string
           creator_id?: string | null
           disposition_status?: string | null
-          email: string
+          email?: string | null
           full_name: string
           id?: number
           lead_source?: string | null
           location_id: number
           notes?: string | null
           phone?: string | null
-          postal_code?: string | null
-          state?: string | null
+          postal_code: string
+          state: string
         }
         Update: {
-          address?: string | null
+          address?: string
           business_id?: string
-          city?: string | null
+          city?: string
           closer_id?: string | null
           created_at?: string
           creator_id?: string | null
           disposition_status?: string | null
-          email?: string
+          email?: string | null
           full_name?: string
           id?: number
           lead_source?: string | null
           location_id?: number
           notes?: string | null
           phone?: string | null
-          postal_code?: string | null
-          state?: string | null
+          postal_code?: string
+          state?: string
         }
         Relationships: [
           {
@@ -809,6 +812,7 @@ export type Database = {
       business_location_profiles: {
         Row: {
           business_id: string
+          closer_priority: number
           commission_rate: number | null
           created_at: string
           is_closer: boolean
@@ -820,6 +824,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          closer_priority?: number
           commission_rate?: number | null
           created_at?: string
           is_closer?: boolean
@@ -831,6 +836,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          closer_priority?: number
           commission_rate?: number | null
           created_at?: string
           is_closer?: boolean
