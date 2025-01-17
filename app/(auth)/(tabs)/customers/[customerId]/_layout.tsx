@@ -23,7 +23,7 @@ export default function Layout() {
           header: customer
             ? () => (
                 <Pressable
-                  className="bg-slate-800 p-4 pt-0 items-center flex-row border-b-8 border-gray-900 gap-x-2"
+                  className="bg-black p-4 items-center flex-row border-b-8 border-gray-900 gap-x-2"
                   onPress={router.back}
                 >
                   <Icon as={ChevronLeft} className="text-white" size="xl" />
