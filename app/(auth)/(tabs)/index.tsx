@@ -1,8 +1,14 @@
+import {
+  Avatar,
+  AvatarFallbackText,
+  AvatarGroup,
+} from "@/components/ui/avatar";
+import { Badge, BadgeText } from "@/components/ui/badge";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
-import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
+import { Progress, ProgressFilledTrack } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -13,16 +19,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Text } from "@/components/ui/text";
+import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
+import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
+import dayjs from "dayjs";
+import { useRouter } from "expo-router";
 import {
   Banknote,
   Calendar1,
   CheckCircle2,
-  ChevronDown,
   CircleIcon,
+  EllipsisVertical,
   MapPinHouse,
   PiggyBank,
   PlusSquareIcon,
@@ -36,46 +46,127 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { twMerge } from "tailwind-merge";
+
+const avatars = [
+  {
+    src: "https://example.com.jpg",
+    alt: "Sandeep Srivastva",
+    color: "bg-emerald-600",
+  },
+  {
+    src: "https://example.com.jpg",
+    alt: "Arjun Kapoor",
+    color: "bg-cyan-600",
+  },
+  {
+    src: "https://example.com.jpg",
+    alt: "Ritik Sharma ",
+    color: "bg-indigo-600",
+  },
+  {
+    src: "https://example.com.jpg",
+    alt: "Akhil Sharma",
+    color: "bg-gray-600",
+  },
+  {
+    src: "https://example.com.jpg",
+    alt: "Rahul Sharma ",
+    color: "bg-red-400",
+  },
+];
 
 function CloserDashboard() {
+  const { location } = useLocationContext();
+  const router = useRouter();
   return (
     <View className="gap-y-6">
-      <WelcomeBanner />
+      {location.customers && (
+        <ScrollView
+          contentContainerClassName="gap-x-4"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {location.customers?.map((customer) => {
+            const dispositionStatus =
+              DISPOSITION_STATUSES[customer.disposition_status];
+            return (
+              <TouchableOpacity
+                key={customer.id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(auth)/(tabs)/customers/[customerId]",
+                    params: { customerId: customer.id },
+                  })
+                }
+              >
+                <Card
+                  className={twMerge(
+                    `bg-${dispositionStatus.action}-50`,
+                    "w-72"
+                  )}
+                >
+                  <View className="items-start mb-1 justify-between flex-row">
+                    <Badge action={dispositionStatus?.action} size="sm">
+                      <BadgeText>{dispositionStatus?.label}</BadgeText>
+                    </Badge>
+                    <Icon as={EllipsisVertical} />
+                  </View>
+                  <Heading className="font-normal tracking-tighter" size="xl">
+                    {customer.full_name}
+                  </Heading>
+                  <Text className="text-typography-500" size="xs">
+                    Job is in progress and installers are at the job site.
+                  </Text>
+                  <View className="my-2 flex-row gap-x-2 items-center">
+                    <Progress
+                      className="shrink"
+                      orientation="horizontal"
+                      size="sm"
+                      value={40}
+                    >
+                      <ProgressFilledTrack className="bg-info-600" />
+                    </Progress>
+                    <View>
+                      <Text bold size="xs">
+                        40%
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row justify-between items-center">
+                    <AvatarGroup className="ml-2">
+                      {avatars.slice(0, 3).map((avatar, index) => {
+                        return (
+                          <Avatar
+                            key={index}
+                            size="xs"
+                            className={
+                              "border-2 border-outline-0 " + avatar.color
+                            }
+                          >
+                            <AvatarFallbackText className="text-white">
+                              {avatar.alt}
+                            </AvatarFallbackText>
+                          </Avatar>
+                        );
+                      })}
+                    </AvatarGroup>
+                    <View className="flex-row gap-x-1 items-center">
+                      <Icon as={Calendar1} size="xs" />
+                      <Text size="xs">
+                        {dayjs(customer.created_at).format(
+                          FRIENDLY_DATE_FORMAT
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
       <View className="gap-y-2">
-        <View className="self-end">
-          <Menu
-            placement="bottom"
-            offset={5}
-            disabledKeys={["Settings"]}
-            trigger={({ ...triggerProps }) => {
-              return (
-                <Button {...triggerProps} action="secondary">
-                  <ButtonText>YTD</ButtonText>
-                  <ButtonIcon as={ChevronDown} />
-                </Button>
-              );
-            }}
-          >
-            <MenuItem key="1W" textValue="1W">
-              <MenuItemLabel size="sm">1 week</MenuItemLabel>
-            </MenuItem>
-            <MenuItem key="1M" textValue="1M">
-              <MenuItemLabel size="sm">1 month</MenuItemLabel>
-            </MenuItem>
-            <MenuItem key="3M" textValue="3M">
-              <MenuItemLabel size="sm">3 month</MenuItemLabel>
-            </MenuItem>
-            <MenuItem key="6M" textValue="6M">
-              <MenuItemLabel size="sm">6 month</MenuItemLabel>
-            </MenuItem>
-            <MenuItem key="1Y" textValue="1Y">
-              <MenuItemLabel size="sm">1 year</MenuItemLabel>
-            </MenuItem>
-            <MenuItem key="YTD" textValue="YTD">
-              <MenuItemLabel size="sm">Year to Date</MenuItemLabel>
-            </MenuItem>
-          </Menu>
-        </View>
         <View className="flex-row gap-x-2">
           <Card className="basis-1/2">
             <Icon as={Calendar1} />
@@ -104,7 +195,7 @@ function CloserDashboard() {
           </Card>
           <Card className="basis-1/2">
             {/*
-            projected calculation
+            TODO: projected calculation
             ---
             appointments up to selected date  / closed jobs up to selected date = close percentage
             job commission totals up to selected date / number of jobs = job commission average
