@@ -4,7 +4,7 @@ type TActions = "muted" | "error" | "warning" | "success" | "info" | undefined;
 export const DISPOSITION_STATUSES = {
   NEW: {
     label: "New",
-    action: "muted" as TActions,
+    action: "warning" as TActions,
   },
   SCHEDULED: {
     label: "Scheduled",
