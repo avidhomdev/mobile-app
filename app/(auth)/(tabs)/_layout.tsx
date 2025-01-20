@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Fragment, useState } from "react";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -204,6 +204,7 @@ type TTabBar = {
 };
 
 function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
+  const { location } = useLocationContext();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const handleClose = () => setIsActionSheetVisible(false);
   const router = useRouter();
@@ -243,42 +244,51 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          <ActionsheetItem
-            onPress={() => {
-              router.push(`/(auth)/(modals)/new-customer-modal`);
-              handleClose();
-            }}
-          >
-            <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
-            <ActionsheetItemText className="text-typography-700">
-              New Customer
-            </ActionsheetItemText>
-          </ActionsheetItem>
-          <ActionsheetItem
-            onPress={() => {
-              router.push(`/(auth)/(modals)/new-customer-modal`);
-              handleClose();
-            }}
-          >
-            <ActionsheetIcon as={Calendar1} className="text-typography-500" />
-            <ActionsheetItemText className="text-typography-700">
-              New Appointment
-            </ActionsheetItemText>
-          </ActionsheetItem>
-          <ActionsheetItem
-            onPress={() => {
-              router.push(`/(auth)/(modals)/new-job-modal`);
-              handleClose();
-            }}
-          >
-            <ActionsheetIcon
-              as={Construction}
-              className="text-typography-500"
-            />
-            <ActionsheetItemText className="text-typography-700">
-              New Job
-            </ActionsheetItemText>
-          </ActionsheetItem>
+          {location.is_setter && (
+            <ActionsheetItem
+              onPress={() => {
+                router.push(`/(auth)/(modals)/new-customer-modal`);
+                handleClose();
+              }}
+            >
+              <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
+              <ActionsheetItemText className="text-typography-700">
+                New Customer
+              </ActionsheetItemText>
+            </ActionsheetItem>
+          )}
+          {location.is_closer && (
+            <Fragment>
+              <ActionsheetItem
+                onPress={() => {
+                  router.push(`/(auth)/(modals)/new-customer-modal`);
+                  handleClose();
+                }}
+              >
+                <ActionsheetIcon
+                  as={Calendar1}
+                  className="text-typography-500"
+                />
+                <ActionsheetItemText className="text-typography-700">
+                  New Appointment
+                </ActionsheetItemText>
+              </ActionsheetItem>
+              <ActionsheetItem
+                onPress={() => {
+                  router.push(`/(auth)/(modals)/new-job-modal`);
+                  handleClose();
+                }}
+              >
+                <ActionsheetIcon
+                  as={Construction}
+                  className="text-typography-500"
+                />
+                <ActionsheetItemText className="text-typography-700">
+                  New Job
+                </ActionsheetItemText>
+              </ActionsheetItem>
+            </Fragment>
+          )}
         </ActionsheetContent>
       </Actionsheet>
     </View>
