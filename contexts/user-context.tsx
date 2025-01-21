@@ -28,8 +28,11 @@ export interface ILocationCustomer
   closer?: Tables<"profiles">;
 }
 
+interface IAppointments extends Tables<"business_appointments"> {
+  profiles: Tables<"business_appointment_profiles">[];
+}
 export interface ILocation extends Partial<Tables<"business_locations">> {
-  appointments: Tables<"business_appointments">[];
+  appointments: IAppointments[];
   jobs: Tables<"business_location_jobs">[];
   customers: ILocationCustomer[];
   profiles: ILocationProfile[];
@@ -92,7 +95,7 @@ const fetchUserContextData = async (
     supabase
       .from("business_locations")
       .select(
-        "*, appointments: business_appointments(*), customers: business_location_customers(*, closer: closer_id(*), appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
+        "*, appointments:business_appointments(*, profiles: business_appointment_profiles(*)), customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
       ),
   ]);
 
