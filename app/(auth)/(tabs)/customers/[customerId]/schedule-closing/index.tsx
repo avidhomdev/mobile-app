@@ -22,14 +22,9 @@ import {
 import { Text } from "@/components/ui/text";
 import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
-import {
-  Calendar1,
-  Calendar1Icon,
-  ChevronDownIcon,
-  Settings,
-} from "lucide-react-native";
-import { Fragment, useCallback, useReducer } from "react";
-import { ScrollView, View } from "react-native";
+import { Calendar1, Calendar1Icon, ChevronDownIcon } from "lucide-react-native";
+import { useCallback, useReducer } from "react";
+import { View } from "react-native";
 import DatePicker from "react-native-date-picker";
 
 import { Card } from "@/components/ui/card";
@@ -161,7 +156,6 @@ function formReducer(
 
 type TLocalParams = {
   customerId?: string;
-  closerId?: string;
 };
 
 export default function ScheduleClosingScreen() {
@@ -173,10 +167,10 @@ export default function ScheduleClosingScreen() {
   const [state, dispatch] = useReducer(formReducer, {
     fields: {
       closer_id: "",
-      duration: 15,
-      end_datetime: null,
+      duration: 30,
+      end_datetime: dayjs().add(30, "m").set("m", 0).set("s", 0),
       location_id: Number(location.id),
-      start_datetime: null,
+      start_datetime: dayjs().set("m", 0).set("s", 0),
     },
     isSubmitting: false,
     selectedDayjs: dayjs(),
@@ -254,146 +248,96 @@ export default function ScheduleClosingScreen() {
   }, [state.fields, state.isSubmitting]);
 
   return (
-    <Fragment>
+    <View>
       <View className="p-4 bg-white">
         <Heading>Closing Appointment</Heading>
         <Text className="sm text-typography-600">
           Schedule closing appointment for your customer
         </Text>
       </View>
-      <ScrollView contentContainerClassName="gap-y-4">
-        <View className="p-4 gap-y-4">
-          <Fragment>
-            {state.fields.start_datetime ? (
-              <Card>
-                <FormControl>
-                  <FormControlLabel>
-                    <FormControlLabelText size="md">
-                      Appointment Start
-                    </FormControlLabelText>
-                  </FormControlLabel>
-                  <View className="flex-row gap-x-2 items-center">
-                    <Icon
-                      as={Calendar1Icon}
-                      className="text-typography-500"
-                      size="lg"
-                    />
-                    <Text className="text-typography-700">
-                      {state.fields.start_datetime.format("MM/DD/YYYY hh:mm a")}
-                    </Text>
-                    <Button
-                      action="secondary"
-                      className="ml-auto"
-                      onPress={() =>
-                        dispatch({
-                          type: FormReducerActionTypes.SET_START_DATETIME,
-                          payload: null,
-                        })
-                      }
-                      size="sm"
-                    >
-                      <ButtonIcon as={Settings} />
-                    </Button>
-                  </View>
-                </FormControl>
-              </Card>
-            ) : (
-              <DatePicker
-                date={new Date()}
-                minuteInterval={15}
-                modal
-                mode="datetime"
-                onConfirm={(payload) =>
-                  dispatch({
-                    type: FormReducerActionTypes.SET_START_DATETIME,
-                    payload: dayjs(payload),
-                  })
-                }
-                open
-              />
-            )}
-          </Fragment>
+      <View className="items-center">
+        <DatePicker
+          date={new Date()}
+          minuteInterval={30}
+          mode="datetime"
+          onDateChange={(payload) =>
+            dispatch({
+              type: FormReducerActionTypes.SET_START_DATETIME,
+              payload: dayjs(payload),
+            })
+          }
+        />
+      </View>
 
-          {state.fields.start_datetime && (
-            <Card>
-              <FormControl isRequired>
-                <FormControlLabel>
-                  <FormControlLabelText size="md">
-                    Duration:
-                  </FormControlLabelText>
-                </FormControlLabel>
-                <Select
-                  defaultValue={state.fields.duration.toString()}
-                  onValueChange={(payload) =>
-                    dispatch({
-                      type: FormReducerActionTypes.SET_DURATION,
-                      payload,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectInput
-                      placeholder="Select option"
-                      className="flex-1"
-                    />
-                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent style={{ paddingBottom: bottom }}>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      <SelectSectionHeaderText>
-                        Select the appointment duration
-                      </SelectSectionHeaderText>
-                      {Array.from({ length: 8 }, (_, num) => (
-                        <SelectItem
-                          key={num}
-                          label={`${(num + 1) * 15} minutes`}
-                          value={((num + 1) * 15).toString()}
-                        />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                <FormControlHelper>
-                  <FormControlHelperText>
-                    Select the appointment duration
-                  </FormControlHelperText>
-                </FormControlHelper>
-              </FormControl>
-            </Card>
-          )}
-          {state.fields.end_datetime && (
-            <Card>
-              <FormControl>
-                <FormControlLabel>
-                  <FormControlLabelText size="md">
-                    Appointment End
-                  </FormControlLabelText>
-                </FormControlLabel>
-                <View className="flex-row gap-x-2">
-                  <Icon
-                    as={Calendar1Icon}
-                    className="text-typography-500"
-                    size="lg"
+      <Card className="gap-y-6 pb-6">
+        <FormControl isRequired>
+          <FormControlLabel>
+            <FormControlLabelText size="md">Duration:</FormControlLabelText>
+          </FormControlLabel>
+          <Select
+            defaultValue={state.fields.duration.toString()}
+            onValueChange={(payload) =>
+              dispatch({
+                type: FormReducerActionTypes.SET_DURATION,
+                payload,
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectInput placeholder="Select option" className="flex-1" />
+              <SelectIcon className="mr-3" as={ChevronDownIcon} />
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectBackdrop />
+              <SelectContent style={{ paddingBottom: bottom }}>
+                <SelectDragIndicatorWrapper>
+                  <SelectDragIndicator />
+                </SelectDragIndicatorWrapper>
+                <SelectSectionHeaderText>
+                  Select the appointment duration
+                </SelectSectionHeaderText>
+                {Array.from({ length: 8 }, (_, num) => (
+                  <SelectItem
+                    key={num}
+                    label={`${(num + 1) * 30} minutes`}
+                    value={((num + 1) * 30).toString()}
                   />
-                  <Text className="text-typography-700">
-                    {state.fields.end_datetime.format("MM/DD/YYYY hh:mm a")}
-                  </Text>
-                </View>
-              </FormControl>
-            </Card>
-          )}
-        </View>
-      </ScrollView>
-      <View className="p-4">
+                ))}
+              </SelectContent>
+            </SelectPortal>
+          </Select>
+          <FormControlHelper>
+            <FormControlHelperText>
+              Select the appointment duration
+            </FormControlHelperText>
+          </FormControlHelper>
+        </FormControl>
+
+        <FormControl>
+          <FormControlLabel>
+            <FormControlLabelText size="md">
+              Appointment End
+            </FormControlLabelText>
+          </FormControlLabel>
+          <View className="flex-row gap-x-2">
+            <Icon
+              as={Calendar1Icon}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Text className="text-typography-700">
+              {state.fields.end_datetime?.format("MM/DD/YYYY hh:mm a")}
+            </Text>
+          </View>
+        </FormControl>
+      </Card>
+
+      <View className="px-6">
         <Button onPress={handleSave}>
           <ButtonIcon as={Calendar1} />
           <ButtonText>Add to Schedule</ButtonText>
         </Button>
       </View>
-    </Fragment>
+    </View>
   );
 }

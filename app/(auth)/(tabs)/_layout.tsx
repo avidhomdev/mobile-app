@@ -1,4 +1,3 @@
-import { Fragment, useState } from "react";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -25,6 +24,7 @@ import {
   DrawerFooter,
   DrawerHeader,
 } from "@/components/ui/drawer";
+import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
 import { Text } from "@/components/ui/text";
@@ -55,10 +55,10 @@ import {
   UserPlus2,
   Wallet,
 } from "lucide-react-native";
+import { Fragment, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
-import { Heading } from "@/components/ui/heading";
 
 function ScreenHeader() {
   const [showDrawer, setShowDrawer] = useState(false);
@@ -296,73 +296,67 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
 }
 
 export default function TabLayout() {
-  const { bottom } = useSafeAreaInsets();
   const { location } = useLocationContext();
 
   return (
-    <Tabs
-      screenOptions={{
-        sceneStyle: {
-          backgroundColor: "#f1f5f9",
-          paddingBottom: bottom + 60,
-        },
-        header: () => <ScreenHeader />,
-      }}
-      tabBar={({ descriptors, insets, navigation, state }) => {
-        const { bottom } = insets;
+    <Fragment>
+      <Tabs
+        screenOptions={{
+          header: () => <ScreenHeader />,
+        }}
+        tabBar={({ descriptors, insets, navigation, state }) => {
+          const { bottom } = insets;
 
-        return (
-          <View
-            className="px-4 pt-2 bg-transparent absolute w-full"
-            style={{ bottom }}
-          >
-            <TabBar
-              paddingBlockEnd={bottom}
-              descriptors={descriptors}
-              navigation={navigation}
-              state={state}
-            />
-          </View>
-        );
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: HomeIcon,
+          return (
+            <View className="px-4 absolute w-full" style={{ bottom }}>
+              <TabBar
+                paddingBlockEnd={bottom}
+                descriptors={descriptors}
+                navigation={navigation}
+                state={state}
+              />
+            </View>
+          );
         }}
-      />
-      <Tabs.Screen
-        name="customers"
-        options={{
-          title: "Customers",
-          tabBarIcon: User2,
-        }}
-      />
-      <Tabs.Screen
-        redirect={!location?.is_closer}
-        name="jobs"
-        options={{
-          title: "Jobs",
-          tabBarIcon: Construction,
-        }}
-      />
-      <Tabs.Screen
-        redirect={!location?.is_closer}
-        name="schedule/index"
-        options={{
-          title: "Schedule",
-          tabBarIcon: Calendar1,
-        }}
-      />
-      <Tabs.Screen
-        name="chats"
-        options={{
-          title: "Chats",
-          tabBarIcon: MessagesSquare,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Dashboard",
+            tabBarIcon: HomeIcon,
+          }}
+        />
+        <Tabs.Screen
+          name="customers"
+          options={{
+            title: "Customers",
+            tabBarIcon: User2,
+          }}
+        />
+        <Tabs.Screen
+          redirect={!location?.is_closer}
+          name="jobs"
+          options={{
+            title: "Jobs",
+            tabBarIcon: Construction,
+          }}
+        />
+        <Tabs.Screen
+          redirect={!location?.is_closer}
+          name="schedule/index"
+          options={{
+            title: "Schedule",
+            tabBarIcon: Calendar1,
+          }}
+        />
+        <Tabs.Screen
+          name="chats"
+          options={{
+            title: "Chats",
+            tabBarIcon: MessagesSquare,
+          }}
+        />
+      </Tabs>
+    </Fragment>
   );
 }

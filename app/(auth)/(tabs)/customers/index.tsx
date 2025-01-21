@@ -1,3 +1,4 @@
+import ScreenEnd from "@/components/ScreenEnd";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -224,7 +225,7 @@ function CustomersList() {
       {customerResults.map((customer) => (
         <CustomerCard customer={customer} key={customer.id} />
       ))}
-      <View />
+      <ScreenEnd />
     </ScrollView>
   );
 }

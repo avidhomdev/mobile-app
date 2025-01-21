@@ -6,7 +6,6 @@ export default function Layout() {
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "#f1f5f9" },
       }}
     />
   );

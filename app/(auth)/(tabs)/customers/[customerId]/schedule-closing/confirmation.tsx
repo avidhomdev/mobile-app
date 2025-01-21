@@ -12,11 +12,11 @@ import { Text } from "@/components/ui/text";
 import { SHORT_FRIENDLY_DATE_TIME_FORMAT } from "@/constants/date-formats";
 import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { CalendarPlus2, ChevronLeft, ShareIcon } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 
-export default function ScheduleAppointmentConfirmationScreen() {
+export default function ScheduleClosingConfirmationScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const { closers } = useUserContext();
@@ -26,7 +26,6 @@ export default function ScheduleAppointmentConfirmationScreen() {
 
   return (
     <ScrollView contentContainerClassName="gap-y-4 p-4">
-      <Stack.Screen options={{ contentStyle: { backgroundColor: "white" } }} />
       <Image
         alt="Celebration"
         source={celebration}
