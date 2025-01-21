@@ -1,4 +1,4 @@
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import {
   FormControl,
   FormControlHelper,
@@ -22,9 +22,15 @@ import {
 import { Text } from "@/components/ui/text";
 import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
-import { Calendar1Icon, ChevronDownIcon } from "lucide-react-native";
+import {
+  Calendar1,
+  Calendar1Icon,
+  ChevronDownIcon,
+  Settings,
+} from "lucide-react-native";
 import { Fragment, useCallback, useReducer } from "react";
 import { ScrollView, View } from "react-native";
+import DatePicker from "react-native-date-picker";
 
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
@@ -40,6 +46,7 @@ enum FormReducerActionTypes {
   SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
   SET_SELECTED_DAYJS = "SET_SELECTED_DAYJS",
   SET_START_DATETIME = "SET_START_DATETIME",
+  RESET = "RESET",
 }
 
 interface ISET_SELECTED_DAYS {
@@ -67,15 +74,21 @@ interface ISET_START_DATETIME {
   payload: dayjs.Dayjs | null;
 }
 
+interface IRESET {
+  type: FormReducerActionTypes.RESET;
+}
+
 type IFormReducerAction =
   | ISET_SELECTED_DAYS
   | ISET_CLOSER_ID
   | ISET_DURATION
   | ISET_IS_SUBMITTING
-  | ISET_START_DATETIME;
+  | ISET_START_DATETIME
+  | IRESET;
 
 interface IFormReducerState {
   fields: {
+    closer_id: string;
     duration: number | string;
     end_datetime: dayjs.Dayjs | null;
     location_id: number | string;
@@ -95,6 +108,16 @@ function formReducer(
       return {
         ...prevState,
         selectedDayjs: action.payload,
+      };
+    case "SET_CLOSER_ID":
+      return {
+        ...prevState,
+        fields: {
+          ...prevState.fields,
+          closer_id: action.payload,
+          start_datetime: null,
+          end_datetime: null,
+        },
       };
     case "SET_DURATION":
       return {
@@ -122,6 +145,15 @@ function formReducer(
             action.payload && action.payload.add(Number(duration), "minutes"),
         },
       };
+    case "RESET":
+      return {
+        ...prevState,
+        fields: {
+          ...prevState.fields,
+          start_datetime: null,
+          end_datetime: null,
+        },
+      };
     default:
       return prevState;
   }
@@ -132,13 +164,15 @@ type TLocalParams = {
   closerId?: string;
 };
 
-export default function ScheduleScreen() {
+export default function ScheduleClosingScreen() {
+  const { profile } = useUserContext();
   const params = useLocalSearchParams<TLocalParams>();
   const { updateCustomer } = useCustomerContext();
   const { location, refreshData } = useUserContext();
   const router = useRouter();
   const [state, dispatch] = useReducer(formReducer, {
     fields: {
+      closer_id: "",
       duration: 15,
       end_datetime: null,
       location_id: Number(location.id),
@@ -152,26 +186,59 @@ export default function ScheduleScreen() {
   const handleSave = useCallback(async () => {
     if (state.isSubmitting) return;
 
+    const {
+      data: [closer],
+      error,
+    } = await supabase
+      .rpc("next_priority_closer", {
+        lid: location.id,
+        start_timestamp: state.fields.start_datetime?.toISOString(),
+        end_timestamp: state.fields.end_datetime?.toISOString(),
+      })
+      .limit(1);
+
+    if (!closer || error) {
+      dispatch({ type: FormReducerActionTypes.RESET });
+      return;
+    }
+
     const insert = {
       business_id: location.business_id,
-      location_id: location.id,
-      name: "Customer Meeting",
       customer_id: params.customerId,
       duration: state.fields.duration,
-      start_datetime: state.fields.start_datetime?.toISOString(),
       end_datetime: state.fields.end_datetime?.toISOString(),
+      location_id: location.id,
+      name: "Customer Meeting",
+      start_datetime: state.fields.start_datetime?.toISOString(),
     };
 
-    return supabase
-      .from("business_appointments")
-      .insert(insert)
-      .then(({ error }) => {
-        if (error) throw error;
+    const { data: businessAppointment, error: businessAppointmentError } =
+      await supabase
+        .from("business_appointments")
+        .insert(insert)
+        .select("id")
+        .single();
 
-        return updateCustomer(Number(params.customerId), {
-          disposition_status: "SCHEDULED",
-        });
+    if (businessAppointmentError) return;
+
+    const appointmentProfiles = [closer.profile_id, profile.id].map(
+      (profileId) => ({
+        appointment_id: businessAppointment.id,
+        business_id: location.business_id,
+        profile_id: profileId,
       })
+    );
+
+    const { error: busienssAppointmentProfilesError } = await supabase
+      .from("business_appointment_profiles")
+      .insert(appointmentProfiles);
+
+    if (busienssAppointmentProfilesError) return;
+
+    return updateCustomer(Number(params.customerId), {
+      closer_id: closer.profile_id,
+      disposition_status: "SCHEDULED",
+    })
       .then(refreshData)
       .then(() =>
         router.push({
@@ -179,6 +246,7 @@ export default function ScheduleScreen() {
             "/(auth)/(tabs)/customers/[customerId]/schedule-closing/confirmation",
           params: {
             ...insert,
+            closer_id: closer.profile_id,
             customerId: params.customerId as string,
           },
         })
@@ -195,6 +263,57 @@ export default function ScheduleScreen() {
       </View>
       <ScrollView contentContainerClassName="gap-y-4">
         <View className="p-4 gap-y-4">
+          <Fragment>
+            {state.fields.start_datetime ? (
+              <Card>
+                <FormControl>
+                  <FormControlLabel>
+                    <FormControlLabelText size="md">
+                      Appointment Start
+                    </FormControlLabelText>
+                  </FormControlLabel>
+                  <View className="flex-row gap-x-2 items-center">
+                    <Icon
+                      as={Calendar1Icon}
+                      className="text-typography-500"
+                      size="lg"
+                    />
+                    <Text className="text-typography-700">
+                      {state.fields.start_datetime.format("MM/DD/YYYY hh:mm a")}
+                    </Text>
+                    <Button
+                      action="secondary"
+                      className="ml-auto"
+                      onPress={() =>
+                        dispatch({
+                          type: FormReducerActionTypes.SET_START_DATETIME,
+                          payload: null,
+                        })
+                      }
+                      size="sm"
+                    >
+                      <ButtonIcon as={Settings} />
+                    </Button>
+                  </View>
+                </FormControl>
+              </Card>
+            ) : (
+              <DatePicker
+                date={new Date()}
+                minuteInterval={15}
+                modal
+                mode="datetime"
+                onConfirm={(payload) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_START_DATETIME,
+                    payload: dayjs(payload),
+                  })
+                }
+                open
+              />
+            )}
+          </Fragment>
+
           {state.fields.start_datetime && (
             <Card>
               <FormControl isRequired>
@@ -271,7 +390,8 @@ export default function ScheduleScreen() {
       </ScrollView>
       <View className="p-4">
         <Button onPress={handleSave}>
-          <ButtonText>Save</ButtonText>
+          <ButtonIcon as={Calendar1} />
+          <ButtonText>Add to Schedule</ButtonText>
         </Button>
       </View>
     </Fragment>

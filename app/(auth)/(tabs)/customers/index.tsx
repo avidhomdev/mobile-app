@@ -129,8 +129,10 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
             onPress={() => {
               router.push({
                 pathname:
-                  "/(auth)/(tabs)/customers/[customerId]/schedule-appointment",
-                params: { customerId: customer.id },
+                  "/(auth)/(tabs)/customers/[customerId]/schedule-closing",
+                params: {
+                  customerId: customer.id,
+                },
               });
               handleClose();
             }}

@@ -24,7 +24,9 @@ export default function Layout() {
             ? () => (
                 <Pressable
                   className="bg-black p-4 items-center flex-row border-b-8 border-gray-900 gap-x-2"
-                  onPress={router.back}
+                  onPress={() =>
+                    router.push({ pathname: "/(auth)/(tabs)/customers" })
+                  }
                 >
                   <Icon as={ChevronLeft} className="text-white" size="xl" />
                   <Heading className="text-white">{customer.full_name}</Heading>

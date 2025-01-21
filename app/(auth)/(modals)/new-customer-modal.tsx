@@ -124,7 +124,7 @@ export default function ModalScreen() {
         })
         .select("id")
         .single()
-        .then(async ({ data, error }) => {
+        .then(async ({ data: customer, error }) => {
           if (error) {
             return dispatch({
               type: FormReducerActionTypes.SET_FORM_ERROR,
@@ -132,15 +132,21 @@ export default function ModalScreen() {
             });
           }
 
+          const { data: closers } = await supabase.rpc("ordered_employees", {
+            lid: location.id,
+          });
+
+          const [closer] = closers;
+
           await refreshData();
           router.back();
           router.push({
-            pathname:
-              "/(auth)/(tabs)/customers/[customerId]/schedule-appointment",
-            params: { customerId: data.id },
+            pathname: "/(auth)/(tabs)/customers/[customerId]/schedule-closing",
+            params: { customerId: customer.id, closerId: closer.profile_id },
           });
         });
     }
+
     dispatch({
       type: FormReducerActionTypes.SET_IS_SUBMITTING,
       payload: false,
