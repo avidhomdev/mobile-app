@@ -1238,6 +1238,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_priority_closer: {
+        Args: {
+          lid: number
+          start_timestamp: string
+          end_timestamp: string
+        }
+        Returns: {
+          profile_id: string
+          full_name: string
+        }[]
+      }
       ordered_employees: {
         Args: {
           lid: number
