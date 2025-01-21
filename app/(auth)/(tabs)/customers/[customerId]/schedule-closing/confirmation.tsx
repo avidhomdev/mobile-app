@@ -1,4 +1,5 @@
 import celebration from "@/assets/images/illustrations/celebration.png";
+import ScreenEnd from "@/components/ScreenEnd";
 import {
   Button,
   ButtonGroup,
@@ -75,6 +76,7 @@ export default function ScheduleClosingConfirmationScreen() {
         <ButtonIcon as={ChevronLeft} />
         <ButtonText>Back to Customer</ButtonText>
       </Button>
+      <ScreenEnd />
     </ScrollView>
   );
 }

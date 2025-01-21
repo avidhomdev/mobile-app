@@ -257,7 +257,13 @@ export default function ScheduleClosingScreen() {
       </View>
       <View className="items-center">
         <DatePicker
-          date={new Date()}
+          date={
+            new Date(
+              state.fields.start_datetime
+                ? state.fields.start_datetime.toString()
+                : ""
+            )
+          }
           minuteInterval={30}
           mode="datetime"
           onDateChange={(payload) =>
