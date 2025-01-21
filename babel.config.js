@@ -1,4 +1,5 @@
-export default function (api) {
+// eslint-disable-next-line no-undef
+module.exports = function (api) {
   api.cache(true);
   return {
     presets: [
@@ -19,4 +20,4 @@ export default function (api) {
       ],
     ],
   };
-}
+};
