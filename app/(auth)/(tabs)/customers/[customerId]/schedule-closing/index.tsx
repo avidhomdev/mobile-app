@@ -22,9 +22,14 @@ import {
 import { Text } from "@/components/ui/text";
 import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
-import { Calendar1, Calendar1Icon, ChevronDownIcon } from "lucide-react-native";
+import {
+  AlertCircle,
+  Calendar1,
+  Calendar1Icon,
+  ChevronDownIcon,
+} from "lucide-react-native";
 import { useCallback, useReducer } from "react";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 import DatePicker from "react-native-date-picker";
 
 import { Card } from "@/components/ui/card";
@@ -34,24 +39,15 @@ import { useCustomerContext } from "@/contexts/customer-context";
 import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SERVER_DATE_TIME_FORMAT } from "@/constants/date-formats";
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import ScreenEnd from "@/components/ScreenEnd";
 
 enum FormReducerActionTypes {
-  SET_CLOSER_ID = "SET_CLOSER_ID",
   SET_DURATION = "SET_DURATION",
   SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
-  SET_SELECTED_DAYJS = "SET_SELECTED_DAYJS",
   SET_START_DATETIME = "SET_START_DATETIME",
   RESET = "RESET",
-}
-
-interface ISET_SELECTED_DAYS {
-  type: FormReducerActionTypes.SET_SELECTED_DAYJS;
-  payload: dayjs.Dayjs;
-}
-
-interface ISET_CLOSER_ID {
-  type: FormReducerActionTypes.SET_CLOSER_ID;
-  payload: string;
 }
 
 interface ISET_DURATION {
@@ -74,14 +70,13 @@ interface IRESET {
 }
 
 type IFormReducerAction =
-  | ISET_SELECTED_DAYS
-  | ISET_CLOSER_ID
   | ISET_DURATION
   | ISET_IS_SUBMITTING
   | ISET_START_DATETIME
   | IRESET;
 
 interface IFormReducerState {
+  error: null | string;
   fields: {
     closer_id: string;
     duration: number | string;
@@ -99,24 +94,10 @@ function formReducer(
 ): IFormReducerState {
   const { start_datetime, duration } = prevState.fields;
   switch (action.type) {
-    case "SET_SELECTED_DAYJS":
-      return {
-        ...prevState,
-        selectedDayjs: action.payload,
-      };
-    case "SET_CLOSER_ID":
-      return {
-        ...prevState,
-        fields: {
-          ...prevState.fields,
-          closer_id: action.payload,
-          start_datetime: null,
-          end_datetime: null,
-        },
-      };
     case "SET_DURATION":
       return {
         ...prevState,
+        error: null,
         fields: {
           ...prevState.fields,
           duration: Number(action.payload),
@@ -128,11 +109,13 @@ function formReducer(
     case "SET_IS_SUBMITTING":
       return {
         ...prevState,
+        error: null,
         isSubmitting: action.payload,
       };
     case "SET_START_DATETIME":
       return {
         ...prevState,
+        error: null,
         fields: {
           ...prevState.fields,
           start_datetime: action.payload,
@@ -143,10 +126,11 @@ function formReducer(
     case "RESET":
       return {
         ...prevState,
+        error: "Appointment date and time not avaialble",
         fields: {
           ...prevState.fields,
-          start_datetime: null,
-          end_datetime: null,
+          start_datetime: dayjs().set("m", 0).set("s", 0),
+          end_datetime: dayjs().set("m", 0).set("s", 0).add(30, "m"),
         },
       };
     default:
@@ -165,10 +149,11 @@ export default function ScheduleClosingScreen() {
   const { location, refreshData } = useUserContext();
   const router = useRouter();
   const [state, dispatch] = useReducer(formReducer, {
+    error: null,
     fields: {
       closer_id: "",
       duration: 30,
-      end_datetime: dayjs().add(30, "m").set("m", 0).set("s", 0),
+      end_datetime: dayjs().set("m", 0).set("s", 0).add(30, "m"),
       location_id: Number(location.id),
       start_datetime: dayjs().set("m", 0).set("s", 0),
     },
@@ -186,8 +171,12 @@ export default function ScheduleClosingScreen() {
     } = await supabase
       .rpc("next_priority_closer", {
         lid: location.id,
-        start_timestamp: state.fields.start_datetime?.toISOString(),
-        end_timestamp: state.fields.end_datetime?.toISOString(),
+        start_timestamp: state.fields.start_datetime?.format(
+          SERVER_DATE_TIME_FORMAT
+        ),
+        end_timestamp: state.fields.end_datetime?.format(
+          SERVER_DATE_TIME_FORMAT
+        ),
       })
       .limit(1);
 
@@ -200,10 +189,12 @@ export default function ScheduleClosingScreen() {
       business_id: location.business_id,
       customer_id: params.customerId,
       duration: state.fields.duration,
-      end_datetime: state.fields.end_datetime?.toISOString(),
+      end_datetime: state.fields.end_datetime?.format(SERVER_DATE_TIME_FORMAT),
       location_id: location.id,
       name: "Customer Meeting",
-      start_datetime: state.fields.start_datetime?.toISOString(),
+      start_datetime: state.fields.start_datetime?.format(
+        SERVER_DATE_TIME_FORMAT
+      ),
     };
 
     const { data: businessAppointment, error: businessAppointmentError } =
@@ -248,13 +239,19 @@ export default function ScheduleClosingScreen() {
   }, [state.fields, state.isSubmitting]);
 
   return (
-    <View>
+    <ScrollView>
       <View className="p-4 bg-white">
         <Heading>Closing Appointment</Heading>
         <Text className="sm text-typography-600">
           Schedule closing appointment for your customer
         </Text>
       </View>
+      {state.error && (
+        <Alert action="error">
+          <AlertIcon as={AlertCircle} />
+          <AlertText>{state.error}</AlertText>
+        </Alert>
+      )}
       <View className="items-center">
         <DatePicker
           date={
@@ -344,6 +341,8 @@ export default function ScheduleClosingScreen() {
           <ButtonText>Add to Schedule</ButtonText>
         </Button>
       </View>
-    </View>
+      <ScreenEnd />
+      <ScreenEnd />
+    </ScrollView>
   );
 }
