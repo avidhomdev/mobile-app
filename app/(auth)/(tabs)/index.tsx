@@ -1,4 +1,5 @@
 import { CloserDashboard } from "@/components/CloserDashboard";
+import ScreenEnd from "@/components/ScreenEnd";
 import { SetterDashboard } from "@/components/SetterDashboard";
 import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
@@ -26,6 +27,7 @@ export default function Dashboard() {
       }
     >
       <Dashboard location={location} />
+      <ScreenEnd />
     </ScrollView>
   );
 }

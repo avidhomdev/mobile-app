@@ -30,6 +30,10 @@ export function SetterDashboard({
   const router = useRouter();
   return (
     <View className="gap-y-6 p-6">
+      <Card>
+        <View className="aspect-video bg-gray-50" />
+        <Text>Map of your area to knock</Text>
+      </Card>
       {location.customers && (
         <ScrollView
           contentContainerClassName="gap-x-4"
@@ -50,12 +54,7 @@ export function SetterDashboard({
                   })
                 }
               >
-                <Card
-                  className={twMerge(
-                    `bg-${dispositionStatus.action}-50`,
-                    "w-72"
-                  )}
-                >
+                <Card className={twMerge(dispositionStatus.bg, "w-72 border")}>
                   <View className="items-start mb-1 justify-between flex-row">
                     <Badge action={dispositionStatus?.action} size="sm">
                       <BadgeText>{dispositionStatus?.label}</BadgeText>
