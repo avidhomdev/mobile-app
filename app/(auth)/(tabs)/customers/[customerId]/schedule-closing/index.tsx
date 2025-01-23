@@ -206,17 +206,15 @@ export default function ScheduleClosingScreen() {
 
     if (businessAppointmentError) return;
 
-    const appointmentProfiles = [closer.profile_id, profile.id].map(
-      (profileId) => ({
-        appointment_id: businessAppointment.id,
-        business_id: location.business_id,
-        profile_id: profileId,
-      })
-    );
+    const appointmentProfilesInsert = {
+      appointment_id: businessAppointment.id,
+      business_id: location.business_id,
+      profile_id: profile.id,
+    };
 
     const { error: busienssAppointmentProfilesError } = await supabase
       .from("business_appointment_profiles")
-      .insert(appointmentProfiles);
+      .insert(appointmentProfilesInsert);
 
     if (busienssAppointmentProfilesError) return;
 
