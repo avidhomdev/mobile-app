@@ -13,6 +13,15 @@ import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
 import { Icon } from "./ui/icon";
 import { Text } from "./ui/text";
+import {
+  Table,
+  TableBody,
+  TableData,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
 
 const avatars = [
   {
@@ -30,10 +39,6 @@ export function SetterDashboard({
   const router = useRouter();
   return (
     <View className="gap-y-6 p-6">
-      <Card>
-        <View className="aspect-video bg-gray-50" />
-        <Text>Map of your area to knock</Text>
-      </Card>
       {location.customers && (
         <ScrollView
           contentContainerClassName="gap-x-4"
@@ -117,6 +122,43 @@ export function SetterDashboard({
           </Text>
         </Card>
       </View>
+
+      <Table className="w-full">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Setter</TableHead>
+            <TableHead className="text-right">Sets</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableData>Rajesh Kumar</TableData>
+            <TableData className="text-right">10</TableData>
+          </TableRow>
+          <TableRow>
+            <TableData>Priya Sharma</TableData>
+            <TableData className="text-right">12</TableData>
+          </TableRow>
+          <TableRow>
+            <TableData>Ravi Patel</TableData>
+            <TableData className="text-right">6</TableData>
+          </TableRow>
+          <TableRow>
+            <TableData>Ananya Gupta</TableData>
+            <TableData className="text-right">18</TableData>
+          </TableRow>
+          <TableRow>
+            <TableData>Arjun Singh</TableData>
+            <TableData className="text-right">2</TableData>
+          </TableRow>
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableHead>Total</TableHead>
+            <TableHead className="text-right">48</TableHead>
+          </TableRow>
+        </TableFooter>
+      </Table>
     </View>
   );
 }

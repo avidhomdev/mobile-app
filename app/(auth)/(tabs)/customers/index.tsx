@@ -20,7 +20,6 @@ import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
 import { CloseIcon, Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 
@@ -39,7 +38,13 @@ import { useLocationContext } from "@/contexts/location-context";
 import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
 import { debounce } from "@/utils/debounce";
 import { useRouter } from "expo-router";
-import { Calendar, Search, TrashIcon, UserSearch } from "lucide-react-native";
+import {
+  Calendar,
+  Search,
+  Settings2,
+  TrashIcon,
+  UserSearch,
+} from "lucide-react-native";
 import { Fragment, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -186,9 +191,11 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
                 {`${customer.address}, ${customer.city} ${customer.state} ${customer.postal_code}`}
               </Text>
             </View>
-            {location.is_setter && (
+            {location.is_setter && customer.closer && (
               <Avatar className="bg-gray-200" size="md">
-                <AvatarFallbackText>{customer.closer_id}</AvatarFallbackText>
+                <AvatarFallbackText>
+                  {customer.closer.full_name}
+                </AvatarFallbackText>
                 <AvatarImage />
               </Avatar>
             )}
@@ -199,7 +206,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
   );
 }
 
-function CustomersList() {
+export default function CustomersScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const {
     location: { customers },
@@ -212,37 +219,33 @@ function CustomersList() {
     );
 
   return (
-    <ScrollView contentContainerClassName="px-6 pb-6 gap-2">
-      <Input className="grow" size="xl" variant="underlined">
-        <InputSlot className="pl-3 mr-2">
-          <InputIcon as={Search} />
-        </InputSlot>
-        <InputField
-          onChangeText={debounce(setSearchTerm, 500)}
-          placeholder="Search..."
-        />
-      </Input>
-      {customerResults.map((customer) => (
-        <CustomerCard customer={customer} key={customer.id} />
-      ))}
-      <ScreenEnd />
-    </ScrollView>
-  );
-}
-
-export default function CustomersScreen() {
-  return (
     <View className="gap-6 flex-1">
-      <HStack space="md" className="justify-between p-6 bg-white items-center">
-        <Box>
-          <Heading size="xl">Customers</Heading>
-          <Text size="sm" className="text-gray-400">
-            Manage customers you have created.
-          </Text>
-        </Box>
-      </HStack>
-
-      <CustomersList />
+      <Box className="bg-white p-6">
+        <Heading size="xl">Customers</Heading>
+        <Text size="sm" className="text-gray-400">
+          Manage customers you have created.
+        </Text>
+        <View className="flex-row items-center gap-x-2 mt-4">
+          <Input className="grow">
+            <InputSlot className="pl-3">
+              <InputIcon as={Search} />
+            </InputSlot>
+            <InputField
+              onChangeText={debounce(setSearchTerm, 500)}
+              placeholder="Search..."
+            />
+          </Input>
+          <TouchableOpacity className="p-2.5 border-gray-300 border rounded">
+            <Icon as={Settings2} className="text-typography-500" />
+          </TouchableOpacity>
+        </View>
+      </Box>
+      <ScrollView contentContainerClassName="px-6 pb-6 gap-2">
+        {customerResults.map((customer) => (
+          <CustomerCard customer={customer} key={customer.id} />
+        ))}
+        <ScreenEnd />
+      </ScrollView>
     </View>
   );
 }

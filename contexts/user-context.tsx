@@ -25,6 +25,7 @@ export interface ILocationCustomer
   extends Tables<"business_location_customers"> {
   disposition_status: DISPOSITION_STATUS_KEYS;
   appointments: Tables<"business_appointments">[];
+  closer?: Tables<"profiles">;
 }
 
 export interface ILocation extends Partial<Tables<"business_locations">> {
@@ -82,7 +83,7 @@ const fetchUserContextData = async (
     supabase
       .from("profiles")
       .select(
-        "*, location_profiles: business_location_profiles!profile_id(*, location: location_id(*, customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))))"
+        "*, location_profiles: business_location_profiles!profile_id(*, location: location_id(*, customers: business_location_customers(*,  appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))))"
       )
       .eq("id", id)
       .limit(1)
@@ -90,7 +91,7 @@ const fetchUserContextData = async (
     supabase
       .from("business_locations")
       .select(
-        "*, customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
+        "*, customers: business_location_customers(*, closer: closer_id(*), appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
       ),
   ]);
 
