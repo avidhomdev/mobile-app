@@ -1,3 +1,19 @@
+import { Text } from "@/components/ui/text";
+import dayjs from "dayjs";
+import { useCallback, useEffect, useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+
+import HorizontalDaySelector from "@/components/HorizontalDaySelector";
+import {
+  Actionsheet,
+  ActionsheetBackdrop,
+  ActionsheetContent,
+  ActionsheetDragIndicator,
+  ActionsheetDragIndicatorWrapper,
+  ActionsheetSectionHeaderText,
+} from "@/components/ui/actionsheet";
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
   FormControl,
@@ -6,6 +22,7 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
+import { Heading } from "@/components/ui/heading";
 import {
   Select,
   SelectBackdrop,
@@ -19,184 +36,129 @@ import {
   SelectSectionHeaderText,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Text } from "@/components/ui/text";
+import {
+  FRIENDLY_DATE_FORMAT,
+  SERVER_DATE_TIME_FORMAT,
+} from "@/constants/date-formats";
+import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
-import dayjs from "dayjs";
-import { Calendar1Icon, ChevronDownIcon } from "lucide-react-native";
-import { Fragment, useCallback, useReducer } from "react";
-import { ScrollView, View } from "react-native";
-
-import { Card } from "@/components/ui/card";
-import { Heading } from "@/components/ui/heading";
-import { Icon } from "@/components/ui/icon";
-import { useCustomerContext } from "@/contexts/customer-context";
 import { supabase } from "@/lib/supabase";
+import { Tables } from "@/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronDownIcon } from "lucide-react-native";
+import { twMerge } from "tailwind-merge";
+import ScreenEnd from "@/components/ScreenEnd";
 
-enum FormReducerActionTypes {
-  SET_CLOSER_ID = "SET_CLOSER_ID",
-  SET_DURATION = "SET_DURATION",
-  SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
-  SET_SELECTED_DAYJS = "SET_SELECTED_DAYJS",
-  SET_START_DATETIME = "SET_START_DATETIME",
-}
-
-interface ISET_SELECTED_DAYS {
-  type: FormReducerActionTypes.SET_SELECTED_DAYJS;
-  payload: dayjs.Dayjs;
-}
-
-interface ISET_CLOSER_ID {
-  type: FormReducerActionTypes.SET_CLOSER_ID;
-  payload: string;
-}
-
-interface ISET_DURATION {
-  type: FormReducerActionTypes.SET_DURATION;
-  payload: string;
-}
-
-interface ISET_IS_SUBMITTING {
-  type: FormReducerActionTypes.SET_IS_SUBMITTING;
-  payload: boolean;
-}
-
-interface ISET_START_DATETIME {
-  type: FormReducerActionTypes.SET_START_DATETIME;
-  payload: dayjs.Dayjs | null;
-}
-
-type IFormReducerAction =
-  | ISET_SELECTED_DAYS
-  | ISET_CLOSER_ID
-  | ISET_DURATION
-  | ISET_IS_SUBMITTING
-  | ISET_START_DATETIME;
-
-interface IFormReducerState {
-  fields: {
-    duration: number | string;
-    end_datetime: dayjs.Dayjs | null;
-    location_id: number | string;
-    start_datetime: dayjs.Dayjs | null;
-  };
-  isSubmitting: boolean;
-  selectedDayjs: dayjs.Dayjs;
-}
-
-function formReducer(
-  prevState: IFormReducerState,
-  action: IFormReducerAction
-): IFormReducerState {
-  const { start_datetime, duration } = prevState.fields;
-  switch (action.type) {
-    case "SET_SELECTED_DAYJS":
-      return {
-        ...prevState,
-        selectedDayjs: action.payload,
-      };
-    case "SET_DURATION":
-      return {
-        ...prevState,
-        fields: {
-          ...prevState.fields,
-          duration: Number(action.payload),
-          end_datetime:
-            start_datetime &&
-            start_datetime.add(Number(action.payload), "minutes"),
-        },
-      };
-    case "SET_IS_SUBMITTING":
-      return {
-        ...prevState,
-        isSubmitting: action.payload,
-      };
-    case "SET_START_DATETIME":
-      return {
-        ...prevState,
-        fields: {
-          ...prevState.fields,
-          start_datetime: action.payload,
-          end_datetime:
-            action.payload && action.payload.add(Number(duration), "minutes"),
-        },
-      };
-    default:
-      return prevState;
-  }
-}
-
-type TLocalParams = {
-  customerId?: string;
-  closerId?: string;
-};
-
-export default function ScheduleScreen() {
-  const params = useLocalSearchParams<TLocalParams>();
-  const { updateCustomer } = useCustomerContext();
-  const { location, refreshData } = useUserContext();
+function TimeSlotRow({
+  disabled = false,
+  time,
+}: {
+  disabled?: boolean;
+  time: dayjs.Dayjs;
+}) {
   const router = useRouter();
-  const [state, dispatch] = useReducer(formReducer, {
-    fields: {
-      duration: 15,
-      end_datetime: null,
-      location_id: Number(location.id),
-      start_datetime: null,
-    },
-    isSubmitting: false,
-    selectedDayjs: dayjs(),
-  });
-  const { bottom } = useSafeAreaInsets();
+  const { profile, refreshData } = useUserContext();
+  const { location } = useLocationContext();
+  const params = useLocalSearchParams();
+  const [duration, setDuration] = useState(30);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [
+    isConfirmTimeSlotActionSheetVisible,
+    setIsConfirmTimeSlotActionSheetVisible,
+  ] = useState(false);
+  const handleCloseTimeSlotActionSheet = () => {
+    setIsSubmitting(false);
+    setIsConfirmTimeSlotActionSheetVisible(false);
+  };
 
-  const handleSave = useCallback(async () => {
-    if (state.isSubmitting) return;
+  const handleSubmitTimeSlot = useCallback(async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const insert = {
+    const appointmentInsert = {
       business_id: location.business_id,
+      customer_id: params.customerId,
+      duration: duration,
+      end_datetime: time
+        .add(duration, "minute")
+        ?.format(SERVER_DATE_TIME_FORMAT),
       location_id: location.id,
       name: "Customer Meeting",
-      customer_id: params.customerId,
-      duration: state.fields.duration,
-      start_datetime: state.fields.start_datetime?.toISOString(),
-      end_datetime: state.fields.end_datetime?.toISOString(),
+      start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
     };
 
     return supabase
       .from("business_appointments")
-      .insert(insert)
-      .then(({ error }) => {
-        if (error) throw error;
+      .insert(appointmentInsert)
+      .select("id")
+      .single()
+      .then(({ data, error }) => {
+        if (error) throw error.message;
 
-        return updateCustomer(Number(params.customerId), {
-          disposition_status: "SCHEDULED",
-        });
+        const appointmentProfileInsert = {
+          appointment_id: data.id,
+          business_id: location.business_id,
+          profile_id: profile.id,
+        };
+
+        return supabase
+          .from("business_appointment_profiles")
+          .insert(appointmentProfileInsert);
       })
       .then(refreshData)
       .then(() =>
         router.push({
-          pathname:
-            "/(auth)/(tabs)/customers/[customerId]/schedule-closing/confirmation",
+          pathname: "/(auth)/(tabs)/customers/[customerId]",
           params: {
-            ...insert,
             customerId: params.customerId as string,
           },
         })
-      );
-  }, [state.fields, state.isSubmitting]);
+      )
+      .then(handleCloseTimeSlotActionSheet);
+  }, [duration]);
 
   return (
-    <Fragment>
-      <View className="p-4 bg-white">
-        <Heading>Closing Appointment</Heading>
-        <Text className="sm text-typography-600">
-          Schedule closing appointment for your customer
-        </Text>
-      </View>
-      <ScrollView contentContainerClassName="gap-y-4">
-        <View className="p-4 gap-y-4">
-          {state.fields.start_datetime && (
-            <Card>
+    <TouchableOpacity
+      className={twMerge(
+        disabled ? "bg-gray-200" : "bg-white shadow-sm shadow-gray-200",
+        "p-4 rounded-full flex-row items-center"
+      )}
+      disabled={disabled}
+      key={time.toString()}
+      onPress={() => setIsConfirmTimeSlotActionSheetVisible(true)}
+    >
+      <Text
+        className={twMerge(
+          disabled ? "text-typography-400" : "text-typography-600",
+          "text-center grow"
+        )}
+        size="md"
+      >
+        {time.format("hh:mm a")}
+      </Text>
+      {!disabled && (
+        <Avatar className="absolute right-2" size="sm">
+          <AvatarFallbackText>{profile.full_name}</AvatarFallbackText>
+        </Avatar>
+      )}
+
+      {!disabled && (
+        <Actionsheet
+          isOpen={isConfirmTimeSlotActionSheetVisible}
+          onClose={handleCloseTimeSlotActionSheet}
+        >
+          <ActionsheetBackdrop />
+          <ActionsheetContent>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+              <ActionsheetSectionHeaderText>
+                Schedule Appointment
+              </ActionsheetSectionHeaderText>
+            </ActionsheetDragIndicatorWrapper>
+            <View className="w-full pb-6 gap-y-4">
+              <Heading>{time.format(FRIENDLY_DATE_FORMAT)}</Heading>
+              <Text>{`Starting at ${time.format("hh:mm a")}`}</Text>
+
               <FormControl isRequired>
                 <FormControlLabel>
                   <FormControlLabelText size="md">
@@ -204,13 +166,8 @@ export default function ScheduleScreen() {
                   </FormControlLabelText>
                 </FormControlLabel>
                 <Select
-                  defaultValue={state.fields.duration.toString()}
-                  onValueChange={(payload) =>
-                    dispatch({
-                      type: FormReducerActionTypes.SET_DURATION,
-                      payload,
-                    })
-                  }
+                  defaultValue={duration.toString()}
+                  onValueChange={(payload) => setDuration(Number(payload))}
                 >
                   <SelectTrigger>
                     <SelectInput
@@ -221,7 +178,7 @@ export default function ScheduleScreen() {
                   </SelectTrigger>
                   <SelectPortal>
                     <SelectBackdrop />
-                    <SelectContent style={{ paddingBottom: bottom }}>
+                    <SelectContent style={{ paddingBottom: 10 }}>
                       <SelectDragIndicatorWrapper>
                         <SelectDragIndicator />
                       </SelectDragIndicatorWrapper>
@@ -231,8 +188,8 @@ export default function ScheduleScreen() {
                       {Array.from({ length: 8 }, (_, num) => (
                         <SelectItem
                           key={num}
-                          label={`${(num + 1) * 15} minutes`}
-                          value={((num + 1) * 15).toString()}
+                          label={`${(num + 1) * 30} minutes`}
+                          value={((num + 1) * 30).toString()}
                         />
                       ))}
                     </SelectContent>
@@ -244,36 +201,150 @@ export default function ScheduleScreen() {
                   </FormControlHelperText>
                 </FormControlHelper>
               </FormControl>
-            </Card>
-          )}
-          {state.fields.end_datetime && (
-            <Card>
-              <FormControl>
-                <FormControlLabel>
-                  <FormControlLabelText size="md">
-                    Appointment End
-                  </FormControlLabelText>
-                </FormControlLabel>
-                <View className="flex-row gap-x-2">
-                  <Icon
-                    as={Calendar1Icon}
-                    className="text-typography-500"
-                    size="lg"
-                  />
-                  <Text className="text-typography-700">
-                    {state.fields.end_datetime.format("MM/DD/YYYY hh:mm a")}
-                  </Text>
-                </View>
-              </FormControl>
-            </Card>
-          )}
+              <Text>{`Ending at ${time
+                .add(duration, "minutes")
+                .format("hh:mm a")}`}</Text>
+              <View className="flex-row w-full gap-x-2">
+                <Button
+                  className="ml-auto"
+                  size="lg"
+                  action="secondary"
+                  onPress={handleCloseTimeSlotActionSheet}
+                >
+                  <ButtonText>Cancel</ButtonText>
+                </Button>
+                <Button onPress={handleSubmitTimeSlot} size="lg">
+                  <ButtonText>Submit</ButtonText>
+                </Button>
+              </View>
+            </View>
+          </ActionsheetContent>
+        </Actionsheet>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+interface IAppointmentProfile extends Tables<"business_appointment_profiles"> {
+  profile: Tables<"profiles">;
+}
+
+interface IAppointment extends Tables<"business_appointments"> {
+  profiles: IAppointmentProfile[];
+}
+
+export default function Screen() {
+  const { location } = useLocationContext();
+  const { closers, profile } = useUserContext();
+  const [appointments, setAppointments] = useState<IAppointment[]>([]);
+  const [selectedDayJs, setSelectedDayJs] = useState(dayjs());
+
+  useEffect(() => {
+    const fetchTodaysAppointments = async () =>
+      supabase
+        .from("business_appointments")
+        .select(
+          "*, profiles: business_appointment_profiles(*, profile: profile_id(*))"
+        )
+        .eq("location_id", location.id)
+        .gte(
+          "start_datetime",
+          selectedDayJs.startOf("day").format(SERVER_DATE_TIME_FORMAT)
+        )
+        .lte(
+          "start_datetime",
+          selectedDayJs.endOf("day").format(SERVER_DATE_TIME_FORMAT)
+        )
+        .returns<IAppointment[]>()
+        .then(({ data }) => {
+          if (data) setAppointments(data);
+        });
+    fetchTodaysAppointments();
+  }, [selectedDayJs]);
+
+  const timeArr = Array.from({ length: 25 }, (_, num) =>
+    selectedDayJs
+      .startOf("day")
+      .set("hour", 8)
+      .add(num * 30, "minutes")
+  );
+
+  return (
+    <View className="flex-1">
+      <Box className="bg-white p-6 pb-2">
+        <Heading size="xl">Scheudle Appointment</Heading>
+        <Text size="sm" className="text-gray-400">
+          Schedule time to meet with your customer
+        </Text>
+      </Box>
+      <Box>
+        <View className="px-6 pt-2">
+          <Heading className="text-center" size="sm">
+            {selectedDayJs.format("MMM YYYY")}
+          </Heading>
         </View>
-      </ScrollView>
-      <View className="p-4">
-        <Button onPress={handleSave}>
-          <ButtonText>Save</ButtonText>
-        </Button>
-      </View>
-    </Fragment>
+        <HorizontalDaySelector
+          selectedDayJs={selectedDayJs}
+          setSelectedDayJs={setSelectedDayJs}
+        />
+      </Box>
+      {!closers?.length ? (
+        <Text>No closers found.</Text>
+      ) : (
+        <ScrollView
+          contentContainerClassName="p-6 gap-y-2"
+          key={selectedDayJs.date()}
+          showsVerticalScrollIndicator={false}
+        >
+          {timeArr.map((time) => {
+            const findOverlappingAppointment = [
+              ...new Set(
+                appointments.flatMap((appointment) => {
+                  const profileIds = appointment.profiles.map(
+                    (p) => p.profile_id
+                  );
+
+                  if (profileIds.includes(profile.id)) {
+                    if (
+                      !dayjs(appointment.start_datetime).diff(time, "minute") ||
+                      !dayjs(appointment.end_datetime).diff(time, "minute")
+                    )
+                      return profileIds;
+                    if (
+                      dayjs(appointment.start_datetime).isBefore(time) &&
+                      dayjs(appointment.end_datetime).isAfter(time)
+                    )
+                      return profileIds;
+                  }
+
+                  return [];
+                })
+              ),
+            ];
+
+            const filteredClosers = closers.filter((c) => {
+              if (location.is_closer) {
+                return (
+                  c.id === profile.id &&
+                  !findOverlappingAppointment.includes(c.id)
+                );
+              }
+              return !findOverlappingAppointment.includes(c.id);
+            });
+
+            return (
+              <TimeSlotRow
+                disabled={!filteredClosers.length}
+                key={`${time.hour()}_${time.minute()}_${
+                  filteredClosers.length
+                }`}
+                time={time}
+              />
+            );
+          })}
+          <ScreenEnd />
+        </ScrollView>
+      )}
+    </View>
   );
 }

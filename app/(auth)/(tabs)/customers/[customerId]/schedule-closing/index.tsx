@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 
 import HorizontalDaySelector from "@/components/HorizontalDaySelector";
+import ScreenEnd from "@/components/ScreenEnd";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -71,7 +72,7 @@ function TimeSlotRow({
 }) {
   const router = useRouter();
   const { updateCustomer } = useCustomerContext();
-  const { profile, refreshData } = useUserContext();
+  const { refreshData } = useUserContext();
   const { location } = useLocationContext();
   const params = useLocalSearchParams();
   const [duration, setDuration] = useState(30);
@@ -112,7 +113,7 @@ function TimeSlotRow({
         const appointmentProfileInsert = {
           appointment_id: data.id,
           business_id: location.business_id,
-          profile_id: location.is_closer ? profile.id : closer.id,
+          profile_id: closer.id,
         };
 
         return supabase
@@ -123,7 +124,7 @@ function TimeSlotRow({
         if (error) throw error.message;
 
         return updateCustomer(Number(params.customerId), {
-          closer_id: location.is_closer ? profile.id : closer.id,
+          closer_id: closer.id,
         });
       })
       .then(refreshData)
@@ -284,7 +285,7 @@ export default function ScheduleClosingScreen() {
   }, [selectedDayJs]);
 
   const timeArr = Array.from({ length: 25 }, (_, num) =>
-    dayjs()
+    selectedDayJs
       .startOf("day")
       .set("hour", 8)
       .add(num * 30, "minutes")
@@ -320,36 +321,42 @@ export default function ScheduleClosingScreen() {
             const findOverlappingAppointment = [
               ...new Set(
                 appointments.flatMap((appointment) => {
+                  const profileIds = appointment.profiles.map(
+                    (p) => p.profile_id
+                  );
+
                   if (
                     !dayjs(appointment.start_datetime).diff(time, "minute") ||
                     !dayjs(appointment.end_datetime).diff(time, "minute")
                   )
-                    return appointment.profiles.map((p) => p.profile_id);
+                    return profileIds;
                   if (
                     dayjs(appointment.start_datetime).isBefore(time) &&
                     dayjs(appointment.end_datetime).isAfter(time)
                   )
-                    return appointment.profiles.map((p) => p.profile_id);
+                    return profileIds;
                   return [];
                 })
               ),
             ];
 
-            const filteredClosers = closers.filter(
-              (c) => !findOverlappingAppointment.includes(c.id)
-            );
+            const filteredClosers = closers.filter((c) => {
+              if (location.is_closer && c.id !== profile.id) return false;
+              return !findOverlappingAppointment.includes(c.id);
+            });
 
             const [closer] = filteredClosers;
 
             return (
               <TimeSlotRow
                 disabled={!closer}
-                closer={location.is_closer ? profile : closer}
+                closer={closer}
                 key={`${time.toISOString()}_${closer?.id}`}
                 time={time}
               />
             );
           })}
+          <ScreenEnd />
         </ScrollView>
       )}
     </View>

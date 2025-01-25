@@ -132,17 +132,11 @@ export default function ModalScreen() {
             });
           }
 
-          const { data: closers } = await supabase.rpc("ordered_employees", {
-            lid: location.id,
-          });
-
-          const [closer] = closers;
-
           await refreshData();
           router.back();
           router.push({
             pathname: "/(auth)/(tabs)/customers/[customerId]/schedule-closing",
-            params: { customerId: customer.id, closerId: closer.profile_id },
+            params: { customerId: customer.id },
           });
         });
     }
