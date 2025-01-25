@@ -11,7 +11,8 @@ import React, {
 import { LocationProvider } from "./location-context";
 import { DISPOSITION_STATUS_KEYS } from "@/constants/disposition_statuses";
 
-interface IProfile extends Omit<Tables<"profiles">, "created_at" | "id"> {
+export interface IProfile
+  extends Omit<Tables<"profiles">, "created_at" | "id"> {
   created_at?: string;
   id: string;
   location_profiles: Tables<"business_location_profiles">[];
@@ -132,13 +133,16 @@ export function UserProvider({
     data.location.customers.find((c) => c.id === Number(params.customerId));
 
   const closers = data.location?.profiles.flatMap((profile) =>
-    profile.is_closer ? profile.profile : []
+    profile.is_closer
+      ? { ...profile.profile, closer_priority: profile.closer_priority }
+      : []
   );
 
   const value = useMemo(
     () => ({
       ...data,
-      closers: closers || null,
+      closers:
+        closers?.sort((a, b) => a.closer_priority - b.closer_priority) || null,
       customer: customer || null,
       refreshData,
     }),

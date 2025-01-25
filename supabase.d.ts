@@ -1231,6 +1231,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      location_business_appointments_with_closers: {
+        Args: {
+          lid: number
+          start_timestamp: string
+        }
+        Returns: {
+          id: number
+          start_datetime: string
+          end_datetime: string
+          name: string
+          profile_id: string
+          full_name: string
+          location_id: number
+          closer_priority: number
+        }[]
+      }
       location_profile_has_role: {
         Args: {
           lid: number
@@ -1247,6 +1263,7 @@ export type Database = {
         Returns: {
           profile_id: string
           full_name: string
+          closer_priority: number
         }[]
       }
       ordered_employees: {

@@ -1,83 +1,294 @@
 import { Text } from "@/components/ui/text";
 import dayjs from "dayjs";
-import { useReducer } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 
 import HorizontalDaySelector from "@/components/HorizontalDaySelector";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { twMerge } from "tailwind-merge";
+import {
+  Actionsheet,
+  ActionsheetBackdrop,
+  ActionsheetContent,
+  ActionsheetDragIndicator,
+  ActionsheetDragIndicatorWrapper,
+  ActionsheetSectionHeaderText,
+} from "@/components/ui/actionsheet";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Box } from "@/components/ui/box";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlHelper,
+  FormControlHelperText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { Heading } from "@/components/ui/heading";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectSectionHeaderText,
+  SelectTrigger,
+} from "@/components/ui/select";
+import {
+  FRIENDLY_DATE_FORMAT,
+  SERVER_DATE_TIME_FORMAT,
+  SERVER_DATE_TIME_FORMAT_TZ,
+} from "@/constants/date-formats";
+import { useCustomerContext } from "@/contexts/customer-context";
+import { useLocationContext } from "@/contexts/location-context";
+import { IProfile, useUserContext } from "@/contexts/user-context";
+import { supabase } from "@/lib/supabase";
+import { Tables } from "@/supabase";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ChevronDownIcon } from "lucide-react-native";
+import { twMerge } from "tailwind-merge";
 
-enum FormReducerActionTypes {
-  SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
-  SET_SELECTED_DAYJS = "SET_SELECTED_DAYJS",
-}
-
-interface ISET_SELECTED_DAYS {
-  type: FormReducerActionTypes.SET_SELECTED_DAYJS;
-  payload: dayjs.Dayjs;
-}
-
-interface ISET_IS_SUBMITTING {
-  type: FormReducerActionTypes.SET_IS_SUBMITTING;
-  payload: boolean;
-}
-
-type IFormReducerAction = ISET_SELECTED_DAYS | ISET_IS_SUBMITTING;
-
-interface IFormReducerState {
-  isSubmitting: boolean;
-  selectedDayjs: dayjs.Dayjs;
-}
-
-function formReducer(
-  prevState: IFormReducerState,
-  action: IFormReducerAction
-): IFormReducerState {
-  switch (action.type) {
-    case FormReducerActionTypes.SET_IS_SUBMITTING:
-      return {
-        ...prevState,
-        error: null,
-        isSubmitting: action.payload,
+function TimeSlotRow({
+  closer,
+  disabled = false,
+  time,
+}: {
+  closer:
+    | IProfile
+    | {
+        avatar_url: string | null;
+        created_at: string;
+        full_name: string | null;
+        id: string;
+        updated_at: string | null;
+        username: string | null;
+        website: string | null;
       };
-    case FormReducerActionTypes.SET_SELECTED_DAYJS:
-      return {
-        ...prevState,
-        selectedDayjs: action.payload,
-      };
-    default:
-      return prevState;
-  }
+  disabled?: boolean;
+  time: dayjs.Dayjs;
+}) {
+  const router = useRouter();
+  const { updateCustomer } = useCustomerContext();
+  const { profile, refreshData } = useUserContext();
+  const { location } = useLocationContext();
+  const params = useLocalSearchParams();
+  const [duration, setDuration] = useState(30);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [
+    isConfirmTimeSlotActionSheetVisible,
+    setIsConfirmTimeSlotActionSheetVisible,
+  ] = useState(false);
+  const handleCloseTimeSlotActionSheet = () => {
+    setIsSubmitting(false);
+    setIsConfirmTimeSlotActionSheetVisible(false);
+  };
+
+  const handleSubmitTimeSlot = useCallback(async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    const appointmentInsert = {
+      business_id: location.business_id,
+      customer_id: params.customerId,
+      duration: duration,
+      end_datetime: time
+        .add(duration, "minute")
+        ?.format(SERVER_DATE_TIME_FORMAT_TZ),
+      location_id: location.id,
+      name: "Customer Meeting",
+      start_datetime: time?.format(SERVER_DATE_TIME_FORMAT_TZ),
+    };
+
+    return supabase
+      .from("business_appointments")
+      .insert(appointmentInsert)
+      .select("id")
+      .single()
+      .then(({ data, error }) => {
+        if (error) throw error.message;
+
+        const appointmentProfileInsert = {
+          appointment_id: data.id,
+          business_id: location.business_id,
+          profile_id: location.is_closer ? profile.id : closer.id,
+        };
+
+        return supabase
+          .from("business_appointment_profiles")
+          .insert(appointmentProfileInsert);
+      })
+      .then(({ error }) => {
+        if (error) throw error.message;
+
+        return updateCustomer(Number(params.customerId), {
+          closer_id: location.is_closer ? profile.id : closer.id,
+        });
+      })
+      .then(refreshData)
+      .then(() =>
+        router.push({
+          pathname: "/(auth)/(tabs)/customers/[customerId]",
+          params: {
+            customerId: params.customerId as string,
+          },
+        })
+      )
+      .then(handleCloseTimeSlotActionSheet);
+  }, [duration]);
+
+  return (
+    <TouchableOpacity
+      className={twMerge(
+        disabled ? "bg-gray-200" : "bg-white shadow-sm shadow-gray-200",
+        "p-4 rounded-full flex-row items-center"
+      )}
+      disabled={disabled}
+      key={time.toString()}
+      onPress={() => setIsConfirmTimeSlotActionSheetVisible(true)}
+    >
+      <Text
+        className={twMerge(
+          disabled ? "text-typography-400" : "text-typography-600",
+          "text-center grow"
+        )}
+        size="md"
+      >
+        {time.format("hh:mm a")}
+      </Text>
+      {!disabled && (
+        <Avatar className="absolute right-2" size="sm">
+          <AvatarFallbackText>{closer.full_name}</AvatarFallbackText>
+        </Avatar>
+      )}
+
+      {!disabled && (
+        <Actionsheet
+          isOpen={isConfirmTimeSlotActionSheetVisible}
+          onClose={handleCloseTimeSlotActionSheet}
+        >
+          <ActionsheetBackdrop />
+          <ActionsheetContent>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+              <ActionsheetSectionHeaderText>
+                Schedule Appointment
+              </ActionsheetSectionHeaderText>
+            </ActionsheetDragIndicatorWrapper>
+            <View className="w-full pb-6 gap-y-4">
+              <Heading>{time.format(FRIENDLY_DATE_FORMAT)}</Heading>
+              <Text>{`Starting at ${time.format("hh:mm a")}`}</Text>
+
+              <FormControl isRequired>
+                <FormControlLabel>
+                  <FormControlLabelText size="md">
+                    Duration:
+                  </FormControlLabelText>
+                </FormControlLabel>
+                <Select
+                  defaultValue={duration.toString()}
+                  onValueChange={(payload) => setDuration(Number(payload))}
+                >
+                  <SelectTrigger>
+                    <SelectInput
+                      placeholder="Select option"
+                      className="flex-1"
+                    />
+                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent style={{ paddingBottom: 10 }}>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectSectionHeaderText>
+                        Select the appointment duration
+                      </SelectSectionHeaderText>
+                      {Array.from({ length: 8 }, (_, num) => (
+                        <SelectItem
+                          key={num}
+                          label={`${(num + 1) * 30} minutes`}
+                          value={((num + 1) * 30).toString()}
+                        />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+                <FormControlHelper>
+                  <FormControlHelperText>
+                    Select the appointment duration
+                  </FormControlHelperText>
+                </FormControlHelper>
+              </FormControl>
+              <Text>{`Ending at ${time
+                .add(duration, "minutes")
+                .format("hh:mm a")}`}</Text>
+              <View className="flex-row w-full gap-x-2">
+                <Button
+                  className="ml-auto"
+                  size="lg"
+                  action="secondary"
+                  onPress={handleCloseTimeSlotActionSheet}
+                >
+                  <ButtonText>Cancel</ButtonText>
+                </Button>
+                <Button onPress={handleSubmitTimeSlot} size="lg">
+                  <ButtonText>Submit</ButtonText>
+                </Button>
+              </View>
+            </View>
+          </ActionsheetContent>
+        </Actionsheet>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+interface IAppointmentProfile extends Tables<"business_appointment_profiles"> {
+  profile: Tables<"profiles">;
+}
+
+interface IAppointment extends Tables<"business_appointments"> {
+  profiles: IAppointmentProfile[];
 }
 
 export default function ScheduleClosingScreen() {
-  const [state, dispatch] = useReducer(formReducer, {
-    isSubmitting: false,
-    selectedDayjs: dayjs(),
-  });
+  const { location } = useLocationContext();
+  const { closers, profile } = useUserContext();
+  const [appointments, setAppointments] = useState<IAppointment[]>([]);
+  const [selectedDayJs, setSelectedDayJs] = useState(dayjs());
+
+  useEffect(() => {
+    const fetchTodaysAppointments = async () =>
+      supabase
+        .from("business_appointments")
+        .select(
+          "*, profiles: business_appointment_profiles(*, profile: profile_id(*))"
+        )
+        .eq("location_id", location.id)
+        .gte(
+          "start_datetime",
+          selectedDayJs.startOf("day").format(SERVER_DATE_TIME_FORMAT)
+        )
+        .lte(
+          "start_datetime",
+          selectedDayJs.endOf("day").format(SERVER_DATE_TIME_FORMAT)
+        )
+        .returns<IAppointment[]>()
+        .then(({ data }) => {
+          if (data) setAppointments(data);
+        });
+    fetchTodaysAppointments();
+  }, [selectedDayJs]);
 
   const timeArr = Array.from({ length: 25 }, (_, num) =>
     dayjs()
+      .startOf("day")
       .set("hour", 8)
-      .set("minute", 0)
-      .set("second", 0)
       .add(num * 30, "minutes")
   );
-
-  const TEMP_MATCHES: { [k: string]: string } = {
-    "08:30 am": "John Doe",
-    "09:00 am": "John Doe",
-    "09:30 am": "Ron Burgundy",
-    "10:00 am": "Ron Burgundy",
-    "12:00 pm": "Ron Burgundy",
-    "12:30 pm": "Ron Burgundy",
-    "03:30 pm": "John Doe",
-    "04:00 pm": "John Doe",
-    "04:30 pm": "Ron Burgundy",
-    "05:00 pm": "Ron Burgundy",
-  };
 
   return (
     <View className="flex-1">
@@ -90,53 +301,57 @@ export default function ScheduleClosingScreen() {
       <Box>
         <View className="px-6 pt-2">
           <Heading className="text-center" size="sm">
-            {state.selectedDayjs.format("MMM YYYY")}
+            {selectedDayJs.format("MMM YYYY")}
           </Heading>
         </View>
         <HorizontalDaySelector
-          selectedDayJs={state.selectedDayjs}
-          setSelectedDayJs={(payload) =>
-            dispatch({
-              type: FormReducerActionTypes.SET_SELECTED_DAYJS,
-              payload,
-            })
-          }
+          selectedDayJs={selectedDayJs}
+          setSelectedDayJs={setSelectedDayJs}
         />
       </Box>
-      <ScrollView
-        contentContainerClassName="p-6 gap-y-2"
-        showsVerticalScrollIndicator={false}
-      >
-        {timeArr.map((time) => {
-          const match = TEMP_MATCHES[time.format("hh:mm a")];
-          const hasMatch = !!match;
-          return (
-            <TouchableOpacity
-              className={twMerge(
-                hasMatch ? "bg-white shadow-sm shadow-gray-200" : "bg-gray-200",
-                "p-4 rounded-full flex-row items-center"
-              )}
-              disabled={!hasMatch}
-              key={time.toString()}
-            >
-              <Text
-                className={twMerge(
-                  hasMatch ? "text-typography-600" : "text-typography-400",
-                  "text-center grow"
-                )}
-                size="md"
-              >
-                {time.format("hh:mm a")}
-              </Text>
-              {hasMatch && (
-                <Avatar className="absolute right-2" size="sm">
-                  <AvatarFallbackText>{match}</AvatarFallbackText>
-                </Avatar>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {!closers?.length ? (
+        <Text>No closers found.</Text>
+      ) : (
+        <ScrollView
+          contentContainerClassName="p-6 gap-y-2"
+          showsVerticalScrollIndicator={false}
+        >
+          {timeArr.map((time) => {
+            const findOverlappingAppointment = [
+              ...new Set(
+                appointments.flatMap((appointment) => {
+                  if (
+                    !dayjs(appointment.start_datetime).diff(time, "minute") ||
+                    !dayjs(appointment.end_datetime).diff(time, "minute")
+                  )
+                    return appointment.profiles.map((p) => p.profile_id);
+                  if (
+                    dayjs(appointment.start_datetime).isBefore(time) &&
+                    dayjs(appointment.end_datetime).isAfter(time)
+                  )
+                    return appointment.profiles.map((p) => p.profile_id);
+                  return [];
+                })
+              ),
+            ];
+
+            const filteredClosers = closers.filter(
+              (c) => !findOverlappingAppointment.includes(c.id)
+            );
+
+            const [closer] = filteredClosers;
+
+            return (
+              <TimeSlotRow
+                disabled={!closer}
+                closer={location.is_closer ? profile : closer}
+                key={`${time.toISOString()}_${closer?.id}`}
+                time={time}
+              />
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }
