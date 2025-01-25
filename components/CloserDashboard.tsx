@@ -86,12 +86,7 @@ export function CloserDashboard({
                   })
                 }
               >
-                <Card
-                  className={twMerge(
-                    `bg-${dispositionStatus.action}-50`,
-                    "w-72"
-                  )}
-                >
+                <Card className={twMerge(dispositionStatus.bg, "w-72")}>
                   <View className="items-start mb-1 justify-between flex-row">
                     <Badge action={dispositionStatus?.action} size="sm">
                       <BadgeText>{dispositionStatus?.label}</BadgeText>
