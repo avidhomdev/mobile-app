@@ -1,9 +1,10 @@
+import ScreenEnd from "@/components/ScreenEnd";
 import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
 import { Home } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -11,6 +12,7 @@ import { ScrollView, TouchableOpacity, View } from "react-native";
 import { twMerge } from "tailwind-merge";
 
 export default function ScheduleScreen() {
+  const { location } = useUserContext();
   const horizontalDaysScrollViewRef = useRef<ScrollView>(null);
   const [selectedDayjs, setSelectedDayjs] = useState(dayjs());
   const days = Array.from({ length: 60 }, (_, index) =>
@@ -22,16 +24,26 @@ export default function ScheduleScreen() {
       .add(index + 1, "days")
   );
 
+  const selectedDayAppointments = location.appointments.filter((appointment) =>
+    dayjs(appointment.start_datetime).isSame(dayjs(selectedDayjs), "date")
+  );
+
+  const locationCustomerDictionary = location.customers.reduce<{
+    [k: number]: (typeof location.customers)[0];
+  }>((dictionary, customer) => {
+    dictionary[customer.id] = customer;
+
+    return dictionary;
+  }, {});
+
   return (
-    <View className="gap-6">
-      <HStack space="md" className="justify-between p-6 bg-white items-center">
-        <Box>
-          <Heading size="xl">Schedule</Heading>
-          <Text size="sm" className="text-gray-400">
-            View upcoming schedule for your selected day.
-          </Text>
-        </Box>
-      </HStack>
+    <ScrollView contentContainerClassName="gap-y-2">
+      <Box className="p-6 bg-white">
+        <Heading size="xl">Schedule</Heading>
+        <Text size="sm" className="text-gray-400">
+          View upcoming schedule for your selected day.
+        </Text>
+      </Box>
 
       <View>
         <View className="flex-row items-center gap-x-2 px-6 justify-between">
@@ -97,23 +109,25 @@ export default function ScheduleScreen() {
           })}
         </ScrollView>
       </View>
-      <ScrollView contentContainerClassName="px-6 gap-y-2">
-        <Card>
-          <Text>{`Appointment on ${selectedDayjs.format(
-            "MMM DD, YYYY"
-          )}`}</Text>
-        </Card>
-        <Card>
-          <Text>{`Appointment on ${selectedDayjs.format(
-            "MMM DD, YYYY"
-          )}`}</Text>
-        </Card>
-        <Card>
-          <Text>{`Appointment on ${selectedDayjs.format(
-            "MMM DD, YYYY"
-          )}`}</Text>
-        </Card>
-      </ScrollView>
-    </View>
+      <View className="px-6 gap-y-2">
+        {selectedDayAppointments.flatMap((appointment) => {
+          if (!appointment.customer_id) return [];
+          const customer = locationCustomerDictionary[appointment.customer_id];
+          return (
+            <Card key={appointment.id}>
+              <Text>{customer.full_name}</Text>
+              <View className="flex-row items-center gap-x-1">
+                <Text>
+                  {dayjs(appointment.start_datetime).format("hh:mm a")}
+                </Text>
+                <Text>{dayjs(appointment.end_datetime).format("hh:mm a")}</Text>
+              </View>
+            </Card>
+          );
+        })}
+      </View>
+      <ScreenEnd />
+      <ScreenEnd />
+    </ScrollView>
   );
 }
