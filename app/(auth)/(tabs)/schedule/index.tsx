@@ -1,9 +1,11 @@
 import ScreenEnd from "@/components/ScreenEnd";
+import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
 import { useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
 import { Home } from "lucide-react-native";
@@ -31,6 +33,7 @@ export default function ScheduleScreen() {
   const locationCustomerDictionary = location.customers.reduce<{
     [k: number]: (typeof location.customers)[0];
   }>((dictionary, customer) => {
+    if (!customer) return dictionary;
     dictionary[customer.id] = customer;
 
     return dictionary;
@@ -110,21 +113,50 @@ export default function ScheduleScreen() {
         </ScrollView>
       </View>
       <View className="px-6 gap-y-2">
-        {selectedDayAppointments.flatMap((appointment) => {
-          if (!appointment.customer_id) return [];
-          const customer = locationCustomerDictionary[appointment.customer_id];
-          return (
-            <Card key={appointment.id}>
-              <Text>{customer.full_name}</Text>
-              <View className="flex-row items-center gap-x-1">
-                <Text>
-                  {dayjs(appointment.start_datetime).format("hh:mm a")}
-                </Text>
-                <Text>{dayjs(appointment.end_datetime).format("hh:mm a")}</Text>
-              </View>
-            </Card>
-          );
-        })}
+        {selectedDayAppointments
+          .sort((a, b) => {
+            return (
+              new Date(a.start_datetime).getTime() -
+              new Date(b.start_datetime).getTime()
+            );
+          })
+          .flatMap((appointment) => {
+            if (!appointment.customer_id) return [];
+            const customer =
+              locationCustomerDictionary[appointment.customer_id];
+            if (!customer) return [];
+            return (
+              <Card key={appointment.id}>
+                <View className="items-start mb-2">
+                  {customer?.disposition_status &&
+                    DISPOSITION_STATUSES[customer.disposition_status] && (
+                      <Badge
+                        action={
+                          DISPOSITION_STATUSES[customer.disposition_status]
+                            .action
+                        }
+                      >
+                        <BadgeText>
+                          {
+                            DISPOSITION_STATUSES[customer.disposition_status]
+                              .label
+                          }
+                        </BadgeText>
+                      </Badge>
+                    )}
+                </View>
+                <Text>{customer.full_name}</Text>
+                <View className="flex-row items-center gap-x-1">
+                  <Text>
+                    {dayjs(appointment.start_datetime).format("hh:mm a")}
+                  </Text>
+                  <Text>
+                    {dayjs(appointment.end_datetime).format("hh:mm a")}
+                  </Text>
+                </View>
+              </Card>
+            );
+          })}
       </View>
       <ScreenEnd />
       <ScreenEnd />
