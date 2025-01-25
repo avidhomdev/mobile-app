@@ -96,7 +96,7 @@ const fetchUserContextData = async (
     supabase
       .from("business_locations")
       .select(
-        "*, appointments:business_appointments(*, profiles: business_appointment_profiles(*)), customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
+        "*, appointments:business_appointments(*, profiles: business_appointment_profiles(*), customer: customer_id(*)), customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
       ),
   ]);
 
