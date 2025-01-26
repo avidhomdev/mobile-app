@@ -272,7 +272,7 @@ export default function Screen() {
   return (
     <View className="flex-1">
       <Box className="bg-white p-6 pb-2">
-        <Heading size="xl">Scheudle Appointment</Heading>
+        <Heading size="xl">Schedule Appointment</Heading>
         <Text size="sm" className="text-gray-400">
           Schedule time to meet with your customer
         </Text>
@@ -284,6 +284,7 @@ export default function Screen() {
           </Heading>
         </View>
         <HorizontalDaySelector
+          disableBeforeToday
           selectedDayJs={selectedDayJs}
           setSelectedDayJs={setSelectedDayJs}
         />
