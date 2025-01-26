@@ -9,10 +9,12 @@ import dayjs from "dayjs";
 import { twMerge } from "tailwind-merge";
 
 export default function HorizontalDaySelector({
+  disableBeforeToday,
   length = 60,
   selectedDayJs,
   setSelectedDayJs,
 }: {
+  disableBeforeToday?: boolean;
   length?: number;
   selectedDayJs: dayjs.Dayjs;
   setSelectedDayJs: (d: dayjs.Dayjs) => void;
@@ -37,10 +39,17 @@ export default function HorizontalDaySelector({
     >
       {days.map((day) => {
         const isToday = day.isSame(selectedDayJs, "date");
-
+        const isBeforeToday =
+          disableBeforeToday && day.isBefore(dayjs(), "date");
         return (
           <TouchableOpacity
-            className="p-2 gap-y-2"
+            disabled={isBeforeToday}
+            className={twMerge(
+              disableBeforeToday && day.isBefore(dayjs(), "date")
+                ? "opacity-30"
+                : "",
+              "p-2 gap-y-2"
+            )}
             key={day.toISOString()}
             onLayout={(event) => {
               const layout = event.nativeEvent.layout;
