@@ -1,40 +1,56 @@
+import {
+  Banknote,
+  CalendarClock,
+  DoorClosed,
+  DoorOpen,
+  EqualNotIcon,
+  Loader,
+} from "lucide-react-native";
+
 export type DISPOSITION_STATUS_KEYS = keyof typeof DISPOSITION_STATUSES;
 
 type TActions = "muted" | "error" | "warning" | "success" | "info" | undefined;
 export const DISPOSITION_STATUSES = {
   NEW: {
-    bg: "bg-background-warning  border-warning-300",
-    label: "New",
     action: "warning" as TActions,
+    bg: "bg-background-warning  border-warning-300",
+    icon: DoorOpen,
+    label: "New",
   },
   NO_SHOW: {
-    bg: "bg-background-error  border-error-300",
-    label: "No show",
     action: "error" as TActions,
+    bg: "bg-background-error  border-error-300",
+    icon: EqualNotIcon,
+    label: "No show",
   },
   CANCELLED_AT_DOOR: {
-    bg: "bg-background-error  border-error-300",
-    label: "Cancelled at door",
     action: "error" as TActions,
+    bg: "bg-background-error  border-error-300",
+    icon: DoorClosed,
+    label: "Cancelled at door",
   },
   PITCHED_NOT_CLOSED: {
-    bg: "bg-background-error  border-error-300",
-    label: "Pitched Not Closed",
     action: "error" as TActions,
+    bg: "bg-background-error  border-error-300",
+    icon: DoorClosed,
+    label: "Pitched Not Closed",
   },
   PITCHED_PENDING: {
-    bg: "bg-background-info  border-info-300",
-    label: "Pitched Pending",
     action: "info" as TActions,
+    bg: "bg-background-info  border-info-300",
+    icon: Loader,
+    label: "Pitched Pending",
   },
   PITCHED_CLOSED: {
-    bg: "bg-background-success  border-success-300",
-    label: "Pitched Closed",
     action: "success" as TActions,
+    bg: "bg-background-success  border-success-300",
+    icon: Banknote,
+    label: "Pitched Closed",
   },
   PITCHED_FOLLOW_UP: {
-    bg: "bg-background-warning  border-warning-300",
-    label: "Pitched Follow Up",
     action: "warning" as TActions,
+    bg: "bg-background-warning  border-warning-300",
+    icon: CalendarClock,
+    label: "Pitched Follow Up",
   },
 };
