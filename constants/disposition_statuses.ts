@@ -7,11 +7,6 @@ export const DISPOSITION_STATUSES = {
     label: "New",
     action: "warning" as TActions,
   },
-  SCHEDULED: {
-    bg: "bg-background-info  border-info-300",
-    label: "Scheduled",
-    action: "info" as TActions,
-  },
   NO_SHOW: {
     bg: "bg-background-error  border-error-300",
     label: "No show",
