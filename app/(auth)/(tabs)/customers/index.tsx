@@ -11,6 +11,14 @@ import {
   ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
 import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
+import {
   Avatar,
   AvatarFallbackText,
   AvatarImage,
@@ -40,18 +48,8 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
-import { CloseIcon, Icon } from "@/components/ui/icon";
+import { Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import {
   DISPOSITION_STATUS_KEYS,
@@ -59,6 +57,7 @@ import {
 } from "@/constants/disposition_statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
+import { supabase } from "@/lib/supabase";
 import { debounce } from "@/utils/debounce";
 import {
   useGlobalSearchParams,
@@ -74,7 +73,7 @@ import {
   UserSearch,
   X,
 } from "lucide-react-native";
-import { Fragment, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
@@ -83,62 +82,65 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
-  const handleClose = () => setIsActionSheetVisible(false);
-  const [showModal, setShowModal] = useState(false);
+  const handleCloseActionSheet = () => setIsActionSheetVisible(false);
+  const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
   const { location } = useLocationContext();
+  const { refreshData } = useUserContext();
+
+  const handleCloserAlertDialog = () => setIsActionSheetVisible(false);
+
+  const handleDelete = useCallback(
+    async () =>
+      supabase
+        .from("business_location_customers")
+        .delete()
+        .eq("id", customer.id)
+        .then(refreshData)
+        .then(handleCloserAlertDialog)
+        .then(handleCloseActionSheet),
+    []
+  );
 
   return (
     <Fragment>
-      <Modal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-        }}
+      <AlertDialog
+        isOpen={isAlertDialogVisible}
+        onClose={handleCloserAlertDialog}
         size="md"
       >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Heading size="md" className="text-typography-950">
-              Delete customer
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading className="text-typography-950 font-semibold" size="md">
+              Are you sure you want to delete this appointment?
             </Heading>
-            <ModalCloseButton>
-              <Icon
-                as={CloseIcon}
-                size="md"
-                className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
-              />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody>
-            <Text size="sm" className="text-typography-500">
-              Deleting this customer will permanently remove them from your
-              records. This action cannot be undone. Are you sure you want to
-              proceed?
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text size="sm">
+              Deleting the appointment will remove it permanently and cannot be
+              undone. Please confirm if you want to proceed.
             </Text>
-          </ModalBody>
-          <ModalFooter>
+          </AlertDialogBody>
+          <AlertDialogFooter className="">
             <Button
               variant="outline"
               action="secondary"
-              onPress={() => {
-                setShowModal(false);
-              }}
+              onPress={handleCloserAlertDialog}
+              size="sm"
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button
-              action="negative"
-              onPress={() => {
-                setShowModal(false);
-              }}
-            >
+            <Button action="negative" size="sm" onPress={handleDelete}>
               <ButtonText>Delete</ButtonText>
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
         <ActionsheetBackdrop />
         <ActionsheetContent style={{ paddingBottom: bottom }}>
           <ActionsheetDragIndicatorWrapper>
@@ -153,7 +155,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
                 pathname: "/(auth)/(tabs)/customers/[customerId]",
                 params: { customerId: customer.id },
               });
-              handleClose();
+              handleCloseActionSheet();
             }}
           >
             <ActionsheetIcon as={UserSearch} className="text-typography-500" />
@@ -170,7 +172,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
                   customerId: customer.id,
                 },
               });
-              handleClose();
+              handleCloseActionSheet();
             }}
           >
             <ActionsheetIcon as={Calendar} className="text-typography-500" />
@@ -180,7 +182,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
           </ActionsheetItem>
           <ActionsheetItem
             onPress={() => {
-              setShowModal(true);
+              setIsAlertDialogVisible(true);
             }}
           >
             <ActionsheetIcon as={TrashIcon} className="text-red-500" />
