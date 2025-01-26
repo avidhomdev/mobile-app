@@ -1,6 +1,6 @@
 import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
 import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
-import { ILocation, ILocationProfile } from "@/contexts/user-context";
+import { useLocationContext } from "@/contexts/location-context";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
@@ -12,7 +12,6 @@ import { Badge, BadgeText } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
 import { Icon } from "./ui/icon";
-import { Text } from "./ui/text";
 import {
   Table,
   TableBody,
@@ -22,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
+import { Text } from "./ui/text";
 
 const avatars = [
   {
@@ -31,11 +31,8 @@ const avatars = [
   },
 ];
 
-export function SetterDashboard({
-  location,
-}: {
-  location: Partial<ILocation & ILocationProfile>;
-}) {
+export function SetterDashboard() {
+  const { location } = useLocationContext();
   const router = useRouter();
   return (
     <View className="gap-y-6 p-6">

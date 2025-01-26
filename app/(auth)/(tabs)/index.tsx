@@ -26,7 +26,7 @@ export default function Dashboard() {
         />
       }
     >
-      <Dashboard location={location} />
+      <Dashboard />
       <ScreenEnd />
     </ScrollView>
   );

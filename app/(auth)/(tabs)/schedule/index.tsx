@@ -22,7 +22,6 @@ import {
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -36,7 +35,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Home, Trash2 } from "lucide-react-native";
+import { Home, MapPin, Trash2 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -120,12 +119,18 @@ function ScheduleRow({
   const { bottom } = useSafeAreaInsets();
   const hasPassed = dayjs().isAfter(appointment.end_datetime);
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
-
+  const router = useRouter();
   return (
     <TouchableOpacity
       className={twMerge(hasPassed ? "opacity-50" : "")}
       disabled={hasPassed}
       key={appointment.id}
+      onPress={() =>
+        router.push({
+          pathname: "/(auth)/(tabs)/customers/[customerId]",
+          params: { customerId: customer.id },
+        })
+      }
       onLongPress={() => setIsActionSheetVisible(true)}
     >
       <Actionsheet
@@ -148,10 +153,22 @@ function ScheduleRow({
           />
         </ActionsheetContent>
       </Actionsheet>
-      <Card>
-        <View className="items-start mb-2">
-          {customer?.disposition_status &&
-            DISPOSITION_STATUSES[customer.disposition_status] && (
+      <View className="bg-white flex-row gap-x-2 border border-gray-200 rounded">
+        <View
+          className={twMerge(
+            DISPOSITION_STATUSES[customer.disposition_status].bg,
+            "px-4 justify-center"
+          )}
+        >
+          <Icon
+            as={DISPOSITION_STATUSES[customer.disposition_status].icon}
+            className="text-typography-700"
+            size="2xl"
+          />
+        </View>
+        <View className="p-2 px-1 grow gap-2">
+          <View className="flex-row justify-between grow items-start">
+            {DISPOSITION_STATUSES[customer.disposition_status] && (
               <Badge
                 action={
                   hasPassed
@@ -164,14 +181,23 @@ function ScheduleRow({
                 </BadgeText>
               </Badge>
             )}
+            <View>
+              <Text size="xs">{`${dayjs(appointment.start_datetime).format(
+                "hh:mm a"
+              )} - ${dayjs(appointment.end_datetime).format("hh:mm a")}`}</Text>
+            </View>
+          </View>
+          <View>
+            <Text bold className="text-typography-700">
+              {customer.full_name}
+            </Text>
+            <View className="flex-row gap-x-1 items-center">
+              <Icon as={MapPin} className="text-typography-400" size="xs" />
+              <Text size="xs">{`${customer.address}, ${customer.city}`}</Text>
+            </View>
+          </View>
         </View>
-        <Text>{customer.full_name}</Text>
-        <View className="flex-row items-center gap-x-1">
-          <Text>{`${dayjs(appointment.start_datetime).format(
-            "hh:mm a"
-          )} - ${dayjs(appointment.end_datetime).format("hh:mm a")}`}</Text>
-        </View>
-      </Card>
+      </View>
     </TouchableOpacity>
   );
 }
