@@ -244,35 +244,20 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          {location.is_setter && (
-            <ActionsheetItem
-              onPress={() => {
-                router.push(`/(auth)/(modals)/new-customer-modal`);
-                handleClose();
-              }}
-            >
-              <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
-              <ActionsheetItemText className="text-typography-700">
-                New Customer
-              </ActionsheetItemText>
-            </ActionsheetItem>
-          )}
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/(auth)/(modals)/new-customer-modal`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              New Customer
+            </ActionsheetItemText>
+          </ActionsheetItem>
+
           {location.is_closer && (
             <Fragment>
-              <ActionsheetItem
-                onPress={() => {
-                  router.push(`/(auth)/(modals)/new-customer-modal`);
-                  handleClose();
-                }}
-              >
-                <ActionsheetIcon
-                  as={Calendar1}
-                  className="text-typography-500"
-                />
-                <ActionsheetItemText className="text-typography-700">
-                  New Appointment
-                </ActionsheetItemText>
-              </ActionsheetItem>
               <ActionsheetItem
                 onPress={() => {
                   router.push(`/(auth)/(modals)/new-job-modal`);
