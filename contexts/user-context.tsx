@@ -29,7 +29,7 @@ export interface ILocationCustomer
   closer?: Tables<"profiles">;
 }
 
-interface IAppointments extends Tables<"business_appointments"> {
+export interface IAppointments extends Tables<"business_appointments"> {
   profiles: Tables<"business_appointment_profiles">[];
 }
 export interface ILocation extends Partial<Tables<"business_locations">> {
@@ -118,10 +118,9 @@ export function UserProvider({
   const [data, setData] =
     useState<Omit<TUserContextProps, "refreshData">>(defaultContext);
 
-  const refreshData = useCallback(
-    async () => fetchUserContextData(session).then(setData),
-    [session]
-  );
+  const refreshData = useCallback(async () => {
+    return fetchUserContextData(session).then(setData);
+  }, [session]);
 
   useEffect(() => {
     refreshData();
