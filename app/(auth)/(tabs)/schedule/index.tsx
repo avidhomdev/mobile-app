@@ -1,3 +1,4 @@
+import HorizontalDaySelector from "@/components/HorizontalDaySelector";
 import ScreenEnd from "@/components/ScreenEnd";
 import {
   Actionsheet,
@@ -36,7 +37,7 @@ import { supabase } from "@/lib/supabase";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Home, Trash2 } from "lucide-react-native";
-import { Fragment, useCallback, useRef, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
@@ -122,6 +123,7 @@ function ScheduleRow({
 
   return (
     <TouchableOpacity
+      className={twMerge(hasPassed ? "opacity-50" : "")}
       disabled={hasPassed}
       key={appointment.id}
       onLongPress={() => setIsActionSheetVisible(true)}
@@ -146,7 +148,7 @@ function ScheduleRow({
           />
         </ActionsheetContent>
       </Actionsheet>
-      <Card variant={hasPassed ? "outline" : undefined}>
+      <Card>
         <View className="items-start mb-2">
           {customer?.disposition_status &&
             DISPOSITION_STATUSES[customer.disposition_status] && (
@@ -182,16 +184,6 @@ export default function ScheduleScreen() {
   }>();
 
   const selectedDayjs = dayjs(params.selectedDate);
-  const horizontalDaysScrollViewRef = useRef<ScrollView>(null);
-
-  const days = Array.from({ length: 60 }, (_, index) =>
-    dayjs()
-      .set("hour", 0)
-      .set("minute", 0)
-      .set("second", 0)
-      .subtract(30, "days")
-      .add(index + 1, "days")
-  );
 
   const selectedDayAppointments = location.appointments.filter((appointment) =>
     dayjs(appointment.start_datetime).isSame(dayjs(selectedDayjs), "date")
@@ -223,7 +215,6 @@ export default function ScheduleScreen() {
           View upcoming schedule for your selected day.
         </Text>
       </Box>
-
       <View>
         <View className="flex-row items-center gap-x-2 px-6 justify-between">
           <Text className="text-typography-800 font-semibold">
@@ -241,61 +232,23 @@ export default function ScheduleScreen() {
             </TouchableOpacity>
           )}
         </View>
-        <ScrollView
-          contentContainerClassName="gap-x-2 p-2"
-          horizontal
-          ref={horizontalDaysScrollViewRef}
-          showsHorizontalScrollIndicator={false}
-        >
-          {days.map((day) => {
-            const isToday = day.isSame(selectedDayjs, "date");
-
-            return (
-              <TouchableOpacity
-                className="p-2 gap-y-2"
-                key={day.toISOString()}
-                onLayout={(event) => {
-                  const layout = event.nativeEvent.layout;
-                  if (isToday && horizontalDaysScrollViewRef.current) {
-                    horizontalDaysScrollViewRef.current.scrollTo({
-                      x: layout.x - 150,
-                      animated: true,
-                    });
-                  }
-                }}
-                onPress={() =>
-                  router.setParams({ selectedDate: day.toISOString() })
-                }
-              >
-                <Text
-                  className={twMerge(
-                    isToday ? "text-typography-900" : "text-typography-500",
-                    "text-center uppercase tracking-tighter font-semibold"
-                  )}
-                  size="xs"
-                >
-                  {day.format("ddd")}
-                </Text>
-                <Text
-                  bold
-                  className={twMerge(
-                    isToday
-                      ? "bg-slate-900 text-typography-white"
-                      : "text-typography-800",
-                    "text-center p-1 px-2 rounded"
-                  )}
-                >
-                  {day.format("DD")}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        <HorizontalDaySelector
+          disableBeforeToday
+          selectedDayJs={dayjs(params.selectedDate)}
+          setSelectedDayJs={(day) =>
+            router.setParams({ selectedDate: day.toISOString() })
+          }
+        />
       </View>
       <View className="px-6 gap-y-2">
         {filteredDayAppointments.length ? (
           filteredDayAppointments
             .sort((a, b) => {
+              if (
+                dayjs().isAfter(a.end_datetime) ||
+                dayjs().isAfter(b.end_datetime)
+              )
+                return -1;
               return (
                 new Date(a.start_datetime).getTime() -
                 new Date(b.start_datetime).getTime()
