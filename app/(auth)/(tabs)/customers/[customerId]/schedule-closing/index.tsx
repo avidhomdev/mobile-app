@@ -306,6 +306,7 @@ export default function ScheduleClosingScreen() {
           </Heading>
         </View>
         <HorizontalDaySelector
+          disableBeforeToday
           selectedDayJs={selectedDayJs}
           setSelectedDayJs={setSelectedDayJs}
         />
@@ -349,7 +350,7 @@ export default function ScheduleClosingScreen() {
 
             return (
               <TimeSlotRow
-                disabled={!closer}
+                disabled={!closer || time.isBefore(dayjs())}
                 closer={closer}
                 key={`${time.toISOString()}_${closer?.id}`}
                 time={time}
