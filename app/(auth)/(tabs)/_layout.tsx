@@ -40,7 +40,6 @@ import { Tabs, useRouter } from "expo-router";
 import {
   Calendar1,
   ChevronDown,
-  Construction,
   Home,
   HomeIcon,
   LogOut,
@@ -204,7 +203,6 @@ type TTabBar = {
 };
 
 function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
-  const { location } = useLocationContext();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const handleClose = () => setIsActionSheetVisible(false);
   const router = useRouter();
@@ -255,25 +253,6 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
               New Customer
             </ActionsheetItemText>
           </ActionsheetItem>
-
-          {location.is_closer && (
-            <Fragment>
-              <ActionsheetItem
-                onPress={() => {
-                  router.push(`/(auth)/(modals)/new-job-modal`);
-                  handleClose();
-                }}
-              >
-                <ActionsheetIcon
-                  as={Construction}
-                  className="text-typography-500"
-                />
-                <ActionsheetItemText className="text-typography-700">
-                  New Job
-                </ActionsheetItemText>
-              </ActionsheetItem>
-            </Fragment>
-          )}
         </ActionsheetContent>
       </Actionsheet>
     </View>
@@ -316,14 +295,6 @@ export default function TabLayout() {
           options={{
             title: "Customers",
             tabBarIcon: User2,
-          }}
-        />
-        <Tabs.Screen
-          redirect={!location?.is_closer}
-          name="jobs"
-          options={{
-            title: "Jobs",
-            tabBarIcon: Construction,
           }}
         />
         <Tabs.Screen
