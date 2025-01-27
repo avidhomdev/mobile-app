@@ -348,7 +348,7 @@ export default function CustomersScreen() {
     });
 
   return (
-    <ScrollView contentContainerClassName="gap-2">
+    <ScrollView>
       <Box className="bg-white p-6">
         <Heading size="xl">Customers</Heading>
         <Text size="sm" className="text-gray-400">
@@ -401,7 +401,7 @@ export default function CustomersScreen() {
           </View>
         ) : null}
       </Box>
-      <View className="p-6 gap-2">
+      <View className="p-6 gap-y-4">
         {customerResults.map((customer) => (
           <CustomerCard customer={customer} key={customer.id} />
         ))}
