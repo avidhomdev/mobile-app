@@ -12,7 +12,6 @@ import {
   ActionsheetItemText,
   ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
-import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -25,6 +24,7 @@ import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
+import { Fab, FabIcon } from "@/components/ui/fab";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
@@ -222,14 +222,13 @@ function PlusButtonActionSheet() {
 
   return (
     <Fragment>
-      <Button
-        action="primary"
-        className="rounded-full aspect-square"
+      <Fab
+        size="lg"
+        placement="bottom right"
         onPress={() => setIsActionSheetVisible(true)}
-        size="xl"
       >
-        <Icon as={Plus} className="text-typography-white" size="xl" />
-      </Button>
+        <FabIcon as={Plus} />
+      </Fab>
       <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
         <ActionsheetBackdrop />
         <ActionsheetContent style={{ paddingBlockEnd }}>
@@ -294,7 +293,7 @@ function PlusButtonActionSheet() {
 }
 
 export default function Screen() {
-  const { top, bottom } = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets();
   const router = useRouter();
   const { customer } = useCustomerContext();
   const customerDisposition = customer?.disposition_status
@@ -319,12 +318,6 @@ export default function Screen() {
         </View>
         <View className="h-72 aspect-video border-t-8 border-gray-500 border-b-8">
           <Image alt="Map" source={map} size="full" />
-        </View>
-        <View className="px-6">
-          <Alert action="info">
-            <AlertIcon as={Calendar1} />
-            <AlertText>Upcoming appointment</AlertText>
-          </Alert>
         </View>
         <View className="px-6">
           <View>
@@ -424,23 +417,7 @@ export default function Screen() {
         </View>
         <ScreenEnd />
       </ScrollView>
-      <View
-        className="px-6 flex-row gap-x-1 justify-end items-center absolute right-0"
-        style={{ bottom: bottom }}
-      >
-        {/* <MapPinButton />
-        <PhoneButton />
-        <EmailButton />
-        <Button
-          action="secondary"
-          className="rounded-full aspect-square"
-          onPress={() => router.push(`/customer/[customerId]/notes`)}
-          size="xl"
-        >
-          <Icon as={MessageCircle} size="xl" />
-        </Button> */}
-        <PlusButtonActionSheet />
-      </View>
+      <PlusButtonActionSheet />
     </Fragment>
   );
 }
