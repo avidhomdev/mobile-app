@@ -21,7 +21,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
-import { Badge, BadgeText } from "@/components/ui/badge";
+import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
@@ -93,12 +93,13 @@ function EmailButton() {
       </AlertDialog>
       <Button
         action="secondary"
-        className="rounded-full aspect-square"
         disabled={!customer?.email}
         onPress={() => setIsAlertDialogVisible(true)}
-        size="xl"
+        size="sm"
+        variant="outline"
       >
-        <Icon as={Mail} size="xl" />
+        <ButtonIcon as={Mail} />
+        <ButtonText>Email</ButtonText>
       </Button>
     </Fragment>
   );
@@ -148,12 +149,13 @@ function PhoneButton() {
       </AlertDialog>
       <Button
         action="secondary"
-        className="rounded-full aspect-square"
         disabled={!customer?.phone}
         onPress={() => setIsAlertDialogVisible(true)}
-        size="xl"
+        size="sm"
+        variant="outline"
       >
-        <Icon as={Phone} size="xl" />
+        <ButtonIcon as={Phone} />
+        <ButtonText>Call</ButtonText>
       </Button>
     </Fragment>
   );
@@ -167,10 +169,18 @@ function MapPinButton() {
   };
   return (
     <Fragment>
+      <Button
+        action="secondary"
+        onPress={() => setIsAlertDialogVisible(true)}
+        size="sm"
+        variant="outline"
+      >
+        <ButtonIcon as={MapPin} />
+        <ButtonText>Map</ButtonText>
+      </Button>
       <AlertDialog
         isOpen={isAlertDialogVisible}
         onClose={handleCloserAlertDialog}
-        size="md"
       >
         <AlertDialogBackdrop />
         <AlertDialogContent>
@@ -200,14 +210,6 @@ function MapPinButton() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Button
-        action="secondary"
-        className="rounded-full aspect-square"
-        onPress={() => setIsAlertDialogVisible(true)}
-        size="xl"
-      >
-        <Icon as={MapPin} size="xl" />
-      </Button>
     </Fragment>
   );
 }
@@ -332,12 +334,18 @@ export default function Screen() {
             </View>
           </View>
           {customerDisposition && (
-            <View className="self-start mt-1">
+            <View className="self-start mt-2">
               <Badge action={customerDisposition.action} size="lg">
+                <BadgeIcon as={customerDisposition.icon} />
                 <BadgeText>{customerDisposition.label}</BadgeText>
               </Badge>
             </View>
           )}
+        </View>
+        <View className="px-6 flex-row items-center gap-x-2">
+          <MapPinButton />
+          <PhoneButton />
+          <EmailButton />
         </View>
         <View className="px-6 flex-row items-center gap-x-4">
           <Card className="grow" variant="filled">
@@ -349,6 +357,7 @@ export default function Screen() {
             <Text size="xl">{formatAsCompactCurrency(0)}</Text>
           </Card>
         </View>
+        <Divider className="w-[50%] mx-auto" />
         <View className="px-6">
           <View className="flex-row items-center gap-x-2">
             <Icon as={Calendar1} className="text-typography-500" size="lg" />
@@ -419,7 +428,7 @@ export default function Screen() {
         className="px-6 flex-row gap-x-1 justify-end items-center absolute right-0"
         style={{ bottom: bottom }}
       >
-        <MapPinButton />
+        {/* <MapPinButton />
         <PhoneButton />
         <EmailButton />
         <Button
@@ -429,7 +438,7 @@ export default function Screen() {
           size="xl"
         >
           <Icon as={MessageCircle} size="xl" />
-        </Button>
+        </Button> */}
         <PlusButtonActionSheet />
       </View>
     </Fragment>
