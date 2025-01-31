@@ -6,6 +6,15 @@ import eslintConfigPrettier from "eslint-config-prettier";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
+  {
+    ignores: [
+      ".expo/",
+      "ios",
+      "metro.config.js",
+      "node_modules/",
+      "**/components/ui/",
+    ],
+  },
   { files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
@@ -30,5 +39,4 @@ export default [
       "no-console": "error",
     },
   },
-  { ignores: [".expo/", "ios", "metro.config.js", "node_modules/"] },
 ];

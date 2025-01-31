@@ -56,7 +56,7 @@ export function CustomerProvider({
 
   return (
     <CustomerContext.Provider value={value}>
-      {children}
+      {customer ? children : "No customer found."}
     </CustomerContext.Provider>
   );
 }

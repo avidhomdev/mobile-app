@@ -1,3 +1,4 @@
+import map from "@/assets/images/map.jpg";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -12,6 +13,7 @@ import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
+import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
 import {
@@ -37,6 +39,7 @@ import {
   Clock8,
   Clock9,
   InfoIcon,
+  MapPin,
   Timer,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
@@ -108,6 +111,57 @@ function CustomerDisposition() {
   );
 }
 
+interface AppointmentCardProps {
+  appointment: {
+    business_id: string;
+    created_at: string;
+    customer_id: number | null;
+    duration: number | null;
+    end_datetime: string;
+    id: number;
+    job_id: number | null;
+    location_id: number | null;
+    name: string | null;
+    start_datetime: string;
+  };
+}
+
+function AppointmentCard({ appointment }: AppointmentCardProps) {
+  const startDayjs = dayjs(appointment.start_datetime);
+  const StartIcon =
+    clocks[Number(startDayjs.format("h")) as keyof typeof clocks];
+  const endDayjs = dayjs(appointment.end_datetime);
+  const EndIcon = clocks[Number(endDayjs.format("h")) as keyof typeof clocks];
+
+  return (
+    <Card key={appointment.id}>
+      <View className="h-36 bg-red-200">
+        <Image alt="Map" source={map} size="full" />
+        <Icon as={MapPin} className="absolute left-10 top-24" />
+      </View>
+      <View className="flex-row items-center gap-x-2 mt-2">
+        <Icon as={Calendar1} />
+        <Text>{dayjs(startDayjs).format(FRIENDLY_DATE_FORMAT)}</Text>
+      </View>
+      <View className="flex-row items-center gap-x-2">
+        <View className="flex-row items-center gap-x-1">
+          <Icon as={StartIcon} />
+          <Text>{dayjs(startDayjs).format(TIME_FORMAT)}</Text>
+        </View>
+        <Text>-</Text>
+        <View className="flex-row items-center gap-x-1">
+          <Icon as={EndIcon} />
+          <Text>{dayjs(endDayjs).format(TIME_FORMAT)}</Text>
+        </View>
+      </View>
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={Timer} />
+        <Text>{`${appointment.duration ?? 0} minutes`}</Text>
+      </View>
+    </Card>
+  );
+}
+
 export default function CustomerScreen() {
   const { customer } = useCustomerContext();
 
@@ -124,41 +178,9 @@ export default function CustomerScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerClassName="gap-x-2 py-2"
         >
-          {customer?.appointments?.map((appointment) => {
-            const startDayjs = dayjs(appointment.start_datetime);
-            const StartIcon =
-              clocks[Number(startDayjs.format("h")) as keyof typeof clocks];
-            const endDayjs = dayjs(appointment.end_datetime);
-            const EndIcon =
-              clocks[Number(endDayjs.format("h")) as keyof typeof clocks];
-
-            return (
-              <Card key={appointment.id}>
-                <Text className="mb-2" isTruncated>
-                  {appointment.name ?? "Appointment"}
-                </Text>
-                <View className="flex-row items-center gap-x-2">
-                  <Icon as={Calendar1} />
-                  <Text>{dayjs(startDayjs).format(FRIENDLY_DATE_FORMAT)}</Text>
-                </View>
-                <View className="flex-row items-center gap-x-2">
-                  <View className="flex-row items-center gap-x-1">
-                    <Icon as={StartIcon} />
-                    <Text>{dayjs(startDayjs).format(TIME_FORMAT)}</Text>
-                  </View>
-                  <Text>-</Text>
-                  <View className="flex-row items-center gap-x-1">
-                    <Icon as={EndIcon} />
-                    <Text>{dayjs(endDayjs).format(TIME_FORMAT)}</Text>
-                  </View>
-                </View>
-                <View className="flex-row items-center gap-x-2">
-                  <Icon as={Timer} />
-                  <Text>{`${appointment.duration ?? 0} minutes`}</Text>
-                </View>
-              </Card>
-            );
-          })}
+          {customer?.appointments?.map((appointment) => (
+            <AppointmentCard appointment={appointment} key={appointment.id} />
+          ))}
         </ScrollView>
       </View>
     </ScrollView>

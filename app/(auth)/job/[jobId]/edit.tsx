@@ -1,4 +1,4 @@
-import Text from "@/components/Text";
+import { Text } from "@/components/ui/text";
 import { FontAwesome } from "@expo/vector-icons";
 import { router, useGlobalSearchParams } from "expo-router";
 import { ScrollView, TouchableOpacity, View } from "react-native";
@@ -22,9 +22,7 @@ export default function JobEditScreen() {
           <Text className="text-white">Back</Text>
         </TouchableOpacity>
 
-        <Text className="text-white" variant="headline">
-          {`Edit ${jobId}`}
-        </Text>
+        <Text className="text-white">{`Edit ${jobId}`}</Text>
       </View>
       <Text>Some fields here</Text>
       <Text>Some fields here</Text>

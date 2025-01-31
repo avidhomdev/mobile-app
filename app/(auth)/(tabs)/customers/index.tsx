@@ -152,7 +152,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
           <ActionsheetItem
             onPress={() => {
               router.push({
-                pathname: "/(auth)/(tabs)/customers/[customerId]",
+                pathname: "/customer/[customerId]",
                 params: { customerId: customer.id },
               });
               handleCloseActionSheet();
@@ -166,8 +166,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
           <ActionsheetItem
             onPress={() => {
               router.push({
-                pathname:
-                  "/(auth)/(tabs)/customers/[customerId]/schedule-appointment",
+                pathname: "/customer/[customerId]/new-appointment",
                 params: {
                   customerId: customer.id,
                 },
@@ -196,7 +195,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
         onLongPress={() => setIsActionSheetVisible(true)}
         onPress={() =>
           router.push({
-            pathname: "/(auth)/(tabs)/customers/[customerId]",
+            pathname: "/customer/[customerId]",
             params: { customerId: customer.id },
           })
         }

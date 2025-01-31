@@ -1,5 +1,5 @@
-import Card from "@/components/Card";
-import Text from "@/components/Text";
+import { Card } from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
 import { useJobContext } from "@/contexts/job-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
@@ -49,10 +49,8 @@ function Header() {
         </TouchableOpacity>
       </View>
       <View className="gap-y-2 w-4/5 py-4">
-        <Text className="bg-white p-1 pl-6 grow" variant="headline">
-          {job?.full_name}
-        </Text>
-        <Text variant="subheader" className="text-white ml-6">
+        <Text className="bg-white p-1 pl-6 grow">{job?.full_name}</Text>
+        <Text className="text-white ml-6">
           {`${formatEmptyAsNa(job?.address)}, ${formatEmptyAsNa(
             job?.city
           )}, ${formatEmptyAsNa(job?.state)} ${formatEmptyAsNa(
@@ -70,9 +68,7 @@ function Tiles() {
   return (
     <View className="gap-3 flex-row px-6 flex-wrap">
       <Card className="p-4 basis-1/3 grow bg-indigo-600">
-        <Text variant="subheader" className="text-indigo-300">
-          Commission
-        </Text>
+        <Text className="text-indigo-300">Commission</Text>
         <View className="flex-row gap-x-2 items-center">
           <Text className="italic font-semibold text-indigo-100">
             {formatAsCurrency(Number(job?.commission))}
@@ -80,9 +76,7 @@ function Tiles() {
         </View>
       </Card>
       <Card className="p-4 basis-1/3 grow bg-indigo-600">
-        <Text variant="subheader" className="text-indigo-300">
-          Hours
-        </Text>
+        <Text className="text-indigo-300">Hours</Text>
         <View className="flex-row gap-x-2 items-center">
           <Text className="italic font-semibold text-indigo-100">
             {formatMinutesToHoursAndMinutes(Number(job?.commission) / 20)}
@@ -98,9 +92,7 @@ function Products() {
 
   return (
     <View className="gap-y-2">
-      <Text variant="header" className="px-6">
-        Products
-      </Text>
+      <Text className="px-6">Products</Text>
       <ScrollView
         contentContainerClassName="gap-x-3 flex-row px-2"
         horizontal
@@ -110,7 +102,7 @@ function Products() {
           <Card className="w-72 flex-1 p-3 gap-y-2" key={product.id}>
             <View>
               <Text>{product.product.name}</Text>
-              <Text variant="subheader">{`${product.number_of_units} x ${product.product.unit}`}</Text>
+              <Text>{`${product.number_of_units} x ${product.product.unit}`}</Text>
             </View>
             <Text className="font-bold text-green-600">
               {formatAsCompactCurrency(
@@ -127,7 +119,7 @@ function Products() {
 function TodoList() {
   return (
     <View className="gap-y-2 px-6">
-      <Text variant="header">Todos</Text>
+      <Text>Todos</Text>
       <TouchableOpacity className="flex-row items-center gap-x-2">
         <Ionicons name="checkbox-outline" size={32} color="#9ca3af" />
         <Text>Verify job measurements</Text>
@@ -175,27 +167,19 @@ function PopoverButton() {
           <View className="absolute bottom-16 right-4 bg-gray-900 w-2/3 p-4 rounded rounded-br-none gap-y-4 z-10">
             <TouchableOpacity className="flex-row gap-x-2 items-center p-2">
               <Ionicons name="camera" size={18} color="#f3f4f6" />
-              <Text variant="menuitem" className="text-gray-100">
-                Take Photo
-              </Text>
+              <Text className="text-gray-100">Take Photo</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-row gap-x-2 items-center p-2">
               <Ionicons name="document" size={18} color="#f3f4f6" />
-              <Text variant="menuitem" className="text-gray-100">
-                Send Document
-              </Text>
+              <Text className="text-gray-100">Send Document</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-row gap-x-2 items-center p-2">
               <Ionicons name="cash" size={18} color="#f3f4f6" />
-              <Text variant="menuitem" className="text-gray-100">
-                Collect Payment
-              </Text>
+              <Text className="text-gray-100">Collect Payment</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-row gap-x-2 items-center p-2">
               <Ionicons name="alarm" size={18} color="#f3f4f6" />
-              <Text variant="menuitem" className="text-gray-100">
-                Track Time
-              </Text>
+              <Text className="text-gray-100">Track Time</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-row gap-x-2 items-center p-2"
@@ -208,9 +192,7 @@ function PopoverButton() {
               }}
             >
               <Ionicons name="chatbubble" size={18} color="#f3f4f6" />
-              <Text variant="menuitem" className="text-gray-100">
-                Take Notes
-              </Text>
+              <Text className="text-gray-100">Take Notes</Text>
             </TouchableOpacity>
           </View>
           <TouchableWithoutFeedback onPress={toggle}>

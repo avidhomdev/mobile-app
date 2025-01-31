@@ -1,4 +1,4 @@
-import Text from "@/components/Text";
+import { Text } from "@/components/ui/text";
 import { TextareaInput } from "@/components/ui/textarea";
 import { useJobContext } from "@/contexts/job-context";
 import { useUserContext } from "@/contexts/user-context";
@@ -111,9 +111,7 @@ export default function JobNotesScreen() {
           <Text className="text-white">Back</Text>
         </TouchableOpacity>
 
-        <Text className="text-white" variant="headline">
-          Notes
-        </Text>
+        <Text className="text-white">Notes</Text>
       </View>
       <FlatList
         contentContainerClassName="gap-y-6 py-6"
