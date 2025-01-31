@@ -342,11 +342,11 @@ export default function Screen() {
         <View className="px-6 flex-row items-center gap-x-4">
           <Card className="grow" variant="filled">
             <Text size="xs">JOBS TOTAL</Text>
-            <Text size="xl">{formatAsCurrency(1_000_235)}</Text>
+            <Text size="xl">{formatAsCurrency(0)}</Text>
           </Card>
           <Card variant="filled">
             <Text size="xs">BID TOTAL</Text>
-            <Text size="xl">{formatAsCompactCurrency(2_000_235)}</Text>
+            <Text size="xl">{formatAsCompactCurrency(0)}</Text>
           </Card>
         </View>
         <View className="px-6">
