@@ -155,10 +155,10 @@ export default function ModalScreen() {
       <View className="bg-slate-800 p-4 flex-row justify-between">
         <View>
           <Text className="text-typography-white" size="xl">
-            New Lead
+            Getting started
           </Text>
           <Text className="text-typography-gray">
-            More information about the customer
+            Tell us more about yourself to continue
           </Text>
         </View>
         <TouchableOpacity onPress={router.back}>
@@ -331,7 +331,7 @@ export default function ModalScreen() {
         </FormControl>
 
         <Button disabled={state.isSubmitting} size="lg" onPress={handleSubmit}>
-          <ButtonText>Submit</ButtonText>
+          <ButtonText>Get Started</ButtonText>
         </Button>
       </View>
       <View style={{ height: bottom }} />
