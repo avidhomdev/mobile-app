@@ -400,11 +400,12 @@ export default function CustomersScreen() {
           </View>
         ) : null}
       </Box>
-      <View className="p-6 gap-y-4">
+      <View className="p-2 gap-y-2">
         {customerResults.map((customer) => (
           <CustomerCard customer={customer} key={customer.id} />
         ))}
       </View>
+      <ScreenEnd />
       <ScreenEnd />
     </ScrollView>
   );
