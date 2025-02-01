@@ -444,7 +444,7 @@ export default function Screen() {
               <Button
                 action="secondary"
                 onPress={() =>
-                  router.push(`/customer/[customerId]/new-appointment`)
+                  router.push(`/customer/[customerId]/schedule-closing`)
                 }
               >
                 <ButtonIcon as={Calendar1} />
