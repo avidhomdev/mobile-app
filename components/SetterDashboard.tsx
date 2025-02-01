@@ -51,7 +51,7 @@ export function SetterDashboard() {
                 key={customer.id}
                 onPress={() =>
                   router.push({
-                    pathname: "/(auth)/(tabs)/customers/[customerId]",
+                    pathname: "/customer/[customerId]",
                     params: { customerId: customer.id },
                   })
                 }

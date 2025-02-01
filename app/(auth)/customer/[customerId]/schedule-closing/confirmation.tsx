@@ -67,7 +67,7 @@ export default function ScheduleClosingConfirmationScreen() {
         action="secondary"
         onPress={() =>
           router.push({
-            pathname: "/(auth)/(tabs)/customers/[customerId]",
+            pathname: "/customer/[customerId]",
             params: { customerId: params.customerId as string },
           })
         }

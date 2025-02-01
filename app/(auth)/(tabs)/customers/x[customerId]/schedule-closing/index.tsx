@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 
-import BackHeaderButton from "@/components/BackHeaderButton";
 import HorizontalDaySelector from "@/components/HorizontalDaySelector";
 import ScreenEnd from "@/components/ScreenEnd";
 import {
@@ -41,28 +40,41 @@ import {
 import {
   FRIENDLY_DATE_FORMAT,
   SERVER_DATE_TIME_FORMAT,
+  SERVER_DATE_TIME_FORMAT_TZ,
 } from "@/constants/date-formats";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { useLocationContext } from "@/contexts/location-context";
-import { useUserContext } from "@/contexts/user-context";
+import { IProfile, useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronDownIcon } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
 function TimeSlotRow({
+  closer,
   disabled = false,
   time,
 }: {
+  closer:
+    | IProfile
+    | {
+        avatar_url: string | null;
+        created_at: string;
+        full_name: string | null;
+        id: string;
+        updated_at: string | null;
+        username: string | null;
+        website: string | null;
+      };
   disabled?: boolean;
   time: dayjs.Dayjs;
 }) {
-  const { customer } = useCustomerContext();
   const router = useRouter();
-  const { profile, refreshData } = useUserContext();
+  const { updateCustomer } = useCustomerContext();
+  const { refreshData } = useUserContext();
   const { location } = useLocationContext();
+  const params = useLocalSearchParams();
   const [duration, setDuration] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [
@@ -80,14 +92,14 @@ function TimeSlotRow({
 
     const appointmentInsert = {
       business_id: location.business_id,
-      customer_id: customer?.id,
+      customer_id: params.customerId,
       duration: duration,
       end_datetime: time
         .add(duration, "minute")
-        ?.format(SERVER_DATE_TIME_FORMAT),
+        ?.format(SERVER_DATE_TIME_FORMAT_TZ),
       location_id: location.id,
       name: "Customer Meeting",
-      start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
+      start_datetime: time?.format(SERVER_DATE_TIME_FORMAT_TZ),
     };
 
     return supabase
@@ -97,18 +109,30 @@ function TimeSlotRow({
       .single()
       .then(({ data, error }) => {
         if (error) throw error.message;
-        return supabase.from("business_appointment_profiles").insert({
+
+        const appointmentProfileInsert = {
           appointment_id: data.id,
           business_id: location.business_id,
-          profile_id: profile.id,
+          profile_id: closer.id,
+        };
+
+        return supabase
+          .from("business_appointment_profiles")
+          .insert(appointmentProfileInsert);
+      })
+      .then(({ error }) => {
+        if (error) throw error.message;
+
+        return updateCustomer(Number(params.customerId), {
+          closer_id: closer.id,
         });
       })
       .then(refreshData)
       .then(() =>
         router.push({
-          pathname: "/(auth)/customer/[customerId]",
+          pathname: "/customer/[customerId]",
           params: {
-            customerId: customer?.id ?? "",
+            customerId: params.customerId as string,
           },
         })
       )
@@ -118,7 +142,7 @@ function TimeSlotRow({
   return (
     <TouchableOpacity
       className={twMerge(
-        disabled ? "bg-gray-300" : "bg-white shadow-sm shadow-gray-200",
+        disabled ? "bg-gray-200" : "bg-white shadow-sm shadow-gray-200",
         "p-4 rounded-full flex-row items-center"
       )}
       disabled={disabled}
@@ -136,7 +160,7 @@ function TimeSlotRow({
       </Text>
       {!disabled && (
         <Avatar className="absolute right-2" size="sm">
-          <AvatarFallbackText>{profile.full_name}</AvatarFallbackText>
+          <AvatarFallbackText>{closer.full_name}</AvatarFallbackText>
         </Avatar>
       )}
 
@@ -231,11 +255,9 @@ interface IAppointment extends Tables<"business_appointments"> {
   profiles: IAppointmentProfile[];
 }
 
-export default function Screen() {
-  const { customer } = useCustomerContext();
-  const { top } = useSafeAreaInsets();
+export default function ScheduleClosingScreen() {
   const { location } = useLocationContext();
-  const { profile } = useUserContext();
+  const { closers, profile } = useUserContext();
   const [appointments, setAppointments] = useState<IAppointment[]>([]);
   const [selectedDayJs, setSelectedDayJs] = useState(dayjs());
 
@@ -246,10 +268,7 @@ export default function Screen() {
         .select(
           "*, profiles: business_appointment_profiles(*, profile: profile_id(*))"
         )
-        .match({
-          location_id: location.id,
-          "business_appointment_profiles.profile_id": profile.id,
-        })
+        .eq("location_id", location.id)
         .gte(
           "start_datetime",
           selectedDayJs.startOf("day").format(SERVER_DATE_TIME_FORMAT)
@@ -273,54 +292,74 @@ export default function Screen() {
   );
 
   return (
-    <View className="flex-1" style={{ paddingTop: top }}>
-      <View className="px-6">
-        <BackHeaderButton />
-        <Heading className="text-typography-800" size="xl">
-          Appointment
-        </Heading>
-        <Text className="text-typography-400">
-          {`Schedule appointment for ${customer?.full_name}`}
+    <View className="flex-1">
+      <Box className="bg-white p-6 pb-2">
+        <Heading size="xl">Closing Appointment</Heading>
+        <Text size="sm" className="text-gray-400">
+          Schedule closing appointment
         </Text>
-      </View>
-      <Box className="border-b border-gray-200 pt-6">
-        <Heading className="text-center" size="sm">
-          {selectedDayJs.format("MMM YYYY")}
-        </Heading>
+      </Box>
+      <Box>
+        <View className="px-6 pt-2">
+          <Heading className="text-center" size="sm">
+            {selectedDayJs.format("MMM YYYY")}
+          </Heading>
+        </View>
         <HorizontalDaySelector
           disableBeforeToday
           selectedDayJs={selectedDayJs}
           setSelectedDayJs={setSelectedDayJs}
         />
       </Box>
+      {!closers?.length ? (
+        <Text>No closers found.</Text>
+      ) : (
+        <ScrollView
+          contentContainerClassName="p-6 gap-y-2"
+          showsVerticalScrollIndicator={false}
+        >
+          {timeArr.map((time) => {
+            const findOverlappingAppointment = [
+              ...new Set(
+                appointments.flatMap((appointment) => {
+                  const profileIds = appointment.profiles.map(
+                    (p) => p.profile_id
+                  );
 
-      <ScrollView
-        contentContainerClassName="p-6 gap-y-2 bg-gray-100"
-        key={selectedDayJs.date()}
-        showsVerticalScrollIndicator={false}
-      >
-        {timeArr.map((time) => {
-          const hasOverlap = appointments.some((appointment) => {
-            const startDayjs = dayjs(appointment.start_datetime);
-            const endDayjs = dayjs(appointment.end_datetime);
-            const noTimeDiff =
-              !startDayjs.diff(time, "minute") ||
-              !endDayjs.diff(time, "minute");
-            const overlap = startDayjs.isBefore(time) && endDayjs.isAfter(time);
+                  if (
+                    !dayjs(appointment.start_datetime).diff(time, "minute") ||
+                    !dayjs(appointment.end_datetime).diff(time, "minute")
+                  )
+                    return profileIds;
+                  if (
+                    dayjs(appointment.start_datetime).isBefore(time) &&
+                    dayjs(appointment.end_datetime).isAfter(time)
+                  )
+                    return profileIds;
+                  return [];
+                })
+              ),
+            ];
 
-            return noTimeDiff || overlap;
-          });
+            const filteredClosers = closers.filter((c) => {
+              if (location.is_closer && c.id !== profile.id) return false;
+              return !findOverlappingAppointment.includes(c.id);
+            });
 
-          return (
-            <TimeSlotRow
-              disabled={hasOverlap || time.isBefore(dayjs())}
-              key={`${time.hour()}_${time.minute()}`}
-              time={time}
-            />
-          );
-        })}
-        <ScreenEnd />
-      </ScrollView>
+            const [closer] = filteredClosers;
+
+            return (
+              <TimeSlotRow
+                disabled={!closer || time.isBefore(dayjs())}
+                closer={closer}
+                key={`${time.toISOString()}_${closer?.id}`}
+                time={time}
+              />
+            );
+          })}
+          <ScreenEnd />
+        </ScrollView>
+      )}
     </View>
   );
 }

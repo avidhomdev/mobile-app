@@ -29,10 +29,12 @@ import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
 import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
+import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
   Calendar1,
@@ -307,7 +309,9 @@ export default function Screen() {
           className="flex-row items-center justify-between px-6"
           style={{ paddingBlockStart: top }}
         >
-          <BackHeaderButton />
+          <BackHeaderButton
+            onPress={() => router.push(`/(auth)/(tabs)/customers`)}
+          />
           <Pressable
             onPress={() =>
               router.push("/(auth)/customer/[customerId]/settings")
@@ -360,18 +364,53 @@ export default function Screen() {
               <Text size="xs">Schedule appointments with the customer</Text>
             </View>
           </View>
-          <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
-            <Text className="text-center">No appointments found.</Text>
-            <Button
-              action="secondary"
-              onPress={() =>
-                router.push(`/customer/[customerId]/new-appointment`)
-              }
-            >
-              <ButtonIcon as={Calendar1} />
-              <ButtonText>Add Appointment</ButtonText>
-            </Button>
-          </View>
+          {customer?.appointments?.length ? (
+            <View className="gap-y-2 py-6">
+              {customer?.appointments
+                .sort(
+                  (a, b) =>
+                    new Date(b.start_datetime).getTime() -
+                    new Date(a.start_datetime).getTime()
+                )
+                .map((appointment) => (
+                  <View
+                    key={appointment.id}
+                    className="bg-gray-50 flex-row items-center gap-x-2 border border-gray-200"
+                  >
+                    <View className="aspect-square p-4 border-r border-gray-200">
+                      <Icon as={Calendar1} />
+                    </View>
+                    <View className="p-2">
+                      <Text>
+                        {dayjs(appointment.start_datetime).format(
+                          FRIENDLY_DATE_FORMAT
+                        )}
+                      </Text>
+                      <Text size="xs">
+                        {`${dayjs(appointment.start_datetime).format(
+                          TIME_FORMAT
+                        )} - ${dayjs(appointment.end_datetime).format(
+                          TIME_FORMAT
+                        )}`}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          ) : (
+            <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+              <Text className="text-center">No appointments found.</Text>
+              <Button
+                action="secondary"
+                onPress={() =>
+                  router.push(`/customer/[customerId]/new-appointment`)
+                }
+              >
+                <ButtonIcon as={Calendar1} />
+                <ButtonText>Add Appointment</ButtonText>
+              </Button>
+            </View>
+          )}
         </View>
         <Divider className="w-[50%] mx-auto" />
         <View className="px-6">
