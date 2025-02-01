@@ -4,10 +4,17 @@ import { Icon } from "./ui/icon";
 import { ChevronLeft } from "lucide-react-native";
 import { Text } from "./ui/text";
 
-export default function BackHeaderButton() {
+export default function BackHeaderButton({
+  onPress,
+}: {
+  onPress?: () => void;
+}) {
   const router = useRouter();
   return (
-    <Pressable className="items-center flex-row gap-x-1" onPress={router.back}>
+    <Pressable
+      className="items-center flex-row gap-x-1"
+      onPress={onPress || router.back}
+    >
       <Icon as={ChevronLeft} />
       <Text>Back</Text>
     </Pressable>
