@@ -30,8 +30,12 @@ import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
-import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
+import {
+  DISPOSITION_STATUS_KEYS,
+  DISPOSITION_STATUSES,
+} from "@/constants/disposition_statuses";
 import { useCustomerContext } from "@/contexts/customer-context";
+import { useUserContext } from "@/contexts/user-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
@@ -294,55 +298,92 @@ function PlusButtonActionSheet() {
   );
 }
 
-export default function Screen() {
-  const { top } = useSafeAreaInsets();
-  const router = useRouter();
-  const { customer } = useCustomerContext();
+function CustomerDisposition() {
+  const { bottom: paddingBlockEnd } = useSafeAreaInsets();
+  const { refreshData } = useUserContext();
+  const { customer, updateCustomer } = useCustomerContext();
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+  const handleClose = () => setIsActionSheetVisible(false);
+  const handleUpdate = (disposition_status: DISPOSITION_STATUS_KEYS) => () =>
+    updateCustomer(Number(customer?.id), { disposition_status })
+      .then(refreshData)
+      .then(handleClose);
   const customerDisposition = customer?.disposition_status
     ? DISPOSITION_STATUSES[customer.disposition_status]
     : DISPOSITION_STATUSES.NEW;
 
   return (
     <Fragment>
-      <ScrollView contentContainerClassName="gap-y-6">
-        <View
-          className="flex-row items-center justify-between px-6"
-          style={{ paddingBlockStart: top }}
+      <Pressable
+        className="ml-auto"
+        onPress={() => setIsActionSheetVisible(true)}
+      >
+        <Badge
+          action={customerDisposition.action}
+          size="lg"
+          className="gap-x-1"
         >
-          <BackHeaderButton
-            onPress={() => router.push(`/(auth)/(tabs)/customers`)}
-          />
-          <Pressable
-            onPress={() =>
-              router.push("/(auth)/customer/[customerId]/settings")
-            }
-          >
-            <Icon as={Settings} className="text-typography-600" size="xl" />
-          </Pressable>
-        </View>
-        <View className="h-72 aspect-video border-t-8 border-gray-500 border-b-8">
+          <BadgeIcon as={customerDisposition.icon} />
+          <BadgeText>{customerDisposition.label}</BadgeText>
+        </Badge>
+      </Pressable>
+
+      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>
+              Select a status
+            </ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          {Object.entries(DISPOSITION_STATUSES).map(([key, status]) => (
+            <ActionsheetItem
+              key={key}
+              onPress={handleUpdate(key as DISPOSITION_STATUS_KEYS)}
+            >
+              <ActionsheetItemText>{status.label}</ActionsheetItemText>
+            </ActionsheetItem>
+          ))}
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
+export default function Screen() {
+  const { top } = useSafeAreaInsets();
+  const router = useRouter();
+  const { customer } = useCustomerContext();
+
+  return (
+    <Fragment>
+      <View
+        className="flex-row items-center p-4 gap-x-4 border-b-8 border-gray-500"
+        style={{ paddingBlockStart: top }}
+      >
+        <BackHeaderButton
+          onPress={() => router.push(`/(auth)/(tabs)/customers`)}
+        />
+        <CustomerDisposition />
+        <Pressable
+          onPress={() => router.push("/(auth)/customer/[customerId]/settings")}
+        >
+          <Icon as={Settings} className="text-typography-600" size="xl" />
+        </Pressable>
+      </View>
+      <ScrollView contentContainerClassName="gap-y-6">
+        <View className="h-72 aspect-video border-gray-500 border-b-8">
           <Image alt="Map" source={map} size="full" />
         </View>
         <View className="px-6">
-          <View>
-            <View>
-              <Heading size="2xl">{customer?.full_name}</Heading>
-              <Text size="sm">{customer?.address}</Text>
-            </View>
+          <Heading size="2xl">{customer?.full_name}</Heading>
+          <Text size="sm">{customer?.address}</Text>
+          <View className="mt-2 flex-row items-center gap-x-2">
+            <MapPinButton />
+            <PhoneButton />
+            <EmailButton />
           </View>
-          {customerDisposition && (
-            <View className="self-start mt-2">
-              <Badge action={customerDisposition.action} size="lg">
-                <BadgeIcon as={customerDisposition.icon} />
-                <BadgeText>{customerDisposition.label}</BadgeText>
-              </Badge>
-            </View>
-          )}
-        </View>
-        <View className="px-6 flex-row items-center gap-x-2">
-          <MapPinButton />
-          <PhoneButton />
-          <EmailButton />
         </View>
         <View className="px-6 flex-row items-center gap-x-4">
           <Card className="grow" variant="filled">
