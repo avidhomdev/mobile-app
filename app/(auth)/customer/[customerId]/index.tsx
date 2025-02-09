@@ -351,6 +351,141 @@ function CustomerDisposition() {
   );
 }
 
+function CustomerBids() {
+  const router = useRouter();
+  const { customer } = useCustomerContext();
+  const { bids = [] } = customer ?? {};
+  const hasBids = bids.length > 0;
+
+  return (
+    <View className="px-6">
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={Construction} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Bids</Heading>
+          <Text size="xs">Create bids for the customer</Text>
+        </View>
+      </View>
+      {hasBids ? (
+        <View className="gap-y-2 py-6">
+          {bids.map((bid) => {
+            const bidTotal = bid.products.reduce((acc, product) => {
+              return acc + Number(product.unit_price) * Number(product.units);
+            }, 0);
+            return (
+              <View
+                key={bid.id}
+                className="bg-gray-50 gap-x-2 border border-gray-200 p-2 gap-y-1"
+              >
+                <Text>{bid.name}</Text>
+
+                {bid.products.map((p) => (
+                  <View
+                    className="p-2 bg-white border border-gray-200 rounded"
+                    key={p.id}
+                  >
+                    <Text size="sm">{p.product.name}</Text>
+                    <View className="flex-row items-center justify-between">
+                      <Text size="xs">{`${p.units} ${p.product.unit}`}</Text>
+                      <Text bold size="sm">
+                        {formatAsCompactCurrency(p.units * p.unit_price)}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+                <View className="flex-row items-center justify-between">
+                  <Text size="sm">Commission</Text>
+                  <Text size="sm">{formatAsCurrency(bid.commission)}</Text>
+                </View>
+                <Divider />
+                <Text bold className="ml-auto">
+                  {formatAsCurrency(bidTotal + bid.commission)}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      ) : (
+        <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+          <Text className="text-center">No bids found.</Text>
+          <Button
+            action="secondary"
+            onPress={() => router.push(`/customer/[customerId]/new-bid`)}
+          >
+            <ButtonIcon as={Construction} />
+            <ButtonText>Add Bid</ButtonText>
+          </Button>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function CustomerAppointments() {
+  const { customer } = useCustomerContext();
+  const router = useRouter();
+  return (
+    <View className="px-6">
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={Calendar1} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Appointments</Heading>
+          <Text size="xs">Schedule appointments with the customer</Text>
+        </View>
+      </View>
+      {customer?.appointments?.length ? (
+        <View className="gap-y-2 py-6">
+          {customer?.appointments
+            .sort(
+              (a, b) =>
+                new Date(b.start_datetime).getTime() -
+                new Date(a.start_datetime).getTime()
+            )
+            .map((appointment) => (
+              <View
+                key={appointment.id}
+                className="bg-gray-50 flex-row items-center gap-x-2 border border-gray-200"
+              >
+                <View className="aspect-square p-4 border-r border-gray-200">
+                  <Icon as={Calendar1} />
+                </View>
+                <View className="p-2">
+                  <Text>
+                    {dayjs(appointment.start_datetime).format(
+                      FRIENDLY_DATE_FORMAT
+                    )}
+                  </Text>
+                  <Text size="xs">
+                    {`${dayjs(appointment.start_datetime).format(
+                      TIME_FORMAT
+                    )} - ${dayjs(appointment.end_datetime).format(
+                      TIME_FORMAT
+                    )}`}
+                  </Text>
+                </View>
+              </View>
+            ))}
+        </View>
+      ) : (
+        <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+          <Text className="text-center">No appointments found.</Text>
+          <Button
+            action="secondary"
+            onPress={() =>
+              router.push("/customer/[customerId]/new-appointment")
+            }
+          >
+            <ButtonIcon as={Calendar1} />
+            <ButtonText>Add Appointment</ButtonText>
+          </Button>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function Screen() {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
@@ -396,84 +531,9 @@ export default function Screen() {
           </Card>
         </View>
         <Divider className="w-[50%] mx-auto" />
-        <View className="px-6">
-          <View className="flex-row items-center gap-x-2">
-            <Icon as={Calendar1} className="text-typography-500" size="lg" />
-            <View className="w-0.5 h-full bg-typography-100" />
-            <View>
-              <Heading size="md">Appointments</Heading>
-              <Text size="xs">Schedule appointments with the customer</Text>
-            </View>
-          </View>
-          {customer?.appointments?.length ? (
-            <View className="gap-y-2 py-6">
-              {customer?.appointments
-                .sort(
-                  (a, b) =>
-                    new Date(b.start_datetime).getTime() -
-                    new Date(a.start_datetime).getTime()
-                )
-                .map((appointment) => (
-                  <View
-                    key={appointment.id}
-                    className="bg-gray-50 flex-row items-center gap-x-2 border border-gray-200"
-                  >
-                    <View className="aspect-square p-4 border-r border-gray-200">
-                      <Icon as={Calendar1} />
-                    </View>
-                    <View className="p-2">
-                      <Text>
-                        {dayjs(appointment.start_datetime).format(
-                          FRIENDLY_DATE_FORMAT
-                        )}
-                      </Text>
-                      <Text size="xs">
-                        {`${dayjs(appointment.start_datetime).format(
-                          TIME_FORMAT
-                        )} - ${dayjs(appointment.end_datetime).format(
-                          TIME_FORMAT
-                        )}`}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-            </View>
-          ) : (
-            <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
-              <Text className="text-center">No appointments found.</Text>
-              <Button
-                action="secondary"
-                onPress={() =>
-                  router.push(`/customer/[customerId]/schedule-closing`)
-                }
-              >
-                <ButtonIcon as={Calendar1} />
-                <ButtonText>Add Appointment</ButtonText>
-              </Button>
-            </View>
-          )}
-        </View>
+        <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />
-        <View className="px-6">
-          <View className="flex-row items-center gap-x-2">
-            <Icon as={Construction} className="text-typography-500" size="lg" />
-            <View className="w-0.5 h-full bg-typography-100" />
-            <View>
-              <Heading size="md">Bids</Heading>
-              <Text size="xs">Create bids for the customer</Text>
-            </View>
-          </View>
-          <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
-            <Text className="text-center">No bids found.</Text>
-            <Button
-              action="secondary"
-              onPress={() => router.push(`/customer/[customerId]/new-bid`)}
-            >
-              <ButtonIcon as={Construction} />
-              <ButtonText>Add Bid</ButtonText>
-            </Button>
-          </View>
-        </View>
+        <CustomerBids />
         <Divider className="w-[50%] mx-auto" />
         <View className="px-6">
           <View className="flex-row items-center gap-x-2">

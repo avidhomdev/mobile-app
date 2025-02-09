@@ -183,6 +183,133 @@ export type Database = {
           },
         ]
       }
+      business_location_customer_bid_products: {
+        Row: {
+          bid_id: number
+          business_id: string
+          created_at: string
+          id: number
+          location_id: number
+          product_id: number
+          unit_price: number
+          units: number
+        }
+        Insert: {
+          bid_id: number
+          business_id: string
+          created_at?: string
+          id?: number
+          location_id: number
+          product_id: number
+          unit_price: number
+          units?: number
+        }
+        Update: {
+          bid_id?: number
+          business_id?: string
+          created_at?: string
+          id?: number
+          location_id?: number
+          product_id?: number
+          unit_price?: number
+          units?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_location_customer_bid_products_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "business_location_customer_bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bid_products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bid_products_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "business_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bid_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "business_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_location_customer_bids: {
+        Row: {
+          business_id: string
+          commission: number
+          created_at: string
+          creator_id: string
+          customer_id: number
+          id: number
+          location_id: number
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          business_id: string
+          commission?: number
+          created_at?: string
+          creator_id: string
+          customer_id: number
+          id?: number
+          location_id: number
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          business_id?: string
+          commission?: number
+          created_at?: string
+          creator_id?: string
+          customer_id?: number
+          id?: number
+          location_id?: number
+          name?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_location_customer_bids_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bids_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bids_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "business_location_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bids_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "business_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_location_customers: {
         Row: {
           address: string
@@ -965,6 +1092,52 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_product_locations: {
+        Row: {
+          business_id: string
+          created_at: string
+          location_id: number
+          product_id: number
+          status: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          location_id: number
+          product_id: number
+          status?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          location_id?: number
+          product_id?: number
+          status?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_product_locations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_product_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "business_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_product_locations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "business_products"
             referencedColumns: ["id"]
           },
         ]

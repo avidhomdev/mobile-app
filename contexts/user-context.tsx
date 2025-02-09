@@ -22,11 +22,22 @@ export interface ILocationProfile extends Tables<"business_location_profiles"> {
   profile: Tables<"profiles">;
 }
 
+interface ILocationCustomerBidProduct
+  extends Tables<"business_location_customer_bid_products"> {
+  product: Tables<"business_products">;
+}
+
+interface ILocationCustomerBid
+  extends Tables<"business_location_customer_bids"> {
+  products: ILocationCustomerBidProduct[];
+}
+
 export interface ILocationCustomer
   extends Tables<"business_location_customers"> {
-  disposition_status: DISPOSITION_STATUS_KEYS;
   appointments: Tables<"business_appointments">[];
+  bids: ILocationCustomerBid[];
   closer?: Tables<"profiles">;
+  disposition_status: DISPOSITION_STATUS_KEYS;
 }
 
 export interface IAppointments extends Tables<"business_appointments"> {
@@ -93,11 +104,23 @@ const fetchUserContextData = async (
       .eq("id", id)
       .limit(1)
       .single(),
-    supabase
-      .from("business_locations")
-      .select(
-        "*, appointments:business_appointments(*, profiles: business_appointment_profiles(*), customer: customer_id(*)), customers: business_location_customers(*, appointments: business_appointments(*)), jobs: business_location_jobs(*), profiles: business_location_profiles(*, profile: profile_id(*))"
-      ),
+    supabase.from("business_locations").select(`*,
+        appointments:business_appointments(
+          *,
+          profiles: business_appointment_profiles(*),
+          customer: customer_id(*)
+        ),
+        customers: business_location_customers(
+          *,
+          appointments: business_appointments(*),
+          bids: business_location_customer_bids(*, products: business_location_customer_bid_products(*, product: product_id(*)))
+        ),
+        jobs: business_location_jobs(*),
+        profiles: business_location_profiles(
+          *,
+          profile: profile_id(*)
+        )
+      `),
   ]);
 
   return {
