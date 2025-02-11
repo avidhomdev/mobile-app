@@ -15,6 +15,7 @@ web-build/
 *.p12
 *.key
 *.mobileprovision
+*.swp
 
 # Metro
 .metro-health-check*
@@ -41,5 +42,6 @@ expo-env.d.ts
 # @end expo-cli
 
 ios/
+android/
 
 .notes/
