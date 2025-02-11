@@ -21,7 +21,6 @@ export default function Layout() {
           headerShown: false,
         }}
       >
-        <Stack.Screen name="new-bid" />
         <Stack.Screen name="new-job" options={{ presentation: "modal" }} />
       </Stack>
     </CustomerProvider>

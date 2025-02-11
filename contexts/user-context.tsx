@@ -27,7 +27,7 @@ interface ILocationCustomerBidProduct
   product: Tables<"business_products">;
 }
 
-interface ILocationCustomerBid
+export interface ILocationCustomerBid
   extends Tables<"business_location_customer_bids"> {
   products: ILocationCustomerBidProduct[];
 }

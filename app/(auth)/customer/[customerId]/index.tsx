@@ -35,7 +35,8 @@ import {
   DISPOSITION_STATUSES,
 } from "@/constants/disposition_statuses";
 import { useCustomerContext } from "@/contexts/customer-context";
-import { useUserContext } from "@/contexts/user-context";
+import { ILocationCustomerBid, useUserContext } from "@/contexts/user-context";
+import { supabase } from "@/lib/supabase";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
@@ -43,13 +44,17 @@ import { useRouter } from "expo-router";
 import {
   Calendar1,
   Construction,
+  Ellipsis,
+  Eye,
   HardHat,
   Mail,
   MapPin,
   MessageCircle,
+  Minus,
   Phone,
   Plus,
   Settings,
+  Trash,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -229,9 +234,9 @@ function PlusButtonActionSheet() {
   return (
     <Fragment>
       <Fab
-        size="lg"
-        placement="bottom right"
+        className="bottom-8 right-5"
         onPress={() => setIsActionSheetVisible(true)}
+        size="lg"
       >
         <FabIcon as={Plus} />
       </Fab>
@@ -351,6 +356,164 @@ function CustomerDisposition() {
   );
 }
 
+function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
+  const { refreshData } = useUserContext();
+  const { bottom: paddingBlockEnd } = useSafeAreaInsets();
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+  const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
+  const handleCloserAlertDialog = () => setIsAlertDialogVisible(false);
+  const handleClose = () => setIsActionSheetVisible(false);
+  const handleConfirm = async () =>
+    supabase
+      .from("business_location_customer_bids")
+      .delete()
+      .eq("id", bid.id)
+      .then(refreshData)
+      .then(handleCloserAlertDialog)
+      .then(handleClose);
+  const router = useRouter();
+
+  return (
+    <Fragment>
+      <Button
+        action="secondary"
+        onPress={() => setIsActionSheetVisible(true)}
+        size="sm"
+        variant="outline"
+      >
+        <ButtonIcon as={Ellipsis} />
+      </Button>
+      <AlertDialog
+        isOpen={isAlertDialogVisible}
+        onClose={handleCloserAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading className="text-typography-950 font-semibold" size="md">
+              {`Are you sure you want to delete ${bid.name}?`}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text size="sm">
+              This action is irreversible and will delete all data related to
+              this bid.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              action="secondary"
+              onPress={handleCloserAlertDialog}
+              size="sm"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button action="negative" size="sm" onPress={handleConfirm}>
+              <ButtonText>Delete</ButtonText>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>{`Manage ${bid.name}`}</ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/customer/[customerId]/bid/${bid.id}`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={Eye} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              View
+            </ActionsheetItemText>
+          </ActionsheetItem>
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/customer/[customerId]/bid/${bid.id}/edit`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={Settings} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              Edit
+            </ActionsheetItemText>
+          </ActionsheetItem>
+          <ActionsheetItem onPress={() => setIsAlertDialogVisible(true)}>
+            <ActionsheetIcon as={Trash} className="text-red-500" />
+            <ActionsheetItemText className="text-red-700">
+              Delete
+            </ActionsheetItemText>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
+function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
+  const [showAllProducts, setShowAllProducts] = useState(false);
+  const bidTotal = bid.products.reduce((acc, product) => {
+    return acc + Number(product.unit_price) * Number(product.units);
+  }, 0);
+  const filteredProducts = showAllProducts
+    ? bid.products
+    : bid.products.slice(0, 1);
+
+  return (
+    <Card key={bid.id} className="border border-gray-200 gap-y-4 w-80">
+      <View className="flex-row justify-between gap-x-2 items-center">
+        <Text className="shrink" size="lg">
+          {bid.name}
+        </Text>
+        <CustomerBidMenu bid={bid} />
+      </View>
+      <View className="bg-warning-100 aspect-video justify-center items-center">
+        <Text>Nearmaps Image</Text>
+      </View>
+      <View className="gap-y-1">
+        {filteredProducts.map((p) => (
+          <Card variant="filled" key={p.id}>
+            <Text size="sm">{p.product.name}</Text>
+            <View className="flex-row items-center justify-between">
+              <Text size="xs">{`${p.units} ${p.product.unit}`}</Text>
+              <Text bold size="sm">
+                {formatAsCompactCurrency(p.units * p.unit_price)}
+              </Text>
+            </View>
+          </Card>
+        ))}
+        {bid.products.length > 1 ? (
+          <Button
+            action="secondary"
+            onPress={() => setShowAllProducts(!showAllProducts)}
+            size="sm"
+          >
+            <ButtonIcon as={showAllProducts ? Minus : Plus} />
+            <ButtonText>{`${
+              showAllProducts ? "Hide" : "Show more"
+            }`}</ButtonText>
+          </Button>
+        ) : null}
+      </View>
+      <View className="flex-row items-center justify-between">
+        <Text size="sm">Commission</Text>
+        <Text size="sm">{formatAsCurrency(bid.commission)}</Text>
+      </View>
+      <Divider className="mt-auto" />
+      <Text bold className="ml-auto">
+        {formatAsCurrency(bidTotal + bid.commission)}
+      </Text>
+    </Card>
+  );
+}
+
 function CustomerBids() {
   const router = useRouter();
   const { customer } = useCustomerContext();
@@ -358,8 +521,8 @@ function CustomerBids() {
   const hasBids = bids.length > 0;
 
   return (
-    <View className="px-6">
-      <View className="flex-row items-center gap-x-2">
+    <Fragment>
+      <View className="flex-row items-center gap-x-2 px-6">
         <Icon as={Construction} className="text-typography-500" size="lg" />
         <View className="w-0.5 h-full bg-typography-100" />
         <View>
@@ -367,47 +530,23 @@ function CustomerBids() {
           <Text size="xs">Create bids for the customer</Text>
         </View>
       </View>
-      {hasBids ? (
-        <View className="gap-y-2 py-6">
-          {bids.map((bid) => {
-            const bidTotal = bid.products.reduce((acc, product) => {
-              return acc + Number(product.unit_price) * Number(product.units);
-            }, 0);
-            return (
-              <View
-                key={bid.id}
-                className="bg-gray-50 gap-x-2 border border-gray-200 p-2 gap-y-1"
-              >
-                <Text>{bid.name}</Text>
 
-                {bid.products.map((p) => (
-                  <View
-                    className="p-2 bg-white border border-gray-200 rounded"
-                    key={p.id}
-                  >
-                    <Text size="sm">{p.product.name}</Text>
-                    <View className="flex-row items-center justify-between">
-                      <Text size="xs">{`${p.units} ${p.product.unit}`}</Text>
-                      <Text bold size="sm">
-                        {formatAsCompactCurrency(p.units * p.unit_price)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-                <View className="flex-row items-center justify-between">
-                  <Text size="sm">Commission</Text>
-                  <Text size="sm">{formatAsCurrency(bid.commission)}</Text>
-                </View>
-                <Divider />
-                <Text bold className="ml-auto">
-                  {formatAsCurrency(bidTotal + bid.commission)}
-                </Text>
-              </View>
-            );
+      {hasBids ? (
+        <ScrollView
+          className="bg-gray-50 p-6 border-t border-gray-200 border-b"
+          contentContainerClassName="gap-x-4 items-start"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={320}
+        >
+          {bids.map((bid) => {
+            return <CustomerBid key={bid.id} bid={bid} />;
           })}
-        </View>
+          <ScreenEnd />
+        </ScrollView>
       ) : (
-        <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+        <View className="p-6 bg-gray-100 rounded border border-gray-200 gap-y-2 items-center mx-6">
           <Text className="text-center">No bids found.</Text>
           <Button
             action="secondary"
@@ -418,7 +557,7 @@ function CustomerBids() {
           </Button>
         </View>
       )}
-    </View>
+    </Fragment>
   );
 }
 
@@ -490,6 +629,14 @@ export default function Screen() {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
   const { customer } = useCustomerContext();
+  const bidsTotal =
+    customer?.bids.reduce((acc, bid) => {
+      const bidTotal = bid.products.reduce((acc, product) => {
+        return acc + Number(product.unit_price) * Number(product.units);
+      }, 0);
+
+      return acc + bidTotal + bid.commission;
+    }, 0) ?? 0;
 
   return (
     <Fragment>
@@ -527,14 +674,15 @@ export default function Screen() {
           </Card>
           <Card variant="filled">
             <Text size="xs">BID TOTAL</Text>
-            <Text size="xl">{formatAsCompactCurrency(0)}</Text>
+            <Text bold size="xl">
+              {formatAsCompactCurrency(bidsTotal)}
+            </Text>
           </Card>
         </View>
         <Divider className="w-[50%] mx-auto" />
         <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />
         <CustomerBids />
-        <Divider className="w-[50%] mx-auto" />
         <View className="px-6">
           <View className="flex-row items-center gap-x-2">
             <Icon as={HardHat} className="text-typography-500" size="lg" />
