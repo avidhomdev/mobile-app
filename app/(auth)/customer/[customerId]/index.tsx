@@ -35,7 +35,14 @@ import {
   DISPOSITION_STATUSES,
 } from "@/constants/disposition_statuses";
 import { useCustomerContext } from "@/contexts/customer-context";
-import { ILocationCustomerBid, useUserContext } from "@/contexts/user-context";
+import { useLocationContext } from "@/contexts/location-context";
+import {
+  ILocationCustomer,
+  ILocationCustomerBid,
+  ILocationJob,
+  IProfile,
+  useUserContext,
+} from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
@@ -356,8 +363,135 @@ function CustomerDisposition() {
   );
 }
 
+function ConvertBidToJobActionItem({
+  bid,
+  customer,
+  handleCloseActionSheet,
+  profile,
+}: {
+  bid: ILocationCustomerBid;
+  customer: ILocationCustomer;
+  handleCloseActionSheet: () => void;
+  profile: IProfile;
+}) {
+  const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+  const handleCloseDialog = () => setIsVisible(false);
+  const handleStartBidToJob = async () => {
+    const insert = {
+      address: customer.address,
+      bid_id: bid.id,
+      business_id: customer.business_id,
+      business_location_id: customer.location_id,
+      city: customer.city,
+      commission: bid.commission,
+      creator_id: profile.id,
+      customer_id: customer.id,
+      full_name: customer.full_name,
+      postal_code: customer.postal_code,
+      state: customer.state,
+    };
+
+    const { data: job } = await supabase
+      .from("business_location_jobs")
+      .insert(insert)
+      .select("id")
+      .single();
+
+    if (!job) return;
+
+    const jobProfiles = [
+      {
+        profile_id: profile.id,
+        role: "closer",
+      },
+      ...(customer.creator_id !== profile.id
+        ? [
+            {
+              profile_id: customer.creator_id,
+              role: "setter",
+            },
+          ]
+        : []),
+    ];
+
+    const jobProfileInsert = jobProfiles.map((jobProfile) => ({
+      ...jobProfile,
+      business_id: customer.business_id,
+      location_id: customer.location_id,
+      job_id: job.id,
+    }));
+
+    await supabase
+      .from("business_location_job_profiles")
+      .insert(jobProfileInsert);
+
+    await supabase.from("business_location_job_products").insert(
+      bid.products.map((product) => ({
+        job_id: job.id,
+        business_id: customer.business_id,
+        location_id: customer.location_id,
+        product_id: product.product_id,
+        number_of_units: product.units,
+        unit_price: product.unit_price,
+        total_price: product.units * product.unit_price,
+      }))
+    );
+
+    handleCloseDialog();
+    handleCloseActionSheet();
+    router.push({
+      pathname: `/(auth)/job/[jobId]`,
+      params: {
+        jobId: job.id,
+      },
+    });
+  };
+
+  return (
+    <Fragment>
+      <AlertDialog isOpen={isVisible} onClose={handleCloseDialog} size="md">
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading className="text-typography-950 font-semibold" size="md">
+              Are you sure you want to convert this bid to a job?
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text size="sm">
+              We will attempt to start this job. Please verify this is correct.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              action="secondary"
+              onPress={handleCloseDialog}
+              size="sm"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button size="sm" onPress={handleStartBidToJob}>
+              <ButtonText>Start</ButtonText>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <ActionsheetItem onPress={() => setIsVisible(true)}>
+        <ActionsheetIcon as={HardHat} className="text-typography-500" />
+        <ActionsheetItemText className="text-typography-700">
+          Start job
+        </ActionsheetItemText>
+      </ActionsheetItem>
+    </Fragment>
+  );
+}
+
 function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
-  const { refreshData } = useUserContext();
+  const { location } = useLocationContext();
+  const { refreshData, profile } = useUserContext();
+  const { customer } = useCustomerContext();
   const { bottom: paddingBlockEnd } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
@@ -423,6 +557,17 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
             <ActionsheetDragIndicator />
             <ActionsheetSectionHeaderText>{`Manage ${bid.name}`}</ActionsheetSectionHeaderText>
           </ActionsheetDragIndicatorWrapper>
+          {location.is_closer && (
+            <ConvertBidToJobActionItem
+              bid={bid}
+              customer={customer}
+              handleCloseActionSheet={() => {
+                refreshData();
+                handleClose();
+              }}
+              profile={profile}
+            />
+          )}
           <ActionsheetItem
             onPress={() => {
               router.push(`/customer/[customerId]/bid/${bid.id}`);
@@ -625,6 +770,76 @@ function CustomerAppointments() {
   );
 }
 
+function caculateJobTotal(job: ILocationJob) {
+  const productsTotal = job.products.reduce((acc, product) => {
+    return acc + Number(product.unit_price) * Number(product.number_of_units);
+  }, 0);
+  return productsTotal + job.commission;
+}
+
+function CustomerJobs() {
+  const { customer } = useCustomerContext();
+  const { jobs } = customer;
+  const router = useRouter();
+  return (
+    <View className="px-6">
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={HardHat} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Jobs</Heading>
+          <Text size="xs">Create job for the customer</Text>
+        </View>
+      </View>
+
+      {jobs.length > 0 ? (
+        <View className="gap-y-2 py-6">
+          {jobs.map((job) => (
+            <Card className="gap-y-2" key={job.id} variant="filled">
+              <View className="flex-row items-center justify-between">
+                <Badge action="info">
+                  <BadgeText>{job.status}</BadgeText>
+                </Badge>
+                <Text>{`${job.products.length} products`}</Text>
+              </View>
+              <View className="flex-row items-center gap-x-2">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <View
+                    key={index}
+                    className="grow aspect-square bg-gray-200 items-center justify-center"
+                  >
+                    <Text className="text-center">Image {index + 1}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text className="text-right text-success-300" size="2xl" bold>
+                {formatAsCurrency(caculateJobTotal(job))}
+              </Text>
+              <Button
+                action="secondary"
+                onPress={() =>
+                  router.push({
+                    pathname: `/(auth)/job/[jobId]`,
+                    params: { jobId: job.id },
+                  })
+                }
+              >
+                <ButtonText>Go to job</ButtonText>
+              </Button>
+            </Card>
+          ))}
+        </View>
+      ) : (
+        <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+          <Text className="text-center">
+            No jobs found. Start with a bid to begin a job
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function Screen() {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
@@ -655,7 +870,7 @@ export default function Screen() {
         </Pressable>
       </View>
       <ScrollView contentContainerClassName="gap-y-6">
-        <View className="h-72 aspect-video border-gray-500 border-b-8">
+        <View className="w-full aspect-video border-gray-500 border-b-8">
           <Image alt="Map" source={map} size="full" />
         </View>
         <View className="px-6">
@@ -683,26 +898,7 @@ export default function Screen() {
         <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />
         <CustomerBids />
-        <View className="px-6">
-          <View className="flex-row items-center gap-x-2">
-            <Icon as={HardHat} className="text-typography-500" size="lg" />
-            <View className="w-0.5 h-full bg-typography-100" />
-            <View>
-              <Heading size="md">Jobs</Heading>
-              <Text size="xs">Create job for the customer</Text>
-            </View>
-          </View>
-          <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
-            <Text className="text-center">No jobs found.</Text>
-            <Button
-              action="secondary"
-              onPress={() => router.push(`/customer/[customerId]/new-job`)}
-            >
-              <ButtonIcon as={HardHat} />
-              <ButtonText>Add Job</ButtonText>
-            </Button>
-          </View>
-        </View>
+        <CustomerJobs />
         <ScreenEnd />
       </ScrollView>
       <PlusButtonActionSheet />

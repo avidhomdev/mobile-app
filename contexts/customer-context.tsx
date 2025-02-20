@@ -9,7 +9,7 @@ import {
 import { ILocationCustomer } from "./user-context";
 
 const CustomerContext = createContext<TCustomerProvider>({
-  customer: null,
+  customer: {} as ILocationCustomer,
   updateCustomer: async () => {},
 });
 
@@ -26,7 +26,7 @@ export function useCustomerContext() {
 }
 
 type TCustomerProvider = {
-  customer: null | ILocationCustomer;
+  customer: ILocationCustomer;
   updateCustomer: (
     id: number,
     updates: Partial<ILocationCustomer>

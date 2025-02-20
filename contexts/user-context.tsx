@@ -32,12 +32,22 @@ export interface ILocationCustomerBid
   products: ILocationCustomerBidProduct[];
 }
 
+interface IJobProduct extends Tables<"business_location_job_products"> {
+  product: Tables<"business_products">;
+  quantity: number;
+  price: number;
+  total: number;
+}
+export interface ILocationJob extends Tables<"business_location_jobs"> {
+  products: IJobProduct[];
+}
 export interface ILocationCustomer
   extends Tables<"business_location_customers"> {
   appointments: Tables<"business_appointments">[];
   bids: ILocationCustomerBid[];
   closer?: Tables<"profiles">;
   disposition_status: DISPOSITION_STATUS_KEYS;
+  jobs: ILocationJob[];
 }
 
 export interface IAppointments extends Tables<"business_appointments"> {
@@ -113,7 +123,25 @@ const fetchUserContextData = async (
         customers: business_location_customers(
           *,
           appointments: business_appointments(*),
-          bids: business_location_customer_bids(*, products: business_location_customer_bid_products(*, product: product_id(*)))
+          bids: business_location_customer_bids(
+            *,
+            products: business_location_customer_bid_products(
+              *,
+              product: product_id(*)
+            )
+          ),
+          jobs: business_location_jobs(*,
+            bid: bid_id(*,
+              products: business_location_customer_bid_products(
+                *,
+                product: product_id(*)
+              )
+            ),
+            products: business_location_job_products(
+              *,
+              product: product_id(*)
+            )
+          )
         ),
         jobs: business_location_jobs(*),
         profiles: business_location_profiles(

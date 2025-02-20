@@ -10,8 +10,9 @@ export default function Layout() {
     (c) => c.id === Number(params.customerId)
   );
 
+  if (!customer) return null;
   return (
-    <CustomerProvider customer={customer ?? null}>
+    <CustomerProvider customer={customer}>
       <Stack
         initialRouteName="index"
         screenOptions={{
@@ -20,9 +21,7 @@ export default function Layout() {
           },
           headerShown: false,
         }}
-      >
-        <Stack.Screen name="new-job" options={{ presentation: "modal" }} />
-      </Stack>
+      />
     </CustomerProvider>
   );
 }
