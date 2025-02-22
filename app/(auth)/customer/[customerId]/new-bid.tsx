@@ -1,5 +1,6 @@
-import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import BackHeaderButton from "@/components/BackHeaderButton";
+import ScreenEnd from "@/components/ScreenEnd";
+import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -10,7 +11,9 @@ import {
   ActionsheetItemText,
   ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import { Box } from "@/components/ui/box";
+import { Button, ButtonGroup, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import {
@@ -19,23 +22,32 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
-import { Icon } from "@/components/ui/icon";
+import { CloseIcon, Icon } from "@/components/ui/icon";
+import { Image } from "@/components/ui/image";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { useCustomerContext } from "@/contexts/customer-context";
+import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { IFormState } from "@/hooks/useFormState";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
 import { formatAsCurrency } from "@/utils/format-as-currency";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Eye, EyeOff, Info, Minus, Plus } from "lucide-react-native";
+import {
+  Eye,
+  EyeOff,
+  Info,
+  Minus,
+  Plus,
+  UploadCloud,
+} from "lucide-react-native";
 import { Fragment, useCallback, useEffect, useReducer, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
-import ScreenEnd from "@/components/ScreenEnd";
 
 interface IProduct extends Tables<"business_products"> {
   locations: Tables<"business_product_locations">[];
@@ -83,7 +95,7 @@ function ProductItem({
   const calculatedProductTotal = Number(product.unit_price) * Number(units);
 
   return (
-    <Card className="gap-y-2" variant="filled">
+    <Card className="gap-y-2 bg-white" variant="filled">
       <Text>{product.name}</Text>
       <View className="flex-row justify-between items-center gap-x-4 ">
         <Button action="negative" onPress={remove} size="xs">
@@ -159,7 +171,6 @@ function AddProductBottomSheet({
       <Button
         action="secondary"
         size="xs"
-        variant="outline"
         onPress={() => setShowActionsheet(true)}
       >
         <ButtonText>Add</ButtonText>
@@ -220,7 +231,7 @@ function Products({
           setSelectedProducts={setSelectedProducts}
         />
       </View>
-      {selectedProducts.length > 0 && (
+      {selectedProducts.length > 0 ? (
         <View className="gap-y-2">
           {selectedProducts.map((product, index) => (
             <ProductItem
@@ -246,6 +257,12 @@ function Products({
             />
           ))}
         </View>
+      ) : (
+        <Box className="bg-gray-200 p-6">
+          <Text className="text-center" size="sm">
+            Start by adding products
+          </Text>
+        </Box>
       )}
     </Fragment>
   );
@@ -297,15 +314,28 @@ interface IBidFields {
   products: IProduct[];
   notes: string;
   commission: number;
+  media: { id: string; path: string }[];
 }
 
 enum FormReducerActionType {
   SET_ERROR = "SET_ERROR",
   SET_NAME = "SET_NAME",
   SET_PRODUCTS = "SET_PRODUCTS",
+  SET_MEDIA = "SET_MEDIA",
+  REMOVE_MEDIA = "REMOVE_MEDIA",
   SET_NOTES = "SET_NOTES",
   SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
   SET_COMMISSION = "SET_COMMISSION",
+}
+
+interface IREMOVE_MEDIA_ACTION {
+  type: FormReducerActionType.REMOVE_MEDIA;
+  payload: string;
+}
+
+interface ISET_MEDIA_ACTION {
+  type: FormReducerActionType.SET_MEDIA;
+  payload: { id: string; path: string };
 }
 
 interface ISET_ERROR_ACTION {
@@ -344,7 +374,9 @@ type TAction =
   | ISET_NOTES_ACTION
   | ISET_COMMISSION_ACTION
   | ISET_IS_SUBMITTING_ACTION
-  | ISET_ERROR_ACTION;
+  | ISET_ERROR_ACTION
+  | ISET_MEDIA_ACTION
+  | IREMOVE_MEDIA_ACTION;
 
 function formReducer(
   state: IFormState<IBidFields>,
@@ -391,9 +423,222 @@ function formReducer(
         fields: { ...state.fields, commission: action.payload },
       };
     }
+    case FormReducerActionType.SET_MEDIA: {
+      return {
+        ...state,
+        fields: {
+          ...state.fields,
+          media: [...state.fields.media, action.payload],
+        },
+      };
+    }
+    case FormReducerActionType.REMOVE_MEDIA: {
+      return {
+        ...state,
+        fields: {
+          ...state.fields,
+          media: state.fields.media.filter((m) => m.id !== action.payload),
+        },
+      };
+    }
     default:
       return state;
   }
+}
+function BidMedia({
+  media,
+  removeMedia,
+  setSelectedMedia,
+}: {
+  media: { id: string; path: string }[];
+  removeMedia: (id: string) => void;
+  setSelectedMedia: (p: { id: string; path: string }) => void;
+}) {
+  const { customer } = useCustomerContext();
+  const { location } = useLocationContext();
+  const { bottom } = useSafeAreaInsets();
+  const [showActionsheet, setShowActionsheet] = useState(false);
+  const [selected, setSelected] = useState<
+    { filePath: string; file: string; fileName: string }[]
+  >([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const handleClose = () => setShowActionsheet(false);
+
+  const handleImagePicker = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const fileRootPath = `${location.business_id}/locations/${location.id}/customers/${customer.id}`;
+      setSelected([
+        ...selected,
+        ...result.assets.flatMap((asset) =>
+          asset.fileName
+            ? {
+                filePath: `${fileRootPath}/${asset.fileName}`,
+                file: asset.uri,
+                fileName: asset.fileName,
+              }
+            : []
+        ),
+      ]);
+    }
+  };
+
+  const handleUploadSelected = async () => {
+    setIsUploading(true);
+
+    for (const file of selected) {
+      const blob = await fetch(file.file).then((r) => r.blob());
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      await supabase.storage
+        .from("business")
+        .upload(file.filePath, arrayBuffer, {
+          cacheControl: "3600",
+          upsert: true,
+        })
+        .then(async ({ data: storageFile }) => {
+          if (!storageFile) return;
+
+          setSelectedMedia(storageFile);
+        })
+        .catch(() => {
+          alert("Error uploading file");
+        });
+    }
+
+    setIsUploading(false);
+    setShowActionsheet(false);
+    setSelected([]);
+  };
+
+  return (
+    <>
+      <View className="flex-row items-end justify-between">
+        <Text>Media*</Text>
+        <Button
+          action="secondary"
+          onPress={() => setShowActionsheet(true)}
+          size="xs"
+        >
+          <ButtonText>Add</ButtonText>
+        </Button>
+      </View>
+      {media.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="flex-row gap-2"
+        >
+          {media.map((m) => {
+            return (
+              <Box
+                key={m.id}
+                className="rounded-lg overflow-hidden relative"
+                style={{ marginBottom: 10 }}
+              >
+                <SupabaseSignedImage
+                  size="2xl"
+                  path={m.path}
+                  cacheInSeconds={3600}
+                />
+                <Pressable
+                  className="absolute top-1 right-1 rounded-full p-1 bg-background-50"
+                  onPress={() => removeMedia(m.id)}
+                >
+                  <Icon as={CloseIcon} size="xl" />
+                </Pressable>
+              </Box>
+            );
+          })}
+        </ScrollView>
+      ) : (
+        <Box className="bg-gray-200 p-6">
+          <Text className="text-center" size="sm">
+            Start by adding photos for the bid
+          </Text>
+        </Box>
+      )}
+      <Actionsheet isOpen={showActionsheet} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+          </ActionsheetDragIndicatorWrapper>
+          <View className="flex-row justify-between w-full mt-3">
+            <View>
+              <Text className="font-semibold">
+                Upload your photos for the bid
+              </Text>
+              <Text size="sm">JPG, PDF, PNG supported</Text>
+            </View>
+            <Pressable onPress={handleClose}>
+              <Icon
+                as={UploadCloud}
+                size="lg"
+                className="stroke-background-500"
+              />
+            </Pressable>
+          </View>
+          {selected.length > 0 ? (
+            <ScrollView
+              contentContainerClassName="p-6 items-start flex-row gap-2 flex-wrap"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {selected.map((file, index) => (
+                <Box key={index}>
+                  <Image
+                    alt={file.fileName}
+                    size="xl"
+                    source={{ uri: file.file }}
+                  />
+                  <Pressable
+                    onPress={() =>
+                      setSelected(selected.filter((i) => i.file !== file.file))
+                    }
+                    className="absolute top-3 right-3 rounded-full p-1 bg-background-50"
+                  >
+                    <Icon as={CloseIcon} size="xl" />
+                  </Pressable>
+                </Box>
+              ))}
+            </ScrollView>
+          ) : (
+            <View className="my-[18px] items-center justify-center rounded-xl bg-background-50 border border-dashed border-outline-300 h-[130px] w-full">
+              <Icon
+                as={UploadCloud}
+                className="h-[62px] w-[62px] stroke-background-200"
+              />
+              <Text size="sm">No files uploaded yet</Text>
+            </View>
+          )}
+
+          <ButtonGroup className="w-full">
+            <Button
+              action="secondary"
+              variant="outline"
+              className="w-full"
+              onPress={handleImagePicker}
+            >
+              <ButtonText>Browse photos</ButtonText>
+            </Button>
+            <Button
+              className="w-full"
+              isDisabled={selected.length === 0 || isUploading}
+              onPress={handleUploadSelected}
+            >
+              <ButtonText>Upload</ButtonText>
+            </Button>
+          </ButtonGroup>
+        </ActionsheetContent>
+      </Actionsheet>
+    </>
+  );
 }
 
 function BidForm({
@@ -431,7 +676,22 @@ function BidForm({
           />
         </Input>
       </FormControl>
-      <Text>nearmap integration? or upload?</Text>
+      <BidMedia
+        media={formState.fields.media}
+        removeMedia={(id) =>
+          dispatch({
+            type: FormReducerActionType.REMOVE_MEDIA,
+            payload: id,
+          })
+        }
+        setSelectedMedia={(payload) =>
+          dispatch({
+            type: FormReducerActionType.SET_MEDIA,
+            payload,
+          })
+        }
+      />
+      {/* <Text>nearmap integration? or upload?</Text> */}
       <Products
         locationId={Number(customer?.location_id)}
         selectedProducts={formState.fields.products}
@@ -442,24 +702,12 @@ function BidForm({
           })
         }
       />
-      <FormControl>
-        <FormControlLabel>
-          <FormControlLabelText>Notes</FormControlLabelText>
-        </FormControlLabel>
-        <Textarea size="md">
-          <TextareaInput
-            defaultValue={formState.fields.notes}
-            onChangeText={(text) =>
-              dispatch({ type: FormReducerActionType.SET_NOTES, payload: text })
-            }
-          />
-        </Textarea>
-      </FormControl>
+
       <FormControl isRequired>
         <FormControlLabel>
           <FormControlLabelText>Commission</FormControlLabelText>
         </FormControlLabel>
-        <Input variant="outline" size="lg">
+        <Input className="bg-white" size="lg">
           <InputField
             keyboardType="numeric"
             autoCorrect={false}
@@ -474,6 +722,19 @@ function BidForm({
         </Input>
       </FormControl>
       <Totals formState={formState} />
+      <FormControl>
+        <FormControlLabel>
+          <FormControlLabelText>Notes</FormControlLabelText>
+        </FormControlLabel>
+        <Textarea className="bg-white" size="md">
+          <TextareaInput
+            defaultValue={formState.fields.notes}
+            onChangeText={(text) =>
+              dispatch({ type: FormReducerActionType.SET_NOTES, payload: text })
+            }
+          />
+        </Textarea>
+      </FormControl>
       <ScreenEnd />
     </ScrollView>
   );
@@ -538,6 +799,7 @@ export default function Screen() {
       commission: 0,
       name: "Bid",
       notes: "",
+      media: [],
       products: [],
     },
     isSubmitting: false,
@@ -583,9 +845,26 @@ export default function Screen() {
     if (error) throw error;
     if (!data) throw new Error("Bid not created");
 
+    const mediaInsert = formState.fields.media.map((m) => ({
+      bid_id: data.id,
+      business_id: customer?.business_id,
+      creator_id: profile?.id,
+      location_id: customer?.location_id,
+      customer_id: customer?.id,
+      path: m.path,
+      name: m.id,
+    }));
+
+    const { error: mediaError } = await supabase
+      .from("business_location_customer_bid_media")
+      .insert(mediaInsert);
+
+    if (mediaError) throw mediaError;
+
     const productsInsert = formState.fields.products.map((product) => ({
       bid_id: data.id,
       business_id: customer?.business_id,
+      customer_id: customer?.id,
       location_id: customer?.location_id,
       product_id: product.id,
       unit_price: product.unit_price,

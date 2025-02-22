@@ -1,6 +1,7 @@
 import map from "@/assets/images/map.jpg";
 import BackHeaderButton from "@/components/BackHeaderButton";
 import ScreenEnd from "@/components/ScreenEnd";
+import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -24,7 +25,7 @@ import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
-import { Fab, FabIcon } from "@/components/ui/fab";
+import { Fab } from "@/components/ui/fab";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
@@ -114,7 +115,6 @@ function EmailButton() {
         disabled={!customer?.email}
         onPress={() => setIsAlertDialogVisible(true)}
         size="sm"
-        variant="outline"
       >
         <ButtonIcon as={Mail} />
         <ButtonText>Email</ButtonText>
@@ -170,7 +170,6 @@ function PhoneButton() {
         disabled={!customer?.phone}
         onPress={() => setIsAlertDialogVisible(true)}
         size="sm"
-        variant="outline"
       >
         <ButtonIcon as={Phone} />
         <ButtonText>Call</ButtonText>
@@ -191,7 +190,6 @@ function MapPinButton() {
         action="secondary"
         onPress={() => setIsAlertDialogVisible(true)}
         size="sm"
-        variant="outline"
       >
         <ButtonIcon as={MapPin} />
         <ButtonText>Map</ButtonText>
@@ -241,11 +239,11 @@ function PlusButtonActionSheet() {
   return (
     <Fragment>
       <Fab
-        className="bottom-8 right-5"
+        className="bottom-5 right-5"
         onPress={() => setIsActionSheetVisible(true)}
         size="lg"
       >
-        <FabIcon as={Plus} />
+        <Icon as={Plus} className="text-white" size="2xl" />
       </Fab>
       <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
         <ActionsheetBackdrop />
@@ -277,17 +275,6 @@ function PlusButtonActionSheet() {
             />
             <ActionsheetItemText className="text-typography-700">
               Bid
-            </ActionsheetItemText>
-          </ActionsheetItem>
-          <ActionsheetItem
-            onPress={() => {
-              router.push(`/customer/[customerId]/new-job`);
-              handleClose();
-            }}
-          >
-            <ActionsheetIcon as={HardHat} className="text-typography-500" />
-            <ActionsheetItemText className="text-typography-700">
-              Job
             </ActionsheetItemText>
           </ActionsheetItem>
           <ActionsheetItem
@@ -426,6 +413,16 @@ function ConvertBidToJobActionItem({
       .from("business_location_job_profiles")
       .insert(jobProfileInsert);
 
+    const jobMediaInsert = bid.media.map((m) => ({
+      business_id: m.business_id,
+      location_id: m.location_id,
+      job_id: job.id,
+      path: m.path,
+      name: m.name,
+    }));
+
+    await supabase.from("business_location_job_media").insert(jobMediaInsert);
+
     await supabase.from("business_location_job_products").insert(
       bid.products.map((product) => ({
         job_id: job.id,
@@ -441,8 +438,9 @@ function ConvertBidToJobActionItem({
     handleCloseDialog();
     handleCloseActionSheet();
     router.push({
-      pathname: `/(auth)/job/[jobId]`,
+      pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
       params: {
+        customerId: customer.id,
         jobId: job.id,
       },
     });
@@ -603,6 +601,7 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
 }
 
 function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
+  const { location } = useLocationContext();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const bidTotal = bid.products.reduce((acc, product) => {
     return acc + Number(product.unit_price) * Number(product.units);
@@ -617,11 +616,24 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
         <Text className="shrink" size="lg">
           {bid.name}
         </Text>
-        <CustomerBidMenu bid={bid} />
+        {location.is_closer && <CustomerBidMenu bid={bid} />}
       </View>
-      <View className="bg-warning-100 aspect-video justify-center items-center">
-        <Text>Nearmaps Image</Text>
-      </View>
+      {bid.media.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="flex-row gap-x-2"
+        >
+          {bid.media.map((media) => (
+            <SupabaseSignedImage key={media.id} path={media.path} size="xl" />
+          ))}
+        </ScrollView>
+      ) : (
+        <View className="bg-warning-50 aspect-video justify-center items-center">
+          <Text>No media found</Text>
+        </View>
+      )}
+
       <View className="gap-y-1">
         {filteredProducts.map((p) => (
           <Card variant="filled" key={p.id}>
@@ -678,12 +690,9 @@ function CustomerBids() {
 
       {hasBids ? (
         <ScrollView
-          className="bg-gray-50 p-6 border-t border-gray-200 border-b"
-          contentContainerClassName="gap-x-4 items-start"
+          contentContainerClassName="gap-x-4 items-start px-6"
           horizontal
           showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={320}
         >
           {bids.map((bid) => {
             return <CustomerBid key={bid.id} bid={bid} />;
@@ -777,13 +786,103 @@ function caculateJobTotal(job: ILocationJob) {
   return productsTotal + job.commission;
 }
 
+function CustomerJobMenu({ job }: { job: ILocationJob }) {
+  const { refreshData } = useUserContext();
+  const { bottom: paddingBlockEnd } = useSafeAreaInsets();
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+  const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
+  const handleCloserAlertDialog = () => setIsAlertDialogVisible(false);
+  const handleClose = () => setIsActionSheetVisible(false);
+  const handleConfirmDelete = async () =>
+    supabase
+      .from("business_location_jobs")
+      .delete()
+      .eq("id", job.id)
+      .then(refreshData)
+      .then(handleCloserAlertDialog)
+      .then(handleClose);
+  const router = useRouter();
+
+  return (
+    <Fragment>
+      <Button
+        action="secondary"
+        onPress={() => setIsActionSheetVisible(true)}
+        size="sm"
+        variant="outline"
+      >
+        <ButtonIcon as={Ellipsis} />
+      </Button>
+      <AlertDialog
+        isOpen={isAlertDialogVisible}
+        onClose={handleCloserAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading className="text-typography-950 font-semibold" size="md">
+              {`Are you sure you want to delete JOB-${job.id}?`}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text size="sm">
+              This action is irreversible and will delete all data related to
+              this job.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              action="secondary"
+              onPress={handleCloserAlertDialog}
+              size="sm"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button action="negative" size="sm" onPress={handleConfirmDelete}>
+              <ButtonText>Delete</ButtonText>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>{`Manage JOB-${job.id}`}</ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem
+            onPress={() => {
+              router.push(`/customer/[customerId]/job/${job.id}`);
+              handleClose();
+            }}
+          >
+            <ActionsheetIcon as={Eye} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              View
+            </ActionsheetItemText>
+          </ActionsheetItem>
+          <ActionsheetItem onPress={() => setIsAlertDialogVisible(true)}>
+            <ActionsheetIcon as={Trash} className="text-red-500" />
+            <ActionsheetItemText className="text-red-700">
+              Delete
+            </ActionsheetItemText>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
 function CustomerJobs() {
   const { customer } = useCustomerContext();
   const { jobs } = customer;
-  const router = useRouter();
+
   return (
-    <View className="px-6">
-      <View className="flex-row items-center gap-x-2">
+    <Fragment>
+      <View className="flex-row items-center gap-x-2 px-6">
         <Icon as={HardHat} className="text-typography-500" size="lg" />
         <View className="w-0.5 h-full bg-typography-100" />
         <View>
@@ -793,42 +892,45 @@ function CustomerJobs() {
       </View>
 
       {jobs.length > 0 ? (
-        <View className="gap-y-2 py-6">
+        <ScrollView
+          contentContainerClassName="gap-x-4 items-start px-6"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
           {jobs.map((job) => (
-            <Card className="gap-y-2" key={job.id} variant="filled">
+            <Card className="border border-gray-200 gap-y-4 w-80" key={job.id}>
               <View className="flex-row items-center justify-between">
                 <Badge action="info">
                   <BadgeText>{job.status}</BadgeText>
                 </Badge>
-                <Text>{`${job.products.length} products`}</Text>
+                <CustomerJobMenu job={job} />
               </View>
-              <View className="flex-row items-center gap-x-2">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <View
-                    key={index}
-                    className="grow aspect-square bg-gray-200 items-center justify-center"
-                  >
-                    <Text className="text-center">Image {index + 1}</Text>
-                  </View>
-                ))}
-              </View>
+              {job.media.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="flex-row items-center gap-x-2"
+                >
+                  {job.media.map((media) => (
+                    <SupabaseSignedImage
+                      key={media.id}
+                      path={media.path}
+                      size="xl"
+                    />
+                  ))}
+                </ScrollView>
+              ) : (
+                <View className="bg-warning-50 aspect-video justify-center items-center">
+                  <Text>No media found</Text>
+                </View>
+              )}
+              <Divider />
               <Text className="text-right text-success-300" size="2xl" bold>
                 {formatAsCurrency(caculateJobTotal(job))}
               </Text>
-              <Button
-                action="secondary"
-                onPress={() =>
-                  router.push({
-                    pathname: `/(auth)/job/[jobId]`,
-                    params: { jobId: job.id },
-                  })
-                }
-              >
-                <ButtonText>Go to job</ButtonText>
-              </Button>
             </Card>
           ))}
-        </View>
+        </ScrollView>
       ) : (
         <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
           <Text className="text-center">
@@ -836,7 +938,7 @@ function CustomerJobs() {
           </Text>
         </View>
       )}
-    </View>
+    </Fragment>
   );
 }
 
@@ -898,6 +1000,7 @@ export default function Screen() {
         <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />
         <CustomerBids />
+        <Divider className="w-[50%] mx-auto" />
         <CustomerJobs />
         <ScreenEnd />
       </ScrollView>

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "android": "DARK_MODE=media expo start --android",
-    "check-types": "npx tsc --noEmit",
+    "check-types": "npx tsc",
     "check-all": "npm run check-types && npm run lint",
     "lint": "npx eslint .",
     "ios": "DARK_MODE=media expo start --ios",
@@ -46,6 +46,7 @@
     "@react-navigation/native": "^7.0.14",
     "@supabase/supabase-js": "^2.46.1",
     "babel-plugin-module-resolver": "^5.0.2",
+    "base64-arraybuffer": "^1.0.2",
     "dayjs": "^1.11.13",
     "expo": "~52.0.32",
     "expo-asset": "~11.0.1",

@@ -1,5 +1,6 @@
 import BackHeaderButton from "@/components/BackHeaderButton";
 import ScreenEnd from "@/components/ScreenEnd";
+import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -105,6 +106,21 @@ export default function Screen() {
         <BackHeaderButton />
         <Heading>{`View ${bid?.name} bid`}</Heading>
       </View>
+      {bid!.media.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="flex-row gap-x-2"
+        >
+          {bid!.media.map((media) => (
+            <SupabaseSignedImage key={media.id} path={media.path} size="2xl" />
+          ))}
+        </ScrollView>
+      ) : (
+        <View className="bg-warning-50 aspect-video justify-center items-center">
+          <Text>No media found</Text>
+        </View>
+      )}
       <View className="gap-y-2">
         {bid?.products.map((product) => {
           const units = product.units ?? 0;

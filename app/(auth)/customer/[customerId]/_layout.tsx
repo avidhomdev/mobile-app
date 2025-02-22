@@ -16,9 +16,6 @@ export default function Layout() {
       <Stack
         initialRouteName="index"
         screenOptions={{
-          contentStyle: {
-            backgroundColor: "white",
-          },
           headerShown: false,
         }}
       />

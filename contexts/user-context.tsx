@@ -29,6 +29,7 @@ interface ILocationCustomerBidProduct
 
 export interface ILocationCustomerBid
   extends Tables<"business_location_customer_bids"> {
+  media: Tables<"business_location_customer_bid_media">[];
   products: ILocationCustomerBidProduct[];
 }
 
@@ -39,6 +40,7 @@ interface IJobProduct extends Tables<"business_location_job_products"> {
   total: number;
 }
 export interface ILocationJob extends Tables<"business_location_jobs"> {
+  media: Tables<"business_location_job_media">[];
   products: IJobProduct[];
 }
 export interface ILocationCustomer
@@ -125,6 +127,7 @@ const fetchUserContextData = async (
           appointments: business_appointments(*),
           bids: business_location_customer_bids(
             *,
+            media: business_location_customer_bid_media(*),
             products: business_location_customer_bid_products(
               *,
               product: product_id(*)
@@ -137,6 +140,7 @@ const fetchUserContextData = async (
                 product: product_id(*)
               )
             ),
+            media: business_location_job_media(*),
             products: business_location_job_products(
               *,
               product: product_id(*)
