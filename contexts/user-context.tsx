@@ -39,8 +39,13 @@ interface IJobProduct extends Tables<"business_location_job_products"> {
   price: number;
   total: number;
 }
+
+interface ILocationJobMessage extends Tables<"business_location_job_messages"> {
+  profile: Tables<"profiles">;
+}
 export interface ILocationJob extends Tables<"business_location_jobs"> {
   media: Tables<"business_location_job_media">[];
+  messages: ILocationJobMessage[];
   products: IJobProduct[];
 }
 export interface ILocationCustomer
@@ -141,6 +146,9 @@ const fetchUserContextData = async (
               )
             ),
             media: business_location_job_media(*),
+            messages: business_location_job_messages(*,
+              profile: author_id(*)
+            ),
             products: business_location_job_products(
               *,
               product: product_id(*)

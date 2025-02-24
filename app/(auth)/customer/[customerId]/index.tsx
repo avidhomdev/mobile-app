@@ -65,7 +65,7 @@ import {
   Trash,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function EmailButton() {
@@ -231,7 +231,7 @@ function MapPinButton() {
 }
 
 function PlusButtonActionSheet() {
-  const { bottom: paddingBlockEnd } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const handleClose = () => setIsActionSheetVisible(false);
   const router = useRouter();
@@ -239,15 +239,16 @@ function PlusButtonActionSheet() {
   return (
     <Fragment>
       <Fab
-        className="bottom-5 right-5"
         onPress={() => setIsActionSheetVisible(true)}
         size="lg"
+        placement="bottom right"
+        style={{ marginBlockEnd: bottom }}
       >
         <Icon as={Plus} className="text-white" size="2xl" />
       </Fab>
       <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
         <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd }}>
+        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
             <ActionsheetSectionHeaderText>New</ActionsheetSectionHeaderText>
@@ -265,7 +266,7 @@ function PlusButtonActionSheet() {
           </ActionsheetItem>
           <ActionsheetItem
             onPress={() => {
-              router.push(`/customer/[customerId]/new-bid`);
+              router.push(`/customer/[customerId]/bid/new`);
               handleClose();
             }}
           >
@@ -704,7 +705,7 @@ function CustomerBids() {
           <Text className="text-center">No bids found.</Text>
           <Button
             action="secondary"
-            onPress={() => router.push(`/customer/[customerId]/new-bid`)}
+            onPress={() => router.push(`/customer/[customerId]/bid/new`)}
           >
             <ButtonIcon as={Construction} />
             <ButtonText>Add Bid</ButtonText>
@@ -786,100 +787,10 @@ function caculateJobTotal(job: ILocationJob) {
   return productsTotal + job.commission;
 }
 
-function CustomerJobMenu({ job }: { job: ILocationJob }) {
-  const { refreshData } = useUserContext();
-  const { bottom: paddingBlockEnd } = useSafeAreaInsets();
-  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
-  const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
-  const handleCloserAlertDialog = () => setIsAlertDialogVisible(false);
-  const handleClose = () => setIsActionSheetVisible(false);
-  const handleConfirmDelete = async () =>
-    supabase
-      .from("business_location_jobs")
-      .delete()
-      .eq("id", job.id)
-      .then(refreshData)
-      .then(handleCloserAlertDialog)
-      .then(handleClose);
-  const router = useRouter();
-
-  return (
-    <Fragment>
-      <Button
-        action="secondary"
-        onPress={() => setIsActionSheetVisible(true)}
-        size="sm"
-        variant="outline"
-      >
-        <ButtonIcon as={Ellipsis} />
-      </Button>
-      <AlertDialog
-        isOpen={isAlertDialogVisible}
-        onClose={handleCloserAlertDialog}
-        size="md"
-      >
-        <AlertDialogBackdrop />
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <Heading className="text-typography-950 font-semibold" size="md">
-              {`Are you sure you want to delete JOB-${job.id}?`}
-            </Heading>
-          </AlertDialogHeader>
-          <AlertDialogBody className="mt-3 mb-4">
-            <Text size="sm">
-              This action is irreversible and will delete all data related to
-              this job.
-            </Text>
-          </AlertDialogBody>
-          <AlertDialogFooter>
-            <Button
-              variant="outline"
-              action="secondary"
-              onPress={handleCloserAlertDialog}
-              size="sm"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button action="negative" size="sm" onPress={handleConfirmDelete}>
-              <ButtonText>Delete</ButtonText>
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
-        <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-            <ActionsheetSectionHeaderText>{`Manage JOB-${job.id}`}</ActionsheetSectionHeaderText>
-          </ActionsheetDragIndicatorWrapper>
-          <ActionsheetItem
-            onPress={() => {
-              router.push(`/customer/[customerId]/job/${job.id}`);
-              handleClose();
-            }}
-          >
-            <ActionsheetIcon as={Eye} className="text-typography-500" />
-            <ActionsheetItemText className="text-typography-700">
-              View
-            </ActionsheetItemText>
-          </ActionsheetItem>
-          <ActionsheetItem onPress={() => setIsAlertDialogVisible(true)}>
-            <ActionsheetIcon as={Trash} className="text-red-500" />
-            <ActionsheetItemText className="text-red-700">
-              Delete
-            </ActionsheetItemText>
-          </ActionsheetItem>
-        </ActionsheetContent>
-      </Actionsheet>
-    </Fragment>
-  );
-}
-
 function CustomerJobs() {
   const { customer } = useCustomerContext();
   const { jobs } = customer;
-
+  const router = useRouter();
   return (
     <Fragment>
       <View className="flex-row items-center gap-x-2 px-6">
@@ -898,37 +809,49 @@ function CustomerJobs() {
           showsHorizontalScrollIndicator={false}
         >
           {jobs.map((job) => (
-            <Card className="border border-gray-200 gap-y-4 w-80" key={job.id}>
-              <View className="flex-row items-center justify-between">
-                <Badge action="info">
-                  <BadgeText>{job.status}</BadgeText>
-                </Badge>
-                <CustomerJobMenu job={job} />
-              </View>
-              {job.media.length > 0 ? (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerClassName="flex-row items-center gap-x-2"
-                >
-                  {job.media.map((media) => (
-                    <SupabaseSignedImage
-                      key={media.id}
-                      path={media.path}
-                      size="xl"
-                    />
-                  ))}
-                </ScrollView>
-              ) : (
-                <View className="bg-warning-50 aspect-video justify-center items-center">
-                  <Text>No media found</Text>
+            <TouchableOpacity
+              key={job.id}
+              onPress={() =>
+                router.push({
+                  pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
+                  params: {
+                    customerId: customer.id,
+                    jobId: job.id,
+                  },
+                })
+              }
+            >
+              <Card
+                className="border border-gray-200 gap-y-4 w-80"
+                key={job.id}
+              >
+                <View className="flex-row items-center justify-between">
+                  <Badge action="info">
+                    <BadgeText>{job.status}</BadgeText>
+                  </Badge>
+                  <Heading>{`JOB-${job.id}`}</Heading>
                 </View>
-              )}
-              <Divider />
-              <Text className="text-right text-success-300" size="2xl" bold>
-                {formatAsCurrency(caculateJobTotal(job))}
-              </Text>
-            </Card>
+                {job.media.length > 0 ? (
+                  <ScrollView
+                    contentContainerClassName="flex-row items-center gap-x-2"
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {job.media.slice(0, 3).map((media) => (
+                      <SupabaseSignedImage key={media.id} path={media.path} />
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <View className="bg-warning-50 aspect-video justify-center items-center">
+                    <Text>No media found</Text>
+                  </View>
+                )}
+                <Divider />
+                <Text className="text-right text-success-300" size="2xl" bold>
+                  {formatAsCurrency(caculateJobTotal(job))}
+                </Text>
+              </Card>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       ) : (
@@ -953,6 +876,11 @@ export default function Screen() {
       }, 0);
 
       return acc + bidTotal + bid.commission;
+    }, 0) ?? 0;
+
+  const jobsTotal =
+    customer?.jobs.reduce((acc, job) => {
+      return acc + caculateJobTotal(job);
     }, 0) ?? 0;
 
   return (
@@ -985,11 +913,13 @@ export default function Screen() {
           </View>
         </View>
         <View className="px-6 flex-row items-center gap-x-4">
-          <Card className="grow" variant="filled">
+          <Card className="grow">
             <Text size="xs">JOBS TOTAL</Text>
-            <Text size="xl">{formatAsCurrency(0)}</Text>
+            <Text bold size="xl">
+              {formatAsCurrency(jobsTotal)}
+            </Text>
           </Card>
-          <Card variant="filled">
+          <Card>
             <Text size="xs">BID TOTAL</Text>
             <Text bold size="xl">
               {formatAsCompactCurrency(bidsTotal)}
@@ -999,9 +929,9 @@ export default function Screen() {
         <Divider className="w-[50%] mx-auto" />
         <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />
-        <CustomerBids />
-        <Divider className="w-[50%] mx-auto" />
         <CustomerJobs />
+        <Divider className="w-[50%] mx-auto" />
+        <CustomerBids />
         <ScreenEnd />
       </ScrollView>
       <PlusButtonActionSheet />
