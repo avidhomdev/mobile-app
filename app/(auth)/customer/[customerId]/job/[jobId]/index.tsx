@@ -10,6 +10,7 @@ import {
   ActionsheetIcon,
   ActionsheetItem,
   ActionsheetItemText,
+  ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
 import {
   AlertDialog,
@@ -48,7 +49,11 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
 import { useCustomerContext } from "@/contexts/customer-context";
-import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
+import {
+  ILocationCustomer,
+  ILocationJob,
+  useUserContext,
+} from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
@@ -61,8 +66,12 @@ import {
   Blocks,
   Circle,
   CircleCheck,
+  EllipsisVertical,
+  EyeOff,
   File,
+  HardHat,
   Image,
+  ListOrdered,
   MessageCircle,
   PanelRightOpen,
   Plus,
@@ -70,7 +79,7 @@ import {
   Trash,
 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function DeleteConfirmation({ handleClose }: { handleClose: () => void }) {
@@ -149,7 +158,7 @@ function HeaderMenu() {
   return (
     <Fragment>
       <Pressable onPress={() => setIsDrawerVisible(true)}>
-        <Icon as={PanelRightOpen} className="text-typography-500" size="xl" />
+        <Icon as={PanelRightOpen} className="text-typography-500" size="2xl" />
       </Pressable>
       <Drawer
         anchor="right"
@@ -195,6 +204,22 @@ function HeaderMenu() {
             >
               <Icon as={Timer} size="lg" className="text-typography-600" />
               <Text>Timesheet</Text>
+            </Pressable>
+            <Pressable
+              className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
+              onPress={() => {
+                setIsDrawerVisible(false);
+                router.push({
+                  pathname: "/customer/[customerId]/job/[jobId]/change-orders",
+                  params: {
+                    customerId: customerId as string,
+                    jobId: jobId as string,
+                  },
+                });
+              }}
+            >
+              <Icon as={HardHat} size="lg" className="text-typography-600" />
+              <Text>Change Orders</Text>
             </Pressable>
           </DrawerBody>
           <DrawerFooter>
@@ -417,12 +442,197 @@ function FabPlusMenu() {
   );
 }
 
-export default function Screen() {
-  const { jobId } = useLocalSearchParams();
-  const { top } = useSafeAreaInsets();
-  const { customer } = useCustomerContext();
-  const job = customer.jobs.find((job) => job.id === Number(jobId));
+function TaskMenu() {
+  const { bottom } = useSafeAreaInsets();
+  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
+  const handleCloseActionSheet = () => setActionSheetVisible(false);
+  return (
+    <Fragment>
+      <TouchableOpacity
+        className="p-2 bg-gray-50 rounded"
+        onPress={() => setActionSheetVisible(true)}
+      >
+        <Icon as={EllipsisVertical} size="lg" />
+      </TouchableOpacity>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>Tasks</ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem onPress={() => {}}>
+            <ActionsheetIcon
+              as={Plus}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Box>
+              <ActionsheetItemText className="text-typography-700">
+                Add Task
+              </ActionsheetItemText>
+              <Text className="text-typography-500" sub>
+                Stay on top of things to do with a new task
+              </Text>
+            </Box>
+          </ActionsheetItem>
+          <ActionsheetItem onPress={() => {}}>
+            <ActionsheetIcon
+              as={EyeOff}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Box>
+              <ActionsheetItemText className="text-typography-700">
+                Hide Completed Tasks
+              </ActionsheetItemText>
+              <Text className="text-typography-500" sub>
+                Show only the incomplete tasks
+              </Text>
+            </Box>
+          </ActionsheetItem>
+          <ActionsheetItem onPress={() => {}}>
+            <ActionsheetIcon
+              as={ListOrdered}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Box>
+              <ActionsheetItemText className="text-typography-700">
+                Sort Tasks
+              </ActionsheetItemText>
+              <Text className="text-typography-500" sub>
+                Change the order of tasks
+              </Text>
+            </Box>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
 
+function ProductsMenu() {
+  const { bottom } = useSafeAreaInsets();
+  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
+  const handleCloseActionSheet = () => setActionSheetVisible(false);
+  return (
+    <Fragment>
+      <TouchableOpacity
+        className="p-2 bg-gray-50 rounded"
+        onPress={() => setActionSheetVisible(true)}
+      >
+        <Icon as={EllipsisVertical} size="lg" />
+      </TouchableOpacity>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>
+              Products
+            </ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem onPress={() => {}}>
+            <ActionsheetIcon
+              as={Plus}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Box>
+              <ActionsheetItemText className="text-typography-700">
+                Change Orders
+              </ActionsheetItemText>
+              <Text className="text-typography-500" sub>
+                Adjust the current order products
+              </Text>
+            </Box>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
+function Tasks() {
+  return (
+    <Fragment>
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={CircleCheck} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View className="grow">
+          <Heading size="md">Tasks</Heading>
+          <Text size="xs">Stay on top of your job tasks</Text>
+        </View>
+        <TaskMenu />
+      </View>
+      <VStack space="sm">
+        <HStack
+          space="md"
+          className="items-center bg-white p-2 px-4 rounded-lg flex-1"
+        >
+          <Pressable>
+            <Icon as={Circle} className="text-typography-500" size="lg" />
+          </Pressable>
+          <Divider orientation="vertical" />
+          <Box className="flex-1">
+            <Text>Send Docusign Agreement</Text>
+            <Text sub>
+              Signed on:{" "}
+              <Text bold italic sub>
+                Not Signed
+              </Text>
+            </Text>
+          </Box>
+        </HStack>
+        <HStack
+          space="md"
+          className="items-center bg-white p-2 px-4 rounded-lg flex-1"
+        >
+          <Pressable>
+            <Icon as={Circle} className="text-typography-500" size="lg" />
+          </Pressable>
+          <Divider orientation="vertical" />
+          <Box className="flex-1">
+            <Text>Collect job deposit</Text>
+            <Text sub>
+              Deposit Collected:{" "}
+              <Text bold italic sub>
+                {formatAsCurrency(500)}
+              </Text>
+            </Text>
+          </Box>
+        </HStack>
+        <HStack
+          space="md"
+          className="items-center bg-white p-2 px-4 rounded-lg flex-1"
+        >
+          <Pressable>
+            <Icon as={CircleCheck} className="text-typography-600" size="lg" />
+          </Pressable>
+          <Divider orientation="vertical" />
+          <Box className="flex-1">
+            <Text>Schedule installation</Text>
+            <Text sub>
+              Starting on:{" "}
+              <Text bold italic sub>
+                12/12/2021
+              </Text>
+            </Text>
+          </Box>
+        </HStack>
+      </VStack>
+    </Fragment>
+  );
+}
+
+function Tiles({ job }: { job: ILocationJob }) {
   const calculateJobProductsTotal = () => {
     return job?.products.reduce((acc, product) => {
       return acc + Number(product.total_price);
@@ -434,188 +644,170 @@ export default function Screen() {
       return acc + Number(product.number_of_units);
     }, 0);
   };
+  return (
+    <Fragment>
+      <HStack space="sm">
+        <Card className="grow">
+          <Text sub>Commission</Text>
+          <Text size="xl">{formatAsCurrency(Number(job?.commission))}</Text>
+        </Card>
+        <Card className="w-1/3">
+          <Text sub>Hours</Text>
+          <Text size="xl">32</Text>
+        </Card>
+      </HStack>
+      <HStack space="sm" reversed>
+        <Card className="grow">
+          <Text sub>Product Total</Text>
+          <Text size="xl">
+            {formatAsCurrency(Number(calculateJobProductsTotal()))}
+          </Text>
+        </Card>
+        <Card className="w-1/3">
+          <Text sub>Units</Text>
+          <Text size="xl">{calculateJobProductUnitsTotal()}</Text>
+        </Card>
+      </HStack>
+    </Fragment>
+  );
+}
+
+function Products({ job }: { job: ILocationJob }) {
+  return (
+    <Fragment>
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={Blocks} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View className="grow">
+          <Heading size="md">Products</Heading>
+          <Text size="xs">Manage the products for this job.</Text>
+        </View>
+        <ProductsMenu />
+      </View>
+      <VStack space="sm">
+        {job?.products.map((product, index) => (
+          <Card key={index}>
+            <HStack space="sm">
+              <Text className="flex-1">{product.product.name}</Text>
+
+              <Box>
+                <Text className="text-right">
+                  {`${product.number_of_units} ${product.product.unit}`}
+                </Text>
+                <Text className="text-right" sub>
+                  {formatAsCurrency(Number(product.total_price))}
+                </Text>
+              </Box>
+            </HStack>
+          </Card>
+        ))}
+      </VStack>
+    </Fragment>
+  );
+}
+
+function Media({ job }: { job: ILocationJob }) {
+  return (
+    <Fragment>
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={Image} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Media</Heading>
+          <Text size="xs">Photos and videos of the job</Text>
+        </View>
+      </View>
+      <ScrollView
+        contentContainerClassName="gap-x-2"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+      >
+        <HStack space="md">
+          {job?.media.map((media, index) => (
+            <Box key={index}>
+              <SupabaseSignedImage path={media.path} size="xl" />
+            </Box>
+          ))}
+        </HStack>
+      </ScrollView>
+    </Fragment>
+  );
+}
+
+function Notes({ job }: { job: ILocationJob }) {
+  return (
+    <Fragment>
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={MessageCircle} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Notes</Heading>
+          <Text size="xs">Notes on the job</Text>
+        </View>
+      </View>
+      <VStack space="sm">
+        {job?.messages.toReversed().map((message) => {
+          return (
+            <Card key={message.id}>
+              <VStack space="sm">
+                <Text>{message.message}</Text>
+                <HStack space="sm" className="items-center">
+                  <Avatar size="xs">
+                    <AvatarFallbackText>
+                      {message.profile.full_name}
+                    </AvatarFallbackText>
+                  </Avatar>
+                  <VStack>
+                    <Text size="sm">{message.profile.full_name}</Text>
+                    <Text sub>{`Posted: ${dayjs(message.created_at).format(
+                      FRIENDLY_DATE_FORMAT
+                    )}`}</Text>
+                  </VStack>
+                </HStack>
+              </VStack>
+            </Card>
+          );
+        })}
+      </VStack>
+    </Fragment>
+  );
+}
+
+function Header({ job }: { job: ILocationJob }) {
+  const { top } = useSafeAreaInsets();
+
+  return (
+    <HStack
+      space="sm"
+      className="p-4 bg-white items-center"
+      style={{ paddingTop: top }}
+    >
+      <Box className="flex-1">
+        <BackHeaderButton />
+        <Heading size="xl">{`JOB-${job.id}`}</Heading>
+      </Box>
+      <HeaderMenu />
+    </HStack>
+  );
+}
+export default function Screen() {
+  const { jobId } = useLocalSearchParams();
+  const { customer } = useCustomerContext();
+  const job = customer.jobs.find((job) => job.id === Number(jobId));
+
+  if (!job) return null;
 
   return (
     <View className="flex-1">
-      <HStack space="sm" className="p-4 bg-white" style={{ paddingTop: top }}>
-        <Box className="flex-1">
-          <BackHeaderButton />
-          <Heading size="xl">{`JOB-${jobId}`}</Heading>
-        </Box>
-        <HeaderMenu />
-      </HStack>
+      <Header job={job} />
       <Divider />
       <FabPlusMenu />
       <ScrollView contentContainerClassName="gap-y-6 p-6">
-        <HStack space="sm">
-          <Card className="grow">
-            <Text sub>Commission</Text>
-            <Text size="xl">{formatAsCurrency(Number(job?.commission))}</Text>
-          </Card>
-          <Card className="w-1/3">
-            <Text sub>Hours</Text>
-            <Text size="xl">32</Text>
-          </Card>
-        </HStack>
-        <HStack space="sm" reversed>
-          <Card className="grow">
-            <Text sub>Product Total</Text>
-            <Text size="xl">
-              {formatAsCurrency(Number(calculateJobProductsTotal()))}
-            </Text>
-          </Card>
-          <Card className="w-1/3">
-            <Text sub>Units</Text>
-            <Text size="xl">{calculateJobProductUnitsTotal()}</Text>
-          </Card>
-        </HStack>
-        <View className="flex-row items-center gap-x-2">
-          <Icon as={CircleCheck} className="text-typography-500" size="lg" />
-          <View className="w-0.5 h-full bg-typography-100" />
-          <View>
-            <Heading size="md">Tasks</Heading>
-            <Text size="xs">Stay on top of your job tasks</Text>
-          </View>
-        </View>
-        <VStack space="sm">
-          <HStack
-            space="md"
-            className="items-center bg-white p-2 px-4 rounded-lg flex-1"
-          >
-            <Pressable>
-              <Icon as={Circle} className="text-typography-500" size="lg" />
-            </Pressable>
-            <Divider orientation="vertical" />
-            <Box className="flex-1">
-              <Text>Send Docusign Agreement</Text>
-              <Text sub>
-                Signed on:{" "}
-                <Text bold italic sub>
-                  Not Signed
-                </Text>
-              </Text>
-            </Box>
-          </HStack>
-          <HStack
-            space="md"
-            className="items-center bg-white p-2 px-4 rounded-lg flex-1"
-          >
-            <Pressable>
-              <Icon as={Circle} className="text-typography-500" size="lg" />
-            </Pressable>
-            <Divider orientation="vertical" />
-            <Box className="flex-1">
-              <Text>Collect job deposit</Text>
-              <Text sub>
-                Deposit Collected:{" "}
-                <Text bold italic sub>
-                  {formatAsCurrency(500)}
-                </Text>
-              </Text>
-            </Box>
-          </HStack>
-          <HStack
-            space="md"
-            className="items-center bg-white p-2 px-4 rounded-lg flex-1"
-          >
-            <Pressable>
-              <Icon
-                as={CircleCheck}
-                className="text-typography-600"
-                size="lg"
-              />
-            </Pressable>
-            <Divider orientation="vertical" />
-            <Box className="flex-1">
-              <Text>Schedule installation</Text>
-              <Text sub>
-                Starting on:{" "}
-                <Text bold italic sub>
-                  12/12/2021
-                </Text>
-              </Text>
-            </Box>
-          </HStack>
-        </VStack>
-        <View className="flex-row items-center gap-x-2">
-          <Icon as={Blocks} className="text-typography-500" size="lg" />
-          <View className="w-0.5 h-full bg-typography-100" />
-          <View>
-            <Heading size="md">Products</Heading>
-            <Text size="xs">Manage the products for this job.</Text>
-          </View>
-        </View>
-        <VStack space="sm">
-          {job?.products.map((product, index) => (
-            <Card key={index}>
-              <HStack space="sm">
-                <Text className="flex-1">{product.product.name}</Text>
-
-                <Box>
-                  <Text className="text-right">
-                    {`${product.number_of_units} ${product.product.unit}`}
-                  </Text>
-                  <Text className="text-right" sub>
-                    {formatAsCurrency(Number(product.total_price))}
-                  </Text>
-                </Box>
-              </HStack>
-            </Card>
-          ))}
-        </VStack>
-        <View className="flex-row items-center gap-x-2">
-          <Icon as={Image} className="text-typography-500" size="lg" />
-          <View className="w-0.5 h-full bg-typography-100" />
-          <View>
-            <Heading size="md">Media</Heading>
-            <Text size="xs">Photos and videos of the job</Text>
-          </View>
-        </View>
-        <ScrollView
-          contentContainerClassName="gap-x-2"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          <HStack space="md">
-            {job?.media.map((media, index) => (
-              <Box key={index}>
-                <SupabaseSignedImage path={media.path} size="xl" />
-              </Box>
-            ))}
-          </HStack>
-        </ScrollView>
-        <View className="flex-row items-center gap-x-2">
-          <Icon as={MessageCircle} className="text-typography-500" size="lg" />
-          <View className="w-0.5 h-full bg-typography-100" />
-          <View>
-            <Heading size="md">Notes</Heading>
-            <Text size="xs">Notes on the job</Text>
-          </View>
-        </View>
-        <VStack space="sm">
-          {job?.messages.toReversed().map((message) => {
-            return (
-              <Card key={message.id}>
-                <VStack space="sm">
-                  <Text>{message.message}</Text>
-                  <HStack space="sm" className="items-center">
-                    <Avatar size="xs">
-                      <AvatarFallbackText>
-                        {message.profile.full_name}
-                      </AvatarFallbackText>
-                    </Avatar>
-                    <VStack>
-                      <Text size="sm">{message.profile.full_name}</Text>
-                      <Text sub>{`Posted: ${dayjs(message.created_at).format(
-                        FRIENDLY_DATE_FORMAT
-                      )}`}</Text>
-                    </VStack>
-                  </HStack>
-                </VStack>
-              </Card>
-            );
-          })}
-        </VStack>
+        <Tiles job={job} />
+        <Tasks />
+        <Products job={job} />
+        <Media job={job} />
+        <Notes job={job} />
         <ScreenEnd />
       </ScrollView>
     </View>
