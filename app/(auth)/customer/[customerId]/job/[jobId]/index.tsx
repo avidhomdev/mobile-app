@@ -79,7 +79,13 @@ import {
   Trash,
 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
-import { Pressable, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function DeleteConfirmation({ handleClose }: { handleClose: () => void }) {
@@ -791,6 +797,8 @@ function Header({ job }: { job: ILocationJob }) {
   );
 }
 export default function Screen() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { refreshData } = useUserContext();
   const { jobId } = useLocalSearchParams();
   const { customer } = useCustomerContext();
   const job = customer.jobs.find((job) => job.id === Number(jobId));
@@ -802,7 +810,19 @@ export default function Screen() {
       <Header job={job} />
       <Divider />
       <FabPlusMenu />
-      <ScrollView contentContainerClassName="gap-y-6 p-6">
+      <ScrollView
+        contentContainerClassName="gap-y-6 p-6"
+        refreshControl={
+          <RefreshControl
+            onRefresh={async () => {
+              setIsRefreshing(true);
+              await refreshData();
+              setIsRefreshing(false);
+            }}
+            refreshing={isRefreshing}
+          />
+        }
+      >
         <Tiles job={job} />
         <Tasks />
         <Products job={job} />
