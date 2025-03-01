@@ -1241,6 +1241,7 @@ export type Database = {
           id: number
           image: string | null
           lead_price: number
+          min_units: number
           name: string
           unit: string | null
           unit_price: number | null
@@ -1252,6 +1253,7 @@ export type Database = {
           id?: number
           image?: string | null
           lead_price?: number
+          min_units?: number
           name: string
           unit?: string | null
           unit_price?: number | null
@@ -1263,6 +1265,7 @@ export type Database = {
           id?: number
           image?: string | null
           lead_price?: number
+          min_units?: number
           name?: string
           unit?: string | null
           unit_price?: number | null

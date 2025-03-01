@@ -162,7 +162,13 @@ function AddProductBottomSheet({
   });
 
   const handleCloseAndAddProduct = (product: IProduct) => {
-    setSelectedProducts([...selectedProducts, product]);
+    setSelectedProducts([
+      ...selectedProducts,
+      {
+        ...product,
+        units: product.min_units,
+      },
+    ]);
     handleClose();
   };
 
