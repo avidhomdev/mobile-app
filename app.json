@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "avid-hom"
+      "bundleIdentifier": "avid-hom",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,6 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.avidhom"
@@ -40,7 +42,9 @@
       [
         "expo-asset",
         {
-          "assets": ["./assets/images/illustrations/celebration.png"]
+          "assets": [
+            "./assets/images/illustrations/celebration.png"
+          ]
         }
       ],
       "expo-image-picker"
@@ -48,6 +52,14 @@
     "experiments": {
       "typedRoutes": true
     },
-    "newArchEnabled": true
+    "newArchEnabled": true,
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "94a61650-4930-4e3e-9ebe-9c7ad66a2e91"
+      }
+    }
   }
 }
