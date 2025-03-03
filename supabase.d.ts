@@ -183,6 +183,47 @@ export type Database = {
           },
         ]
       }
+      business_integrations: {
+        Row: {
+          authorized_on_date: string | null
+          business_id: string
+          created_at: string
+          id: number
+          resource: string
+          status: Database["public"]["Enums"]["row_status"]
+          token: string | null
+          type: string
+        }
+        Insert: {
+          authorized_on_date?: string | null
+          business_id: string
+          created_at?: string
+          id?: number
+          resource: string
+          status?: Database["public"]["Enums"]["row_status"]
+          token?: string | null
+          type?: string
+        }
+        Update: {
+          authorized_on_date?: string | null
+          business_id?: string
+          created_at?: string
+          id?: number
+          resource?: string
+          status?: Database["public"]["Enums"]["row_status"]
+          token?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_location_customer_bid_media: {
         Row: {
           bid_id: number
@@ -833,6 +874,80 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_location_job_tasks: {
+        Row: {
+          business_id: string
+          complete: boolean
+          completed_by_profile_id: string | null
+          completed_date: string | null
+          created_at: string
+          id: number
+          job_id: number
+          location_id: number
+          name: string
+          notes: string | null
+          type: string
+          type_value: string | null
+        }
+        Insert: {
+          business_id: string
+          complete?: boolean
+          completed_by_profile_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          id?: number
+          job_id: number
+          location_id: number
+          name: string
+          notes?: string | null
+          type?: string
+          type_value?: string | null
+        }
+        Update: {
+          business_id?: string
+          complete?: boolean
+          completed_by_profile_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          id?: number
+          job_id?: number
+          location_id?: number
+          name?: string
+          notes?: string | null
+          type?: string
+          type_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_location_job_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_job_tasks_completed_by_profile_id_fkey"
+            columns: ["completed_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_job_tasks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "business_location_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_job_tasks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "business_locations"
             referencedColumns: ["id"]
           },
         ]
@@ -1565,6 +1680,7 @@ export type Database = {
         | "canceled"
         | "complete"
       location_profile_roles: "admin" | "manager" | "base"
+      row_status: "inactive" | "active"
     }
     CompositeTypes: {
       [_ in never]: never

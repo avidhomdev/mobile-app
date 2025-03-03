@@ -43,11 +43,15 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
+import { Input, InputField } from "@/components/ui/input";
 import { Actionsheet } from "@/components/ui/select/select-actionsheet";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
-import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
+import {
+  FRIENDLY_DATE_FORMAT,
+  SERVER_DATE_FORMAT,
+} from "@/constants/date-formats";
 import { useCustomerContext } from "@/contexts/customer-context";
 import {
   ILocationCustomer,
@@ -71,7 +75,6 @@ import {
   File,
   HardHat,
   Image,
-  ListOrdered,
   MessageCircle,
   PanelRightOpen,
   Plus,
@@ -80,6 +83,7 @@ import {
 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -87,6 +91,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 
 function DeleteConfirmation({ handleClose }: { handleClose: () => void }) {
   const router = useRouter();
@@ -373,8 +378,7 @@ function FabPlusActionSheetNoteItem({
   );
 }
 
-function FabPlusMenu() {
-  const { jobId } = useLocalSearchParams();
+function FabPlusMenu({ job }: { job: ILocationJob }) {
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setActionSheetVisible] = useState(false);
   const handleCloseActionSheet = () => setActionSheetVisible(false);
@@ -403,29 +407,16 @@ function FabPlusMenu() {
           <FabPlusActionSheetMediaItem
             closeFabPlusMenu={handleCloseActionSheet}
             customer={customer}
-            jobId={Number(jobId)}
+            jobId={job.id}
             refreshData={refreshData}
           />
-          <ActionsheetItem
-            onPress={() => {
-              // router.push(`/customer/[customerId]/job/${job.id}`);
+          <AddTaskMenuItem
+            job={job}
+            onSubmit={() => {
+              refreshData();
               handleCloseActionSheet();
             }}
-          >
-            <ActionsheetIcon
-              as={CircleCheck}
-              className="text-typography-500"
-              size="lg"
-            />
-            <Box>
-              <ActionsheetItemText className="text-typography-700">
-                Task
-              </ActionsheetItemText>
-              <Text className="text-typography-500" sub>
-                Stay on top of things to do with a task
-              </Text>
-            </Box>
-          </ActionsheetItem>
+          />
           <FabPlusActionSheetNoteItem
             closeFabPlusMenu={handleCloseActionSheet}
             handleSubmitNoteToJob={async (note) => {
@@ -435,86 +426,13 @@ function FabPlusMenu() {
                   author_id: profile.id,
                   business_id: customer.business_id,
                   location_id: customer.location_id,
-                  job_id: Number(jobId),
+                  job_id: job.id,
                   message: note,
                 })
                 .then(refreshData)
                 .then(handleCloseActionSheet);
             }}
           />
-        </ActionsheetContent>
-      </Actionsheet>
-    </Fragment>
-  );
-}
-
-function TaskMenu() {
-  const { bottom } = useSafeAreaInsets();
-  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
-  const handleCloseActionSheet = () => setActionSheetVisible(false);
-  return (
-    <Fragment>
-      <TouchableOpacity
-        className="p-2 bg-gray-50 rounded"
-        onPress={() => setActionSheetVisible(true)}
-      >
-        <Icon as={EllipsisVertical} size="lg" />
-      </TouchableOpacity>
-      <Actionsheet
-        isOpen={isActionSheetVisible}
-        onClose={handleCloseActionSheet}
-      >
-        <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-            <ActionsheetSectionHeaderText>Tasks</ActionsheetSectionHeaderText>
-          </ActionsheetDragIndicatorWrapper>
-          <ActionsheetItem onPress={() => {}}>
-            <ActionsheetIcon
-              as={Plus}
-              className="text-typography-500"
-              size="lg"
-            />
-            <Box>
-              <ActionsheetItemText className="text-typography-700">
-                Add Task
-              </ActionsheetItemText>
-              <Text className="text-typography-500" sub>
-                Stay on top of things to do with a new task
-              </Text>
-            </Box>
-          </ActionsheetItem>
-          <ActionsheetItem onPress={() => {}}>
-            <ActionsheetIcon
-              as={EyeOff}
-              className="text-typography-500"
-              size="lg"
-            />
-            <Box>
-              <ActionsheetItemText className="text-typography-700">
-                Hide Completed Tasks
-              </ActionsheetItemText>
-              <Text className="text-typography-500" sub>
-                Show only the incomplete tasks
-              </Text>
-            </Box>
-          </ActionsheetItem>
-          <ActionsheetItem onPress={() => {}}>
-            <ActionsheetIcon
-              as={ListOrdered}
-              className="text-typography-500"
-              size="lg"
-            />
-            <Box>
-              <ActionsheetItemText className="text-typography-700">
-                Sort Tasks
-              </ActionsheetItemText>
-              <Text className="text-typography-500" sub>
-                Change the order of tasks
-              </Text>
-            </Box>
-          </ActionsheetItem>
         </ActionsheetContent>
       </Actionsheet>
     </Fragment>
@@ -566,7 +484,213 @@ function ProductsMenu() {
   );
 }
 
-function Tasks() {
+function AddTaskMenuItem({
+  job,
+  onSubmit,
+}: {
+  job: ILocationJob;
+  onSubmit: (task: string) => void;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [task, setTask] = useState("");
+  const { bottom } = useSafeAreaInsets();
+  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
+  const handleCloseActionSheet = () => setActionSheetVisible(false);
+
+  const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+
+    const insert = {
+      business_id: job.business_id,
+      location_id: job.business_location_id,
+      job_id: job.id,
+      name: task,
+      type: "checkbox",
+    };
+    await supabase.from("business_location_job_tasks").insert(insert);
+    setIsSubmitting(false);
+    onSubmit(task);
+  }, [task]);
+
+  return (
+    <Fragment>
+      <ActionsheetItem onPress={() => setActionSheetVisible(true)}>
+        <ActionsheetIcon as={Plus} className="text-typography-500" size="lg" />
+        <Box>
+          <ActionsheetItemText className="text-typography-700">
+            Add Task
+          </ActionsheetItemText>
+          <Text className="text-typography-500" sub>
+            Stay on top of things to do with a new task
+          </Text>
+        </Box>
+      </ActionsheetItem>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+          </ActionsheetDragIndicatorWrapper>
+          <VStack className="w-full" space="lg">
+            <FormControl isDisabled={isSubmitting} size="sm" className="w-full">
+              <FormControlLabel>
+                <FormControlLabelText>Add Task</FormControlLabelText>
+              </FormControlLabel>
+              <Input variant="outline" size="lg">
+                <InputField
+                  onChangeText={setTask}
+                  placeholder="Send documents to customer"
+                />
+              </Input>
+            </FormControl>
+            <Button disabled={isSubmitting} onPress={handleSubmit}>
+              <ButtonText>Submit</ButtonText>
+            </Button>
+          </VStack>
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
+function TaskMenu({
+  isHidingCompleted,
+  job,
+  toggleCompleted,
+}: {
+  isHidingCompleted: boolean;
+  job: ILocationJob;
+  toggleCompleted: () => void;
+}) {
+  const { refreshData } = useUserContext();
+  const { bottom } = useSafeAreaInsets();
+  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
+  const handleCloseActionSheet = () => setActionSheetVisible(false);
+
+  return (
+    <Fragment>
+      <TouchableOpacity
+        className="p-2 bg-gray-50 rounded"
+        onPress={() => setActionSheetVisible(true)}
+      >
+        <Icon as={EllipsisVertical} size="lg" />
+      </TouchableOpacity>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>Tasks</ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          <AddTaskMenuItem
+            job={job}
+            onSubmit={() => {
+              refreshData();
+              handleCloseActionSheet();
+            }}
+          />
+          <ActionsheetItem
+            onPress={() => {
+              toggleCompleted();
+              handleCloseActionSheet();
+            }}
+          >
+            <ActionsheetIcon
+              as={EyeOff}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Box>
+              <ActionsheetItemText className="text-typography-700">
+                {`${isHidingCompleted ? `Show` : `Hide`} Completed Tasks`}
+              </ActionsheetItemText>
+              <Text className="text-typography-500" sub>
+                Show or hide only the complete tasks
+              </Text>
+            </Box>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
+function TaskItem({ task }: { task: ILocationJob["tasks"][0] }) {
+  const [isToggling, setIsToggling] = useState(false);
+  const { refreshData } = useUserContext();
+
+  const toggleTaskCompletion = async () => {
+    setIsToggling(true);
+    await supabase
+      .from("business_location_job_tasks")
+      .update({
+        complete: !task.complete,
+        completed_date: !task.complete
+          ? dayjs().format(SERVER_DATE_FORMAT)
+          : null,
+      })
+      .eq("id", task.id)
+      .then(refreshData)
+      .then(() => setIsToggling(false));
+  };
+
+  return (
+    <Pressable>
+      <Card size="sm">
+        <HStack space="md" className="items-center">
+          <Box className="w-6">
+            {isToggling ? (
+              <ActivityIndicator />
+            ) : (
+              <TouchableOpacity onPress={toggleTaskCompletion}>
+                <Icon
+                  as={task.complete ? CircleCheck : Circle}
+                  className={twMerge(
+                    task.complete ? "text-green-500" : "text-gray-500"
+                  )}
+                  size="2xl"
+                />
+              </TouchableOpacity>
+            )}
+          </Box>
+          <Divider orientation="vertical" />
+          <Box className="flex-1">
+            <Text>{task.name}</Text>
+            <Text sub>
+              Completed on:{" "}
+              <Text bold italic sub>
+                {task.completed_date
+                  ? dayjs(task.completed_date).format(FRIENDLY_DATE_FORMAT)
+                  : "Incomplete"}
+              </Text>
+            </Text>
+          </Box>
+        </HStack>
+      </Card>
+    </Pressable>
+  );
+}
+
+function Tasks({ job }: { job: ILocationJob }) {
+  const [isHidingCompleted, setIsHidingCompleted] = useState(false);
+  const { tasks } = job;
+
+  const filteredTasks = tasks
+    .filter((task) => (isHidingCompleted ? !task.complete : true))
+    .sort((a, b) => {
+      const aComplete = a.complete ? 1 : 0;
+      const bComplete = b.complete ? 1 : 0;
+      return aComplete - bComplete;
+    });
+
+  const toggleCompleted = () => setIsHidingCompleted((prevState) => !prevState);
+
   return (
     <Fragment>
       <View className="flex-row items-center gap-x-2">
@@ -576,63 +700,21 @@ function Tasks() {
           <Heading size="md">Tasks</Heading>
           <Text size="xs">Stay on top of your job tasks</Text>
         </View>
-        <TaskMenu />
+        <TaskMenu
+          job={job}
+          isHidingCompleted={isHidingCompleted}
+          toggleCompleted={toggleCompleted}
+        />
       </View>
       <VStack space="sm">
-        <HStack
-          space="md"
-          className="items-center bg-white p-2 px-4 rounded-lg flex-1"
-        >
-          <Pressable>
-            <Icon as={Circle} className="text-typography-500" size="lg" />
-          </Pressable>
-          <Divider orientation="vertical" />
-          <Box className="flex-1">
-            <Text>Send Docusign Agreement</Text>
-            <Text sub>
-              Signed on:{" "}
-              <Text bold italic sub>
-                Not Signed
-              </Text>
-            </Text>
-          </Box>
-        </HStack>
-        <HStack
-          space="md"
-          className="items-center bg-white p-2 px-4 rounded-lg flex-1"
-        >
-          <Pressable>
-            <Icon as={Circle} className="text-typography-500" size="lg" />
-          </Pressable>
-          <Divider orientation="vertical" />
-          <Box className="flex-1">
-            <Text>Collect job deposit</Text>
-            <Text sub>
-              Deposit Collected:{" "}
-              <Text bold italic sub>
-                {formatAsCurrency(500)}
-              </Text>
-            </Text>
-          </Box>
-        </HStack>
-        <HStack
-          space="md"
-          className="items-center bg-white p-2 px-4 rounded-lg flex-1"
-        >
-          <Pressable>
-            <Icon as={CircleCheck} className="text-typography-600" size="lg" />
-          </Pressable>
-          <Divider orientation="vertical" />
-          <Box className="flex-1">
-            <Text>Schedule installation</Text>
-            <Text sub>
-              Starting on:{" "}
-              <Text bold italic sub>
-                12/12/2021
-              </Text>
-            </Text>
-          </Box>
-        </HStack>
+        {filteredTasks.length === 0 && (
+          <Card variant="outline">
+            <Text>No task found.</Text>
+          </Card>
+        )}
+        {filteredTasks.map((task) => (
+          <TaskItem key={task.id} task={task} />
+        ))}
       </VStack>
     </Fragment>
   );
@@ -651,30 +733,30 @@ function Tiles({ job }: { job: ILocationJob }) {
     }, 0);
   };
   return (
-    <Fragment>
+    <VStack space="sm">
       <HStack space="sm">
-        <Card className="grow">
+        <Card className="grow justify-center">
           <Text sub>Commission</Text>
-          <Text size="xl">{formatAsCurrency(Number(job?.commission))}</Text>
+          <Text size="2xl">{formatAsCurrency(Number(job?.commission))}</Text>
         </Card>
         <Card className="w-1/3">
           <Text sub>Hours</Text>
-          <Text size="xl">32</Text>
+          <Text size="2xl">32</Text>
         </Card>
       </HStack>
       <HStack space="sm" reversed>
         <Card className="grow">
           <Text sub>Product Total</Text>
-          <Text size="xl">
+          <Text size="2xl">
             {formatAsCurrency(Number(calculateJobProductsTotal()))}
           </Text>
         </Card>
         <Card className="w-1/3">
           <Text sub>Units</Text>
-          <Text size="xl">{calculateJobProductUnitsTotal()}</Text>
+          <Text size="2xl">{calculateJobProductUnitsTotal()}</Text>
         </Card>
       </HStack>
-    </Fragment>
+    </VStack>
   );
 }
 
@@ -690,24 +772,33 @@ function Products({ job }: { job: ILocationJob }) {
         </View>
         <ProductsMenu />
       </View>
-      <VStack space="sm">
-        {job?.products.map((product, index) => (
-          <Card key={index}>
-            <HStack space="sm">
-              <Text className="flex-1">{product.product.name}</Text>
-
-              <Box>
-                <Text className="text-right">
-                  {`${product.number_of_units} ${product.product.unit}`}
-                </Text>
-                <Text className="text-right" sub>
-                  {formatAsCurrency(Number(product.total_price))}
-                </Text>
-              </Box>
-            </HStack>
-          </Card>
-        ))}
-      </VStack>
+      {job.products.length === 0 ? (
+        <Card variant="outline">
+          <Text>No products found.</Text>
+        </Card>
+      ) : (
+        <VStack space="sm">
+          {job.products.map((product) => (
+            <Card className="bg-white" key={product.id} size="sm">
+              <VStack space="sm">
+                <VStack>
+                  <Text>{product.product.name}</Text>
+                  <Text
+                    sub
+                  >{`Price is calculated per ${product.product.unit}`}</Text>
+                </VStack>
+                <Divider />
+                <HStack className="justify-between">
+                  <Text>{`${product.number_of_units} x ${product.product.unit}`}</Text>
+                  <Text size="lg">
+                    {formatAsCurrency(Number(product.total_price))}
+                  </Text>
+                </HStack>
+              </VStack>
+            </Card>
+          ))}
+        </VStack>
+      )}
     </Fragment>
   );
 }
@@ -723,19 +814,25 @@ function Media({ job }: { job: ILocationJob }) {
           <Text size="xs">Photos and videos of the job</Text>
         </View>
       </View>
-      <ScrollView
-        contentContainerClassName="gap-x-2"
-        horizontal
-        showsHorizontalScrollIndicator={false}
-      >
-        <HStack space="md">
-          {job?.media.map((media, index) => (
-            <Box key={index}>
-              <SupabaseSignedImage path={media.path} size="xl" />
-            </Box>
-          ))}
-        </HStack>
-      </ScrollView>
+      {job.media.length === 0 ? (
+        <Card variant="outline">
+          <Text>No media found.</Text>
+        </Card>
+      ) : (
+        <ScrollView
+          contentContainerClassName="gap-x-2"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          <HStack space="md">
+            {job?.media.map((media, index) => (
+              <Box key={index}>
+                <SupabaseSignedImage path={media.path} size="xl" />
+              </Box>
+            ))}
+          </HStack>
+        </ScrollView>
+      )}
     </Fragment>
   );
 }
@@ -752,6 +849,11 @@ function Notes({ job }: { job: ILocationJob }) {
         </View>
       </View>
       <VStack space="sm">
+        {job.messages.length === 0 && (
+          <Card variant="outline">
+            <Text>No notes found.</Text>
+          </Card>
+        )}
         {job?.messages.toReversed().map((message) => {
           return (
             <Card key={message.id}>
@@ -809,7 +911,7 @@ export default function Screen() {
     <View className="flex-1">
       <Header job={job} />
       <Divider />
-      <FabPlusMenu />
+      <FabPlusMenu job={job} />
       <ScrollView
         contentContainerClassName="gap-y-6 p-6"
         refreshControl={
@@ -824,8 +926,8 @@ export default function Screen() {
         }
       >
         <Tiles job={job} />
-        <Tasks />
         <Products job={job} />
+        <Tasks job={job} />
         <Media job={job} />
         <Notes job={job} />
         <ScreenEnd />
