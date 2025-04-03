@@ -36,7 +36,9 @@ export default function Login() {
   return (
     <View className="flex-1 justify-center p-4 gap-y-6 bg-white">
       <View>
-        <Text size="xl">Welcome back!</Text>
+        <Text className="text-center" size="3xl">
+          Welcome back!
+        </Text>
         <Text>
           Sign in to view your jobs, manage your schedule and start tracking
           time.
