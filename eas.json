@@ -19,6 +19,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "trentonbird26@gmail.com",
+        "ascAppId": "6744122534",
+        "appleTeamId": "7316ba4d-6e8d-4152-8071-fadf09361c6b"
+      }
+    }
   }
 }
