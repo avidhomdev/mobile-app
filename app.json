@@ -24,9 +24,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.avidhom"
     },
     "web": {
@@ -42,9 +40,7 @@
       [
         "expo-asset",
         {
-          "assets": [
-            "./assets/images/illustrations/celebration.png"
-          ]
+          "assets": ["./assets/images/illustrations/celebration.png"]
         }
       ],
       "expo-image-picker"
@@ -60,6 +56,12 @@
       "eas": {
         "projectId": "94a61650-4930-4e3e-9ebe-9c7ad66a2e91"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/94a61650-4930-4e3e-9ebe-9c7ad66a2e91"
     }
   }
 }
