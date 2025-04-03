@@ -1,14 +1,20 @@
-import React, { useEffect } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { supabase } from "@/lib/supabase";
+import { AuthTokenResponsePassword } from "@supabase/supabase-js";
+import React, { useEffect } from "react";
+
+type TSignIn = (args: {
+  email: string;
+  password: string;
+}) => Promise<AuthTokenResponsePassword>;
 
 const AuthContext = React.createContext<{
-  signIn: (args: { email: string; password: string }) => void;
+  signIn: undefined | TSignIn;
   signOut: () => void;
   session?: string | null;
   isLoading: boolean;
 }>({
-  signIn: async () => null,
+  signIn: undefined,
   signOut: () => null,
   session: null,
   isLoading: false,

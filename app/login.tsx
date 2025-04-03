@@ -1,8 +1,3 @@
-import { Redirect, router } from "expo-router";
-import { View } from "react-native";
-import { useSession } from "@/contexts/auth-context";
-import { useState } from "react";
-import { Text } from "@/components/ui/text";
 import {
   FormControl,
   FormControlError,
@@ -11,19 +6,28 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
+import { Text } from "@/components/ui/text";
+import { useSession } from "@/contexts/auth-context";
+import { Redirect, router } from "expo-router";
+import { useState } from "react";
+import { KeyboardAvoidingView, View } from "react-native";
 
+import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { AlertCircleIcon } from "lucide-react-native";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Alert, AlertText } from "@/components/ui/alert";
 
 export default function Login() {
   const { signIn, session } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleLogin = () => {
-    signIn({ email, password });
-    router.replace("/");
-  };
+  const [error, setError] = useState("");
+
+  const handleLogin = () =>
+    signIn!({ email, password }).then(({ error: signInError }) => {
+      if (!signInError) router.replace("/");
+      setError(signInError!.message);
+    });
 
   if (session) {
     return <Redirect href="/(auth)/(tabs)" />;
@@ -38,7 +42,12 @@ export default function Login() {
           time.
         </Text>
       </View>
-      <View className="gap-y-6">
+      <KeyboardAvoidingView behavior="padding" className="gap-y-6">
+        {error && (
+          <Alert action="error">
+            <AlertText>{error}</AlertText>
+          </Alert>
+        )}
         <FormControl isRequired>
           <FormControlLabel>
             <FormControlLabelText>Email</FormControlLabelText>
@@ -49,6 +58,7 @@ export default function Login() {
               autoCorrect={false}
               onChangeText={setEmail}
               placeholder="johndoe@exmaple.com"
+              value={email}
             />
           </Input>
           <FormControlError>
@@ -61,7 +71,11 @@ export default function Login() {
             <FormControlLabelText>Password</FormControlLabelText>
           </FormControlLabel>
           <Input variant="outline" size="lg">
-            <InputField onChangeText={setPassword} type="password" />
+            <InputField
+              onChangeText={setPassword}
+              type="password"
+              value={password}
+            />
           </Input>
           <FormControlError>
             <FormControlErrorIcon as={AlertCircleIcon} />
@@ -71,7 +85,7 @@ export default function Login() {
         <Button onPress={handleLogin}>
           <ButtonText className="text-center font-bold">Sign in</ButtonText>
         </Button>
-      </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
