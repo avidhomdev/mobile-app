@@ -30,7 +30,7 @@ export default function Login() {
   }
 
   return (
-    <View className="flex-1 justify-center p-4 gap-y-6">
+    <View className="flex-1 justify-center p-4 gap-y-6 bg-white">
       <View>
         <Text size="xl">Welcome back!</Text>
         <Text>
