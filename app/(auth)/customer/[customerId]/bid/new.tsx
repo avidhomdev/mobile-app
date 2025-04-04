@@ -37,6 +37,7 @@ import { formatAsCurrency } from "@/utils/format-as-currency";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import {
+  Construction,
   Eye,
   EyeOff,
   Info,
@@ -45,7 +46,12 @@ import {
   UploadCloud,
 } from "lucide-react-native";
 import { Fragment, useCallback, useEffect, useReducer, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
@@ -657,7 +663,7 @@ function BidForm({
   const { customer } = useCustomerContext();
 
   return (
-    <ScrollView contentContainerClassName="gap-y-6 p-6">
+    <Fragment>
       {formState.error && (
         <Alert action="error">
           <AlertIcon as={Info} />
@@ -736,13 +742,15 @@ function BidForm({
           <TextareaInput
             defaultValue={formState.fields.notes}
             onChangeText={(text) =>
-              dispatch({ type: FormReducerActionType.SET_NOTES, payload: text })
+              dispatch({
+                type: FormReducerActionType.SET_NOTES,
+                payload: text,
+              })
             }
           />
         </Textarea>
       </FormControl>
-      <ScreenEnd />
-    </ScrollView>
+    </Fragment>
   );
 }
 
@@ -757,7 +765,7 @@ function Preview({ formState }: { formState: IFormState<IBidFields> }) {
     formState.fields.commission / (totalNumberOfUnits || 1);
 
   return (
-    <ScrollView contentContainerClassName="gap-y-4 p-6">
+    <Fragment>
       <Heading>{formState.fields.name}</Heading>
       {formState.fields.products.map((product) => {
         const units = product.units ?? 0;
@@ -787,15 +795,14 @@ function Preview({ formState }: { formState: IFormState<IBidFields> }) {
         </Card>
       )}
       <Totals hideCommissions formState={formState} />
-      <ScreenEnd />
-    </ScrollView>
+    </Fragment>
   );
 }
 
 export default function Screen() {
   const { profile, refreshData } = useUserContext();
   const [preview, setPreview] = useState(false);
-  const { top, bottom } = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets();
   const { customer } = useCustomerContext();
   const router = useRouter();
 
@@ -894,10 +901,7 @@ export default function Screen() {
 
   return (
     <Fragment>
-      <View
-        className="p-4 gap-x-4 border-b-8 border-gray-500"
-        style={{ paddingBlockStart: top }}
-      >
+      <View className="p-4 gap-x-4" style={{ paddingBlockStart: top }}>
         <View className="flex-row items-center gap-x-4 justify-between">
           <BackHeaderButton />
           <Pressable onPress={() => setPreview(!preview)}>
@@ -910,23 +914,33 @@ export default function Screen() {
             />
           </Pressable>
         </View>
-        <Heading className="text-typography-800 mt-2" size="xl">
-          New Bid
-        </Heading>
-        <Text className="text-typography-400">
-          {`Start a new bid for ${customer?.full_name}`}
-        </Text>
       </View>
-      {preview ? (
-        <Preview formState={formState} />
-      ) : (
-        <BidForm formState={formState} dispatch={dispatch} />
-      )}
-      <View className="px-4 bg-transparent absolute w-full" style={{ bottom }}>
-        <Button onPress={handleSubmit}>
-          <ButtonText>Submit Bid</ButtonText>
-        </Button>
-      </View>
+      <KeyboardAvoidingView behavior="padding">
+        <ScrollView contentContainerClassName="gap-y-6 p-6 pt-0">
+          <View className="flex-row items-center gap-x-2">
+            <Icon as={Construction} className="text-typography-500" size="lg" />
+            <View className="w-0.5 h-full bg-typography-100" />
+            <View>
+              <Heading size="md">{`${
+                preview ? "Previewing" : "New"
+              } Bid`}</Heading>
+              <Text size="xs">{`Start a new bid for ${customer?.full_name}`}</Text>
+            </View>
+          </View>
+
+          {preview ? (
+            <Preview formState={formState} />
+          ) : (
+            <BidForm formState={formState} dispatch={dispatch} />
+          )}
+
+          <Button onPress={handleSubmit}>
+            <ButtonText>Submit Bid</ButtonText>
+          </Button>
+          <ScreenEnd />
+          <ScreenEnd />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Fragment>
   );
 }
