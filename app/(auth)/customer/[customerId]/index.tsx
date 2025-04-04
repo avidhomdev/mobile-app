@@ -65,7 +65,13 @@ import {
   Trash,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
-import { Pressable, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Linking,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function EmailButton() {
@@ -73,6 +79,7 @@ function EmailButton() {
   const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
   const handleCloserAlertDialog = () => setIsAlertDialogVisible(false);
   const handleConfirm = () => {
+    Linking.openURL(`mailto:${encodeURIComponent(customer.email!)}`);
     handleCloserAlertDialog();
   };
   return (
@@ -128,6 +135,7 @@ function PhoneButton() {
   const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
   const handleCloserAlertDialog = () => setIsAlertDialogVisible(false);
   const handleConfirm = () => {
+    Linking.openURL(`tel:${customer.phone}}`);
     handleCloserAlertDialog();
   };
   return (
@@ -167,7 +175,6 @@ function PhoneButton() {
       </AlertDialog>
       <Button
         action="secondary"
-        disabled={!customer?.phone}
         onPress={() => setIsAlertDialogVisible(true)}
         size="sm"
       >
@@ -179,9 +186,15 @@ function PhoneButton() {
 }
 
 function MapPinButton() {
+  const { customer } = useCustomerContext();
   const [isAlertDialogVisible, setIsAlertDialogVisible] = useState(false);
   const handleCloserAlertDialog = () => setIsAlertDialogVisible(false);
   const handleConfirm = () => {
+    Linking.openURL(
+      `maps://?daddr=${encodeURIComponent(
+        `${customer.address}, ${customer.city}, ${customer.state}, ${customer.postal_code}`
+      )}`
+    );
     handleCloserAlertDialog();
   };
   return (
@@ -907,9 +920,9 @@ export default function Screen() {
           <Heading size="2xl">{customer?.full_name}</Heading>
           <Text size="sm">{customer?.address}</Text>
           <View className="mt-2 flex-row items-center gap-x-2">
-            <MapPinButton />
-            <PhoneButton />
-            <EmailButton />
+            {customer.address && <MapPinButton />}
+            {customer.phone && <PhoneButton />}
+            {customer.email && <EmailButton />}
           </View>
         </View>
         <View className="px-6 flex-row items-center gap-x-4">

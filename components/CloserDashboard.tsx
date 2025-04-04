@@ -1,25 +1,22 @@
-import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
 import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
-import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
   Banknote,
   Calendar1,
-  EllipsisVertical,
   PiggyBank,
+  TrophyIcon,
+  UserIcon,
 } from "lucide-react-native";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { twMerge } from "tailwind-merge";
-import { Avatar, AvatarFallbackText, AvatarGroup } from "./ui/avatar";
 import { Badge, BadgeText } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
 import { Icon } from "./ui/icon";
-import { Progress, ProgressFilledTrack } from "./ui/progress";
 import {
   Table,
   TableBody,
@@ -29,35 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
+import { tableDataStyle, tableHeadStyle } from "./ui/table/styles";
 import { Text } from "./ui/text";
-
-const avatars = [
-  {
-    src: "https://example.com.jpg",
-    alt: "Sandeep Srivastva",
-    color: "bg-emerald-600",
-  },
-  {
-    src: "https://example.com.jpg",
-    alt: "Arjun Kapoor",
-    color: "bg-cyan-600",
-  },
-  {
-    src: "https://example.com.jpg",
-    alt: "Ritik Sharma ",
-    color: "bg-indigo-600",
-  },
-  {
-    src: "https://example.com.jpg",
-    alt: "Akhil Sharma",
-    color: "bg-gray-600",
-  },
-  {
-    src: "https://example.com.jpg",
-    alt: "Rahul Sharma ",
-    color: "bg-red-400",
-  },
-];
 
 export function CloserDashboard() {
   const { closers } = useUserContext();
@@ -66,87 +36,6 @@ export function CloserDashboard() {
 
   return (
     <View className="gap-y-6 p-6">
-      {location.customers && (
-        <ScrollView
-          contentContainerClassName="gap-x-4"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {location.customers?.map((customer) => {
-            const dispositionStatus =
-              DISPOSITION_STATUSES[customer.disposition_status] ||
-              DISPOSITION_STATUSES.NEW;
-            return (
-              <TouchableOpacity
-                key={customer.id}
-                onPress={() =>
-                  router.push({
-                    pathname: "/customer/[customerId]",
-                    params: { customerId: customer.id },
-                  })
-                }
-              >
-                <Card className={twMerge(dispositionStatus.bg, "w-72")}>
-                  <View className="items-start mb-1 justify-between flex-row">
-                    <Badge action={dispositionStatus?.action} size="sm">
-                      <BadgeText>{dispositionStatus?.label}</BadgeText>
-                    </Badge>
-                    <Icon as={EllipsisVertical} />
-                  </View>
-                  <Heading className="font-normal tracking-tighter" size="xl">
-                    {customer.full_name}
-                  </Heading>
-                  <Text className="text-typography-500" size="xs">
-                    Job is in progress and installers are at the job site.
-                  </Text>
-                  <View className="my-2 flex-row gap-x-2 items-center">
-                    <Progress
-                      className="shrink"
-                      orientation="horizontal"
-                      size="sm"
-                      value={40}
-                    >
-                      <ProgressFilledTrack className="bg-info-600" />
-                    </Progress>
-                    <View>
-                      <Text bold size="xs">
-                        40%
-                      </Text>
-                    </View>
-                  </View>
-                  <View className="flex-row justify-between items-center">
-                    <AvatarGroup className="ml-2">
-                      {avatars.slice(0, 3).map((avatar, index) => {
-                        return (
-                          <Avatar
-                            key={index}
-                            size="xs"
-                            className={
-                              "border-2 border-outline-0 " + avatar.color
-                            }
-                          >
-                            <AvatarFallbackText className="text-white">
-                              {avatar.alt}
-                            </AvatarFallbackText>
-                          </Avatar>
-                        );
-                      })}
-                    </AvatarGroup>
-                    <View className="flex-row gap-x-1 items-center">
-                      <Icon as={Calendar1} size="xs" />
-                      <Text size="xs">
-                        {dayjs(customer.created_at).format(
-                          FRIENDLY_DATE_FORMAT
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                </Card>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
       <View className="gap-y-2">
         <View className="flex-row gap-x-2">
           <Card className="basis-1/2">
@@ -194,25 +83,93 @@ export function CloserDashboard() {
           </Card>
         </View>
       </View>
+
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={UserIcon} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Recent Customers</Heading>
+          <Text size="xs">Customers that were recently added</Text>
+        </View>
+      </View>
+      {location.customers && (
+        <ScrollView
+          contentContainerClassName="gap-x-4"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {location.customers?.map((customer) => {
+            const dispositionStatus =
+              DISPOSITION_STATUSES[customer.disposition_status] ||
+              DISPOSITION_STATUSES.NEW;
+            return (
+              <TouchableOpacity
+                key={customer.id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/customer/[customerId]",
+                    params: { customerId: customer.id },
+                  })
+                }
+              >
+                <Card
+                  className={twMerge(dispositionStatus.bg, "w-72")}
+                  variant="outline"
+                >
+                  <Badge action={dispositionStatus?.action} size="sm">
+                    <BadgeText>{dispositionStatus?.label}</BadgeText>
+                  </Badge>
+                  <Heading className="font-normal tracking-tighter" size="xl">
+                    {customer.full_name}
+                  </Heading>
+                </Card>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={TrophyIcon} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">Closer Leaderboard</Heading>
+          <Text size="xs">Closers ranked by the number of jobs</Text>
+        </View>
+      </View>
       <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>Closer</TableHead>
-            <TableHead className="text-right">Closes</TableHead>
+            <TableHead className={tableHeadStyle({ class: "p-2" })}>
+              Closer
+            </TableHead>
+            <TableHead className={tableHeadStyle({ class: "p-2 text-right" })}>
+              Jobs
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {closers?.map((closer) => (
             <TableRow key={closer.id}>
-              <TableData>{closer.full_name}</TableData>
-              <TableData className="text-right">#</TableData>
+              <TableData className={tableDataStyle({ class: "p-2" })}>
+                {closer.full_name}
+              </TableData>
+              <TableData
+                className={tableDataStyle({ class: "p-2 text-right" })}
+              >
+                0
+              </TableData>
             </TableRow>
           ))}
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableHead>Total</TableHead>
-            <TableHead className="text-right">48</TableHead>
+            <TableHead className={tableHeadStyle({ class: "p-2" })}>
+              Total
+            </TableHead>
+            <TableHead className={tableHeadStyle({ class: "p-2 text-right" })}>
+              0
+            </TableHead>
           </TableRow>
         </TableFooter>
       </Table>

@@ -14,7 +14,7 @@ import { useUserContext } from "@/contexts/user-context";
 import { debounce } from "@/utils/debounce";
 import { useRouter } from "expo-router";
 import { useCallback, useReducer } from "react";
-import { ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 enum FormReducerActionType {
@@ -171,167 +171,169 @@ export default function Screen() {
   }, [state, customer?.id]);
 
   return (
-    <ScrollView
-      contentContainerClassName="gap-y-6 px-6"
-      contentContainerStyle={{ paddingTop: top }}
-    >
-      <BackHeaderButton />
-      <View>
-        <Heading>Profile</Heading>
-        <Text size="sm">Manage generic profile information</Text>
-      </View>
-      <View className="gap-y-2">
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Full Name</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.full_name}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_FULL_NAME,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Phone</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.phone}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_PHONE,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Email</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.email}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_EMAIL,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-      </View>
-      <View>
-        <Heading>Location</Heading>
-        <Text size="sm">Address is important for jobs and appointments</Text>
-      </View>
-      <View className="gap-y-2">
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Address</FormControlLabelText>
-          </FormControlLabel>
-          <Input size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.address}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_ADDRESS,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>City</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.city}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_CITY,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>State</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.state}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_STATE,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Postal Code</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoCapitalize="none"
-              autoComplete="off"
-              defaultValue={state.fields.postal_code}
-              onChangeText={debounce(
-                (payload) =>
-                  dispatch({
-                    type: FormReducerActionType.SET_POSTAL_CODE,
-                    payload,
-                  }),
-                500
-              )}
-            />
-          </Input>
-        </FormControl>
-      </View>
-      <Button onPress={handleSave} disabled={state.isSubmitting}>
-        <ButtonText>Save</ButtonText>
-      </Button>
-      <ScreenEnd />
-    </ScrollView>
+    <KeyboardAvoidingView behavior="padding">
+      <ScrollView
+        contentContainerClassName="gap-y-6 px-6"
+        contentContainerStyle={{ paddingTop: top }}
+      >
+        <BackHeaderButton />
+        <View>
+          <Heading>Profile</Heading>
+          <Text size="sm">Manage generic profile information</Text>
+        </View>
+        <View className="gap-y-2">
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Full Name</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.full_name}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_FULL_NAME,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Phone</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.phone}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_PHONE,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Email</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.email}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_EMAIL,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+        </View>
+        <View>
+          <Heading>Location</Heading>
+          <Text size="sm">Address is important for jobs and appointments</Text>
+        </View>
+        <View className="gap-y-2">
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Address</FormControlLabelText>
+            </FormControlLabel>
+            <Input size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.address}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_ADDRESS,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>City</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.city}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_CITY,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>State</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.state}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_STATE,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Postal Code</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={state.fields.postal_code}
+                onChangeText={debounce(
+                  (payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_POSTAL_CODE,
+                      payload,
+                    }),
+                  500
+                )}
+              />
+            </Input>
+          </FormControl>
+        </View>
+        <Button onPress={handleSave} disabled={state.isSubmitting}>
+          <ButtonText>Save</ButtonText>
+        </Button>
+        <ScreenEnd />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
