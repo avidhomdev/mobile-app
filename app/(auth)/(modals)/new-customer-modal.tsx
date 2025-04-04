@@ -152,208 +152,220 @@ export default function ModalScreen() {
     });
   };
   return (
-    <ScrollView
-      contentContainerClassName="gap-y-4"
-      contentContainerStyle={{ paddingBottom: bottom }}
-      stickyHeaderHiddenOnScroll
-    >
-      <View className="bg-slate-800 p-4 flex-row justify-between">
-        <View>
-          <Text className="text-typography-white" size="xl">
-            Getting started
-          </Text>
-          <Text className="text-typography-gray">
-            Tell us more about yourself to continue
-          </Text>
-        </View>
-        <TouchableOpacity onPress={router.back}>
-          <Icon as={CloseIcon} className="text-white" size="xl" />
-        </TouchableOpacity>
-      </View>
-      <KeyboardAvoidingView
-        behavior="padding"
-        className={twMerge(state.isSubmitting && "opacity-50", "gap-y-6 px-6")}
+    <KeyboardAvoidingView behavior="padding">
+      <ScrollView
+        contentContainerClassName="gap-y-4"
+        contentContainerStyle={{ paddingBottom: bottom }}
+        stickyHeaderHiddenOnScroll
       >
-        <FormControl isInvalid={state.submitted && !state.full_name} isRequired>
-          <FormControlLabel>
-            <FormControlLabelText>Full Name</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoComplete="off"
-              autoCapitalize="none"
-              onChangeText={(text) =>
-                dispatch({
-                  type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "full_name", value: text },
-                })
-              }
-              placeholder="John Doe"
-            />
-          </Input>
-          <FormControlError>
-            <FormControlErrorIcon as={AlertCircleIcon} />
-            <FormControlErrorText>Full name is required</FormControlErrorText>
-          </FormControlError>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Email</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoComplete="off"
-              autoCapitalize="none"
-              onChangeText={(text) =>
-                dispatch({
-                  type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "email", value: text },
-                })
-              }
-              placeholder="johndoe@example.com"
-            />
-          </Input>
-        </FormControl>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Phone</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoComplete="off"
-              autoCapitalize="none"
-              onChangeText={(text) =>
-                dispatch({
-                  type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "phone", value: text },
-                })
-              }
-              placeholder="555-555-5555"
-            />
-          </Input>
-        </FormControl>
-        <FormControl isInvalid={state.submitted && !state.address} isRequired>
-          <FormControlLabel>
-            <FormControlLabelText>Address</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoComplete="off"
-              autoCapitalize="none"
-              onChangeText={(text) =>
-                dispatch({
-                  type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "address", value: text },
-                })
-              }
-              placeholder="1234 Fake St"
-            />
-          </Input>
-          <FormControlError>
-            <FormControlErrorIcon as={AlertCircleIcon} />
-            <FormControlErrorText>Address is required</FormControlErrorText>
-          </FormControlError>
-        </FormControl>
-        <FormControl isInvalid={state.submitted && !state.city} isRequired>
-          <FormControlLabel>
-            <FormControlLabelText>City</FormControlLabelText>
-          </FormControlLabel>
-          <Input variant="outline" size="lg">
-            <InputField
-              autoComplete="off"
-              autoCapitalize="none"
-              onChangeText={(text) =>
-                dispatch({
-                  type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "city", value: text },
-                })
-              }
-              placeholder="Los Angeles"
-            />
-          </Input>
-          <FormControlError>
-            <FormControlErrorIcon as={AlertCircleIcon} />
-            <FormControlErrorText>City is required</FormControlErrorText>
-          </FormControlError>
-        </FormControl>
-        <View className="flex-row gap-x-2">
-          <FormControl
-            className="basis-1/2"
-            isInvalid={state.submitted && !state.state}
-            isRequired
-          >
-            <FormControlLabel>
-              <FormControlLabelText>State</FormControlLabelText>
-            </FormControlLabel>
-            <Input variant="outline" size="lg">
-              <InputField
-                autoComplete="off"
-                autoCapitalize="none"
-                onChangeText={(text) =>
-                  dispatch({
-                    type: FormReducerActionTypes.SET_INPUT_VALUE,
-                    payload: { input: "state", value: text },
-                  })
-                }
-                placeholder="CA"
-              />
-            </Input>
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText>State is required</FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-          <FormControl
-            className="basis-1/2"
-            isInvalid={state.submitted && !state.postal_code}
-            isRequired
-          >
-            <FormControlLabel>
-              <FormControlLabelText>Postal Code</FormControlLabelText>
-            </FormControlLabel>
-            <Input variant="outline" size="lg">
-              <InputField
-                autoComplete="off"
-                autoCapitalize="none"
-                onChangeText={(text) =>
-                  dispatch({
-                    type: FormReducerActionTypes.SET_INPUT_VALUE,
-                    payload: { input: "postal_code", value: text },
-                  })
-                }
-                placeholder="90650"
-              />
-            </Input>
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText>
-                Postal Code is required
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
+        <View className="bg-slate-800 p-4 flex-row justify-between">
+          <View>
+            <Text className="text-typography-white" size="xl">
+              Getting started
+            </Text>
+            <Text className="text-typography-gray">
+              Tell us more about yourself to continue
+            </Text>
+          </View>
+          <TouchableOpacity onPress={router.back}>
+            <Icon as={CloseIcon} className="text-white" size="xl" />
+          </TouchableOpacity>
         </View>
-        <FormControl>
-          <FormControlLabel>
-            <FormControlLabelText>Notes</FormControlLabelText>
-          </FormControlLabel>
-          <Textarea size="md">
-            <TextareaInput
-              onChangeText={(text) =>
-                dispatch({
-                  type: FormReducerActionTypes.SET_INPUT_VALUE,
-                  payload: { input: "notes", value: text },
-                })
-              }
-              placeholder="Share notes that may be helpful"
-            />
-          </Textarea>
-        </FormControl>
 
-        <Button disabled={state.isSubmitting} size="lg" onPress={handleSubmit}>
-          <ButtonText>Get Started</ButtonText>
-        </Button>
-      </KeyboardAvoidingView>
-      <View style={{ height: bottom }} />
-    </ScrollView>
+        <View
+          className={twMerge(
+            state.isSubmitting && "opacity-50",
+            "gap-y-6 px-6"
+          )}
+        >
+          <FormControl
+            isInvalid={state.submitted && !state.full_name}
+            isRequired
+          >
+            <FormControlLabel>
+              <FormControlLabelText>Full Name</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoComplete="off"
+                autoCapitalize="none"
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "full_name", value: text },
+                  })
+                }
+                placeholder="John Doe"
+              />
+            </Input>
+            <FormControlError>
+              <FormControlErrorIcon as={AlertCircleIcon} />
+              <FormControlErrorText>Full name is required</FormControlErrorText>
+            </FormControlError>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Email</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoComplete="off"
+                autoCapitalize="none"
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "email", value: text },
+                  })
+                }
+                placeholder="johndoe@example.com"
+              />
+            </Input>
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Phone</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoComplete="off"
+                autoCapitalize="none"
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "phone", value: text },
+                  })
+                }
+                placeholder="555-555-5555"
+              />
+            </Input>
+          </FormControl>
+          <FormControl isInvalid={state.submitted && !state.address} isRequired>
+            <FormControlLabel>
+              <FormControlLabelText>Address</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoComplete="off"
+                autoCapitalize="none"
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "address", value: text },
+                  })
+                }
+                placeholder="1234 Fake St"
+              />
+            </Input>
+            <FormControlError>
+              <FormControlErrorIcon as={AlertCircleIcon} />
+              <FormControlErrorText>Address is required</FormControlErrorText>
+            </FormControlError>
+          </FormControl>
+          <FormControl isInvalid={state.submitted && !state.city} isRequired>
+            <FormControlLabel>
+              <FormControlLabelText>City</FormControlLabelText>
+            </FormControlLabel>
+            <Input variant="outline" size="lg">
+              <InputField
+                autoComplete="off"
+                autoCapitalize="none"
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "city", value: text },
+                  })
+                }
+                placeholder="Los Angeles"
+              />
+            </Input>
+            <FormControlError>
+              <FormControlErrorIcon as={AlertCircleIcon} />
+              <FormControlErrorText>City is required</FormControlErrorText>
+            </FormControlError>
+          </FormControl>
+          <View className="flex-row gap-x-2">
+            <FormControl
+              className="basis-1/2"
+              isInvalid={state.submitted && !state.state}
+              isRequired
+            >
+              <FormControlLabel>
+                <FormControlLabelText>State</FormControlLabelText>
+              </FormControlLabel>
+              <Input variant="outline" size="lg">
+                <InputField
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  onChangeText={(text) =>
+                    dispatch({
+                      type: FormReducerActionTypes.SET_INPUT_VALUE,
+                      payload: { input: "state", value: text },
+                    })
+                  }
+                  placeholder="CA"
+                />
+              </Input>
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText>State is required</FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+            <FormControl
+              className="basis-1/2"
+              isInvalid={state.submitted && !state.postal_code}
+              isRequired
+            >
+              <FormControlLabel>
+                <FormControlLabelText>Postal Code</FormControlLabelText>
+              </FormControlLabel>
+              <Input variant="outline" size="lg">
+                <InputField
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  onChangeText={(text) =>
+                    dispatch({
+                      type: FormReducerActionTypes.SET_INPUT_VALUE,
+                      payload: { input: "postal_code", value: text },
+                    })
+                  }
+                  placeholder="90650"
+                />
+              </Input>
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText>
+                  Postal Code is required
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          </View>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Notes</FormControlLabelText>
+            </FormControlLabel>
+            <Textarea size="md">
+              <TextareaInput
+                onChangeText={(text) =>
+                  dispatch({
+                    type: FormReducerActionTypes.SET_INPUT_VALUE,
+                    payload: { input: "notes", value: text },
+                  })
+                }
+                placeholder="Share notes that may be helpful"
+              />
+            </Textarea>
+          </FormControl>
+
+          <Button
+            disabled={state.isSubmitting}
+            size="lg"
+            onPress={handleSubmit}
+          >
+            <ButtonText>Get Started</ButtonText>
+          </Button>
+        </View>
+        <View style={{ height: bottom }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
