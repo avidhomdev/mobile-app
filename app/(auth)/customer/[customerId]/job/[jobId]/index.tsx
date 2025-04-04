@@ -534,27 +534,33 @@ function AddTaskMenuItem({
         onClose={handleCloseActionSheet}
       >
         <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-          </ActionsheetDragIndicatorWrapper>
-          <VStack className="w-full" space="lg">
-            <FormControl isDisabled={isSubmitting} size="sm" className="w-full">
-              <FormControlLabel>
-                <FormControlLabelText>Add Task</FormControlLabelText>
-              </FormControlLabel>
-              <Input variant="outline" size="lg">
-                <InputField
-                  onChangeText={setTask}
-                  placeholder="Send documents to customer"
-                />
-              </Input>
-            </FormControl>
-            <Button disabled={isSubmitting} onPress={handleSubmit}>
-              <ButtonText>Submit</ButtonText>
-            </Button>
-          </VStack>
-        </ActionsheetContent>
+        <KeyboardAvoidingView behavior="padding">
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+            </ActionsheetDragIndicatorWrapper>
+            <VStack className="w-full" space="lg">
+              <FormControl
+                isDisabled={isSubmitting}
+                size="sm"
+                className="w-full"
+              >
+                <FormControlLabel>
+                  <FormControlLabelText>Add Task</FormControlLabelText>
+                </FormControlLabel>
+                <Input variant="outline" size="lg">
+                  <InputField
+                    onChangeText={setTask}
+                    placeholder="Send documents to customer"
+                  />
+                </Input>
+              </FormControl>
+              <Button disabled={isSubmitting} onPress={handleSubmit}>
+                <ButtonText>Submit</ButtonText>
+              </Button>
+            </VStack>
+          </ActionsheetContent>
+        </KeyboardAvoidingView>
       </Actionsheet>
     </Fragment>
   );
