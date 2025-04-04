@@ -17,7 +17,12 @@ import { Tables } from "@/supabase";
 import { useRouter } from "expo-router";
 import { AlertCircleIcon } from "lucide-react-native";
 import { useReducer } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
@@ -165,7 +170,8 @@ export default function ModalScreen() {
           <Icon as={CloseIcon} className="text-white" size="xl" />
         </TouchableOpacity>
       </View>
-      <View
+      <KeyboardAvoidingView
+        behavior="padding"
         className={twMerge(state.isSubmitting && "opacity-50", "gap-y-6 px-6")}
       >
         <FormControl isInvalid={state.submitted && !state.full_name} isRequired>
@@ -174,6 +180,8 @@ export default function ModalScreen() {
           </FormControlLabel>
           <Input variant="outline" size="lg">
             <InputField
+              autoComplete="off"
+              autoCapitalize="none"
               onChangeText={(text) =>
                 dispatch({
                   type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -194,6 +202,7 @@ export default function ModalScreen() {
           </FormControlLabel>
           <Input variant="outline" size="lg">
             <InputField
+              autoComplete="off"
               autoCapitalize="none"
               onChangeText={(text) =>
                 dispatch({
@@ -211,6 +220,8 @@ export default function ModalScreen() {
           </FormControlLabel>
           <Input variant="outline" size="lg">
             <InputField
+              autoComplete="off"
+              autoCapitalize="none"
               onChangeText={(text) =>
                 dispatch({
                   type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -227,6 +238,8 @@ export default function ModalScreen() {
           </FormControlLabel>
           <Input variant="outline" size="lg">
             <InputField
+              autoComplete="off"
+              autoCapitalize="none"
               onChangeText={(text) =>
                 dispatch({
                   type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -247,6 +260,8 @@ export default function ModalScreen() {
           </FormControlLabel>
           <Input variant="outline" size="lg">
             <InputField
+              autoComplete="off"
+              autoCapitalize="none"
               onChangeText={(text) =>
                 dispatch({
                   type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -272,6 +287,8 @@ export default function ModalScreen() {
             </FormControlLabel>
             <Input variant="outline" size="lg">
               <InputField
+                autoComplete="off"
+                autoCapitalize="none"
                 onChangeText={(text) =>
                   dispatch({
                     type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -296,6 +313,8 @@ export default function ModalScreen() {
             </FormControlLabel>
             <Input variant="outline" size="lg">
               <InputField
+                autoComplete="off"
+                autoCapitalize="none"
                 onChangeText={(text) =>
                   dispatch({
                     type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -333,7 +352,7 @@ export default function ModalScreen() {
         <Button disabled={state.isSubmitting} size="lg" onPress={handleSubmit}>
           <ButtonText>Get Started</ButtonText>
         </Button>
-      </View>
+      </KeyboardAvoidingView>
       <View style={{ height: bottom }} />
     </ScrollView>
   );
