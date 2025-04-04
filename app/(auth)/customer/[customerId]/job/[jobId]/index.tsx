@@ -84,6 +84,7 @@ import {
 import { Fragment, useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -315,9 +316,6 @@ function FabPlusActionSheetNoteItem({
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
     await handleSubmitNoteToJob(note);
-    // await supabase
-    //   .from("business_location_job_messages")
-    //   .insert()
     setIsSubmitting(false);
   }, [note]);
 
@@ -347,32 +345,38 @@ function FabPlusActionSheetNoteItem({
         onClose={handleCloseActionSheet}
       >
         <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-          </ActionsheetDragIndicatorWrapper>
-          <VStack className="w-full" space="lg">
-            <FormControl isDisabled={isSubmitting} size="sm" className="w-full">
-              <FormControlLabel>
-                <FormControlLabelText>Take notes</FormControlLabelText>
-              </FormControlLabel>
-              <Textarea>
-                <TextareaInput
-                  onChangeText={setNote}
-                  placeholder="Once upon a time..."
-                />
-              </Textarea>
-              <FormControlHelper>
-                <FormControlHelperText>
-                  These notes are shared to all who have access to the job
-                </FormControlHelperText>
-              </FormControlHelper>
-            </FormControl>
-            <Button disabled={isSubmitting} onPress={handleSubmit}>
-              <ButtonText>Submit</ButtonText>
-            </Button>
-          </VStack>
-        </ActionsheetContent>
+        <KeyboardAvoidingView behavior="padding">
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+            </ActionsheetDragIndicatorWrapper>
+            <VStack className="w-full" space="lg">
+              <FormControl
+                isDisabled={isSubmitting}
+                size="sm"
+                className="w-full"
+              >
+                <FormControlLabel>
+                  <FormControlLabelText>Take notes</FormControlLabelText>
+                </FormControlLabel>
+                <Textarea>
+                  <TextareaInput
+                    onChangeText={setNote}
+                    placeholder="Once upon a time..."
+                  />
+                </Textarea>
+                <FormControlHelper>
+                  <FormControlHelperText>
+                    These notes are shared to all who have access to the job
+                  </FormControlHelperText>
+                </FormControlHelper>
+              </FormControl>
+              <Button disabled={isSubmitting} onPress={handleSubmit}>
+                <ButtonText>Submit</ButtonText>
+              </Button>
+            </VStack>
+          </ActionsheetContent>
+        </KeyboardAvoidingView>
       </Actionsheet>
     </Fragment>
   );
