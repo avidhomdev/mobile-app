@@ -56,6 +56,7 @@ export default function Login() {
           </FormControlLabel>
           <Input variant="outline" size="lg">
             <InputField
+              autoComplete="off"
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setEmail}
