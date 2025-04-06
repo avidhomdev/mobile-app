@@ -98,34 +98,43 @@ export function CloserDashboard() {
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          {location.customers?.map((customer) => {
-            const dispositionStatus =
-              DISPOSITION_STATUSES[customer.disposition_status] ||
-              DISPOSITION_STATUSES.NEW;
-            return (
-              <TouchableOpacity
-                key={customer.id}
-                onPress={() =>
-                  router.push({
-                    pathname: "/customer/[customerId]",
-                    params: { customerId: customer.id },
-                  })
-                }
-              >
-                <Card
-                  className={twMerge(dispositionStatus.bg, "w-72")}
-                  variant="outline"
+          {location.customers
+            ?.sort((a, b) => {
+              if (
+                a.disposition_status === "NEW" ||
+                b.disposition_status === "NEW"
+              )
+                return -1;
+              return 1;
+            })
+            ?.map((customer) => {
+              const dispositionStatus =
+                DISPOSITION_STATUSES[customer.disposition_status] ||
+                DISPOSITION_STATUSES.NEW;
+              return (
+                <TouchableOpacity
+                  key={customer.id}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/customer/[customerId]",
+                      params: { customerId: customer.id },
+                    })
+                  }
                 >
-                  <Badge action={dispositionStatus?.action} size="sm">
-                    <BadgeText>{dispositionStatus?.label}</BadgeText>
-                  </Badge>
-                  <Heading className="font-normal tracking-tighter" size="xl">
-                    {customer.full_name}
-                  </Heading>
-                </Card>
-              </TouchableOpacity>
-            );
-          })}
+                  <Card
+                    className={twMerge(dispositionStatus.bg, "w-72")}
+                    variant="outline"
+                  >
+                    <Badge action={dispositionStatus?.action} size="sm">
+                      <BadgeText>{dispositionStatus?.label}</BadgeText>
+                    </Badge>
+                    <Heading className="font-normal tracking-tighter" size="xl">
+                      {customer.full_name}
+                    </Heading>
+                  </Card>
+                </TouchableOpacity>
+              );
+            })}
         </ScrollView>
       )}
 

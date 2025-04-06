@@ -1,11 +1,23 @@
 import { supabase } from "@/lib/supabase";
 import { memo, useEffect, useState } from "react";
 import { Image } from "./ui/image";
+import { Pressable } from "react-native";
+import { useRouter } from "expo-router";
 
 type TUseSupabaseSignedImage = {
   path: string;
   cacheInSeconds?: number;
-  size?: "lg" | "sm" | "md" | "xl" | "2xl" | "2xs" | "xs" | "full" | "none";
+  size?:
+    | "lg"
+    | "sm"
+    | "md"
+    | "xl"
+    | "2xl"
+    | "2xs"
+    | "xs"
+    | "full"
+    | "none"
+    | "square";
 };
 
 function useSupabaseSignedImage({
@@ -34,16 +46,25 @@ function SupabaseSignedImage({
   size,
 }: TUseSupabaseSignedImage) {
   const { uri } = useSupabaseSignedImage({ path, cacheInSeconds });
-
+  const router = useRouter();
   return (
     uri && (
-      <Image
-        source={uri}
-        alt={path}
-        className="bg-gray-100 aspect-square"
-        key={path}
-        size={size}
-      />
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: "/(auth)/(modals)/image-view-modal",
+            params: { path, uri },
+          })
+        }
+      >
+        <Image
+          source={uri}
+          alt={path}
+          className="bg-gray-100 aspect-square"
+          key={path}
+          size={size}
+        />
+      </Pressable>
     )
   );
 }

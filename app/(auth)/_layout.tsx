@@ -28,6 +28,10 @@ export default function AppLayout() {
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
+          name="(modals)/image-view-modal"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
           name="(modals)/new-proposal-modal"
           options={{ presentation: "modal" }}
         />
