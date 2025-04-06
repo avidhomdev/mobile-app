@@ -12,6 +12,7 @@ import {
   ActionsheetItemText,
   ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -44,6 +45,19 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectSectionHeaderText,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { Actionsheet } from "@/components/ui/select/select-actionsheet";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
@@ -67,7 +81,9 @@ import {
   useRouter,
 } from "expo-router";
 import {
+  Banknote,
   Blocks,
+  ChevronDown,
   Circle,
   CircleCheck,
   EllipsisVertical,
@@ -75,13 +91,14 @@ import {
   File,
   HardHat,
   Image,
+  Info,
   MessageCircle,
   PanelRightOpen,
   Plus,
   Timer,
   Trash,
 } from "lucide-react-native";
-import { Fragment, useCallback, useState } from "react";
+import { Fragment, useCallback, useReducer, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -185,6 +202,22 @@ function HeaderMenu() {
           style={{ paddingBlockStart: top }}
         >
           <DrawerBody contentContainerClassName="gap-2">
+            <Pressable
+              className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
+              onPress={() => {
+                setIsDrawerVisible(false);
+                router.push({
+                  pathname: "/customer/[customerId]/job/[jobId]/payments",
+                  params: {
+                    customerId: customerId as string,
+                    jobId: jobId as string,
+                  },
+                });
+              }}
+            >
+              <Icon as={Banknote} size="lg" className="text-typography-600" />
+              <Text>Payments</Text>
+            </Pressable>
             <Pressable
               className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
               onPress={() => {
@@ -382,6 +415,343 @@ function FabPlusActionSheetNoteItem({
   );
 }
 
+enum FormReducerActionType {
+  SET_NAME = "SET_NAME",
+  SET_TYPE = "SET_TYPE",
+  SET_AMOUNT = "SET_AMOUNT",
+  SUBMIT_FORM = "SUBMIT_FORM",
+  SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
+  SET_ERROR = "SET_ERROR",
+}
+
+interface IFormFields {
+  name: string;
+  type: string;
+  amount: number;
+}
+
+interface IFormReducerState {
+  fields: IFormFields;
+  isSubmitting: boolean;
+  error: string | null;
+  submitted: boolean;
+}
+
+interface ISetnameAction {
+  type: FormReducerActionType.SET_NAME;
+  payload: string;
+}
+
+interface ISetTypeAction {
+  type: FormReducerActionType.SET_TYPE;
+  payload: string;
+}
+
+interface ISetAmountAction {
+  type: FormReducerActionType.SET_AMOUNT;
+  payload: number;
+}
+interface ISetIsSubmittingAction {
+  type: FormReducerActionType.SET_IS_SUBMITTING;
+  payload: boolean;
+}
+interface ISubmitFormAction {
+  type: FormReducerActionType.SUBMIT_FORM;
+}
+
+interface ISetErrorAction {
+  type: FormReducerActionType.SET_ERROR;
+  payload: string | null;
+}
+
+type TFormReducerAction =
+  | ISetnameAction
+  | ISetTypeAction
+  | ISetAmountAction
+  | ISetIsSubmittingAction
+  | ISetErrorAction
+  | ISubmitFormAction;
+
+function newPaymentReducer(
+  state: IFormReducerState,
+  action: TFormReducerAction
+): IFormReducerState {
+  switch (action.type) {
+    case FormReducerActionType.SET_NAME:
+      return {
+        ...state,
+        error: null,
+        fields: { ...state.fields, name: action.payload },
+      };
+    case FormReducerActionType.SET_TYPE:
+      return {
+        ...state,
+        error: null,
+        fields: { ...state.fields, type: action.payload },
+      };
+    case FormReducerActionType.SET_AMOUNT:
+      return {
+        ...state,
+        error: null,
+        fields: { ...state.fields, amount: action.payload },
+      };
+    case FormReducerActionType.SUBMIT_FORM:
+      return { ...state, isSubmitting: true, submitted: true };
+    case FormReducerActionType.SET_IS_SUBMITTING:
+      return { ...state, isSubmitting: action.payload };
+    case FormReducerActionType.SET_ERROR:
+      return { ...state, error: action.payload, isSubmitting: false };
+    default:
+      return state;
+  }
+}
+
+const paymentOptions = [
+  {
+    label: "Cash",
+    value: "cash",
+  },
+  {
+    label: "Check",
+    value: "check",
+  },
+  {
+    label: "Credit Card",
+    value: "credit_card",
+  },
+];
+
+function FabPlusActionSheetPaymentItem({
+  customer,
+  onSubmitCallback,
+  job,
+}: {
+  customer: ILocationCustomer;
+  onSubmitCallback: () => void;
+  job: ILocationJob;
+}) {
+  const { bottom } = useSafeAreaInsets();
+
+  const [
+    {
+      error,
+      fields: { name, amount, type },
+      isSubmitting,
+      submitted,
+    },
+    dispatch,
+  ] = useReducer(newPaymentReducer, {
+    isSubmitting: false,
+    error: null,
+    submitted: false,
+    fields: {
+      name: "Deposit",
+      type: "",
+      amount: 500,
+    },
+  });
+
+  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
+  const handleCloseActionSheet = () => setActionSheetVisible(false);
+
+  const handleSubmit = useCallback(async () => {
+    dispatch({ type: FormReducerActionType.SUBMIT_FORM });
+
+    if (name === "")
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: "Please enter a name",
+      });
+
+    if (type === "")
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: "Please select a type",
+      });
+
+    if (amount <= 0)
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: "Amount must be greater than 0",
+      });
+
+    const insertParams = {
+      business_id: customer.business_id,
+      location_id: customer.location_id,
+      job_id: job.id,
+      name: name,
+      type: type,
+      amount,
+    };
+
+    const { error } = await supabase
+      .from("business_location_job_payments")
+      .insert(insertParams);
+
+    if (error) {
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: error.message,
+      });
+    }
+
+    dispatch({ type: FormReducerActionType.SET_IS_SUBMITTING, payload: false });
+    onSubmitCallback();
+  }, [name, amount, type, customer, job]);
+
+  return (
+    <Fragment>
+      <ActionsheetItem
+        onPress={() => {
+          setActionSheetVisible(true);
+        }}
+      >
+        <ActionsheetIcon
+          as={Banknote}
+          className="text-typography-500"
+          size="lg"
+        />
+        <Box>
+          <ActionsheetItemText className="text-typography-700">
+            Payments
+          </ActionsheetItemText>
+          <Text className="text-typography-500" sub>
+            Track cash, check or collect credit card payment
+          </Text>
+        </Box>
+      </ActionsheetItem>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <KeyboardAvoidingView behavior="padding">
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+              <ActionsheetSectionHeaderText>
+                New Payment
+              </ActionsheetSectionHeaderText>
+            </ActionsheetDragIndicatorWrapper>
+            <VStack className="w-full" space="lg">
+              <FormControl
+                isDisabled={isSubmitting}
+                isInvalid={submitted && !name}
+                isRequired
+                size="sm"
+                className="w-full"
+              >
+                <FormControlLabel>
+                  <FormControlLabelText>name</FormControlLabelText>
+                </FormControlLabel>
+                <Input variant="outline" size="lg">
+                  <InputField
+                    onChangeText={(text) =>
+                      dispatch({
+                        type: FormReducerActionType.SET_NAME,
+                        payload: text,
+                      })
+                    }
+                    defaultValue={name}
+                  />
+                </Input>
+              </FormControl>
+              <FormControl
+                isDisabled={isSubmitting}
+                isInvalid={submitted && !type}
+                isRequired
+                size="sm"
+                className="w-full"
+              >
+                <FormControlLabel>
+                  <FormControlLabelText>Type</FormControlLabelText>
+                </FormControlLabel>
+                <Select
+                  onValueChange={(payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_TYPE,
+                      payload,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectInput
+                      placeholder="Select option"
+                      className="flex-1"
+                    />
+                    <SelectIcon className="mr-3" as={ChevronDown} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent style={{ paddingBottom: bottom }}>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectSectionHeaderText>
+                        Select a payment type
+                      </SelectSectionHeaderText>
+                      {paymentOptions.map(({ label, value }) => (
+                        <SelectItem key={value} label={label} value={value} />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+              </FormControl>
+              <FormControl
+                isDisabled={isSubmitting}
+                isInvalid={submitted && !amount}
+                isRequired
+                size="sm"
+                className="w-full"
+              >
+                <FormControlLabel>
+                  <FormControlLabelText>Amount</FormControlLabelText>
+                </FormControlLabel>
+                <Input variant="outline" size="lg">
+                  <InputField
+                    onChangeText={(text) =>
+                      dispatch({
+                        type: FormReducerActionType.SET_AMOUNT,
+                        payload: Number(text),
+                      })
+                    }
+                    keyboardType="numeric"
+                    defaultValue={amount.toString()}
+                  />
+                </Input>
+              </FormControl>
+              {type === "credit_card" && (
+                <VStack space="sm">
+                  <VStack>
+                    <Text size="xs">Credit Card Payment</Text>
+                    <Text size="2xs">
+                      We will send an email to the customer to complete the
+                      payment.
+                    </Text>
+                  </VStack>
+                  <Text italic>{customer.email || "No email found"}</Text>
+                </VStack>
+              )}
+              {error && (
+                <Alert action="error">
+                  <AlertIcon as={Info} />
+                  <AlertText>{error}</AlertText>
+                </Alert>
+              )}
+              <Button
+                disabled={isSubmitting || !customer.email}
+                onPress={handleSubmit}
+              >
+                <ButtonText>Submit</ButtonText>
+              </Button>
+            </VStack>
+          </ActionsheetContent>
+        </KeyboardAvoidingView>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
 function FabPlusMenu({ job }: { job: ILocationJob }) {
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setActionSheetVisible] = useState(false);
@@ -435,6 +805,15 @@ function FabPlusMenu({ job }: { job: ILocationJob }) {
                 })
                 .then(refreshData)
                 .then(handleCloseActionSheet);
+            }}
+          />
+          <FabPlusActionSheetPaymentItem
+            customer={customer}
+            job={job}
+            closeFabPlusMenu={handleCloseActionSheet}
+            onSubmitCallback={() => {
+              refreshData();
+              handleCloseActionSheet();
             }}
           />
         </ActionsheetContent>
