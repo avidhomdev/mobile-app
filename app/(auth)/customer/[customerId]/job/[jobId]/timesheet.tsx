@@ -17,6 +17,9 @@ export default function Screen() {
           Track your time working on the job
         </Text>
       </VStack>
+      <VStack className="px-6">
+        <Text>Coming soon...</Text>
+      </VStack>
     </VStack>
   );
 }

@@ -266,6 +266,22 @@ function HeaderMenu() {
               <Icon as={HardHat} size="lg" className="text-typography-600" />
               <Text>Change Orders</Text>
             </Pressable>
+            <Pressable
+              className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
+              onPress={() => {
+                setIsDrawerVisible(false);
+                router.push({
+                  pathname: "/customer/[customerId]/job/[jobId]/schedule",
+                  params: {
+                    customerId: customerId as string,
+                    jobId: jobId as string,
+                  },
+                });
+              }}
+            >
+              <Icon as={HardHat} size="lg" className="text-typography-600" />
+              <Text>Schedule</Text>
+            </Pressable>
           </DrawerBody>
           <DrawerFooter>
             <DeleteConfirmation

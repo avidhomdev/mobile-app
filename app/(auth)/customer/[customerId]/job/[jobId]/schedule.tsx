@@ -11,10 +11,10 @@ export default function Screen() {
       <VStack className="px-6">
         <BackHeaderButton />
         <Heading className="text-typography-800" size="xl">
-          Documents
+          Schedule
         </Heading>
         <Text className="text-typography-400">
-          Documents belonging to the job
+          View the schedule for this job
         </Text>
       </VStack>
       <VStack className="px-6">

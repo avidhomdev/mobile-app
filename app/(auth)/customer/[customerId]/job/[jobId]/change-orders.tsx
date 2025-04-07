@@ -17,6 +17,9 @@ export default function Screen() {
           Manage products on the job with change orders
         </Text>
       </VStack>
+      <VStack className="px-6">
+        <Text>Coming soon...</Text>
+      </VStack>
     </VStack>
   );
 }
