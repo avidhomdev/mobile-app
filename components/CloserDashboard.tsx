@@ -34,6 +34,14 @@ export function CloserDashboard() {
   const { location } = useLocationContext();
   const router = useRouter();
 
+  const sortedCustomers = location.customers?.sort((a, b) => {
+    if (a.disposition_status === "NEW" && b.disposition_status != "NEW")
+      return -1;
+    if (b.disposition_status === "NEW" && a.disposition_status != "NEW")
+      return 1;
+    return 0;
+  });
+
   return (
     <View className="gap-y-6 p-6">
       <View className="gap-y-2">
@@ -98,43 +106,34 @@ export function CloserDashboard() {
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          {location.customers
-            ?.sort((a, b) => {
-              if (
-                a.disposition_status === "NEW" ||
-                b.disposition_status === "NEW"
-              )
-                return -1;
-              return 1;
-            })
-            ?.map((customer) => {
-              const dispositionStatus =
-                DISPOSITION_STATUSES[customer.disposition_status] ||
-                DISPOSITION_STATUSES.NEW;
-              return (
-                <TouchableOpacity
-                  key={customer.id}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/customer/[customerId]",
-                      params: { customerId: customer.id },
-                    })
-                  }
+          {sortedCustomers?.map((customer) => {
+            const dispositionStatus =
+              DISPOSITION_STATUSES[customer.disposition_status] ||
+              DISPOSITION_STATUSES.NEW;
+            return (
+              <TouchableOpacity
+                key={customer.id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/customer/[customerId]",
+                    params: { customerId: customer.id },
+                  })
+                }
+              >
+                <Card
+                  className={twMerge(dispositionStatus.bg, "w-72")}
+                  variant="outline"
                 >
-                  <Card
-                    className={twMerge(dispositionStatus.bg, "w-72")}
-                    variant="outline"
-                  >
-                    <Badge action={dispositionStatus?.action} size="sm">
-                      <BadgeText>{dispositionStatus?.label}</BadgeText>
-                    </Badge>
-                    <Heading className="font-normal tracking-tighter" size="xl">
-                      {customer.full_name}
-                    </Heading>
-                  </Card>
-                </TouchableOpacity>
-              );
-            })}
+                  <Badge action={dispositionStatus?.action} size="sm">
+                    <BadgeText>{dispositionStatus?.label}</BadgeText>
+                  </Badge>
+                  <Heading className="font-normal tracking-tighter" size="xl">
+                    {customer.full_name}
+                  </Heading>
+                </Card>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       )}
 
