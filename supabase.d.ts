@@ -454,7 +454,7 @@ export type Database = {
           created_at: string
           creator_id: string | null
           disposition_status: string | null
-          email: string | null
+          email: string
           full_name: string
           id: number
           lead_source: string | null
@@ -473,7 +473,7 @@ export type Database = {
           created_at?: string
           creator_id?: string | null
           disposition_status?: string | null
-          email?: string | null
+          email: string
           full_name: string
           id?: number
           lead_source?: string | null
@@ -492,7 +492,7 @@ export type Database = {
           created_at?: string
           creator_id?: string | null
           disposition_status?: string | null
-          email?: string | null
+          email?: string
           full_name?: string
           id?: number
           lead_source?: string | null
@@ -1658,49 +1658,33 @@ export type Database = {
     }
     Functions: {
       business_profile_has_role: {
-        Args: {
-          bid: string
-          r: string
-        }
+        Args: { bid: string; r: string }
         Returns: boolean
       }
       get_user_id_by_email: {
-        Args: {
-          email: string
-        }
+        Args: { email: string }
         Returns: {
           id: string
         }[]
       }
       has_business_profile: {
-        Args: {
-          bid: string
-        }
+        Args: { bid: string }
         Returns: boolean
       }
       has_job_profile: {
-        Args: {
-          jid: number
-        }
+        Args: { jid: number }
         Returns: boolean
       }
       has_location_profile: {
-        Args: {
-          lid: number
-        }
+        Args: { lid: number }
         Returns: boolean
       }
       has_role_at_any_business_location: {
-        Args: {
-          r: string
-          bid: string
-        }
+        Args: { r: string; bid: string }
         Returns: boolean
       }
       is_business_profile: {
-        Args: {
-          biz_id: string
-        }
+        Args: { biz_id: string }
         Returns: boolean
       }
       is_global_admin: {
@@ -1708,24 +1692,15 @@ export type Database = {
         Returns: boolean
       }
       is_location_manager_or_admin: {
-        Args: {
-          locationid: number
-        }
+        Args: { locationid: number }
         Returns: boolean
       }
       location_profile_has_role: {
-        Args: {
-          lid: number
-          r: string
-        }
+        Args: { lid: number; r: string }
         Returns: boolean
       }
       next_priority_closer: {
-        Args: {
-          lid: number
-          start_timestamp: string
-          end_timestamp: string
-        }
+        Args: { lid: number; start_timestamp: string; end_timestamp: string }
         Returns: {
           profile_id: string
           full_name: string
@@ -1733,9 +1708,7 @@ export type Database = {
         }[]
       }
       ordered_employees: {
-        Args: {
-          lid: number
-        }
+        Args: { lid: number }
         Returns: {
           profile_id: string
           full_name: string
@@ -1988,30 +1961,19 @@ export type Database = {
     }
     Functions: {
       can_insert_object: {
-        Args: {
-          bucketid: string
-          name: string
-          owner: string
-          metadata: Json
-        }
+        Args: { bucketid: string; name: string; owner: string; metadata: Json }
         Returns: undefined
       }
       extension: {
-        Args: {
-          name: string
-        }
+        Args: { name: string }
         Returns: string
       }
       filename: {
-        Args: {
-          name: string
-        }
+        Args: { name: string }
         Returns: string
       }
       foldername: {
-        Args: {
-          name: string
-        }
+        Args: { name: string }
         Returns: string[]
       }
       get_size_by_bucket: {
