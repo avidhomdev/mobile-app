@@ -96,6 +96,13 @@ const defaultContext = {
     username: null,
     website: null,
     id: "",
+    address: "",
+    address2: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    email: "",
+    phone: "",
   },
 };
 
