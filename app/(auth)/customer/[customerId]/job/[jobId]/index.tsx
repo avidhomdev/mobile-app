@@ -591,6 +591,44 @@ function FabPlusActionSheetPaymentItem({
         payload: "Amount must be greater than 0",
       });
 
+    if (type === "credit_card") {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (!session || error) {
+        return dispatch({
+          type: FormReducerActionType.SET_ERROR,
+          payload: error?.message || "No session found.",
+        });
+      }
+
+      const invoiceResponse = await fetch(
+        `${process.env.EXPO_PUBLIC_HOM_API_URL}/customers/${customer.id}/invoice`,
+        {
+          body: JSON.stringify({
+            job_id: job.id,
+            amount,
+            name,
+            type,
+          }),
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+        }
+      ).then((res) => res.json());
+
+      if (invoiceResponse.error) {
+        return dispatch({
+          type: FormReducerActionType.SET_ERROR,
+          payload: invoiceResponse.error,
+        });
+      }
+    }
+
     const insertParams = {
       business_id: customer.business_id,
       location_id: customer.location_id,
@@ -758,7 +796,9 @@ function FabPlusActionSheetPaymentItem({
                 disabled={isSubmitting || !customer.email}
                 onPress={handleSubmit}
               >
-                <ButtonText>Submit</ButtonText>
+                <ButtonText>
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </ButtonText>
               </Button>
             </VStack>
           </ActionsheetContent>
@@ -1157,7 +1197,7 @@ function Tiles({ job }: { job: ILocationJob }) {
           </Text>
         </Card>
         <Card className="w-1/3">
-          <Text sub>Units</Text>
+          <Text sub>Payments Received</Text>
           <Text size="2xl">{calculateJobProductUnitsTotal()}</Text>
         </Card>
       </HStack>
