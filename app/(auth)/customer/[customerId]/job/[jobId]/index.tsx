@@ -614,7 +614,7 @@ function FabPlusActionSheetPaymentItem({
             type,
           }),
           headers: {
-            "x-vercel-user-token": session.access_token,
+            Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
           },
           method: "POST",
