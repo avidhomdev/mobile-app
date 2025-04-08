@@ -99,11 +99,11 @@ export default function ModalScreen() {
     error: null,
     full_name: "",
     isSubmitting: false,
-    submitted: false,
     lead_source: "setter",
     notes: "",
     postal_code: "",
     state: "",
+    submitted: false,
   });
 
   const handleSubmit = async () => {
@@ -120,10 +120,12 @@ export default function ModalScreen() {
           city: state.city,
           creator_id: profile.id,
           disposition_status: state.disposition_status,
+          email: state.email,
           full_name: state.full_name,
           lead_source: state.lead_source,
           location_id: location.id,
           notes: state.notes,
+          phone: state.phone,
           postal_code: state.postal_code,
           state: state.state,
         })
@@ -203,7 +205,7 @@ export default function ModalScreen() {
               <FormControlErrorText>Full name is required</FormControlErrorText>
             </FormControlError>
           </FormControl>
-          <FormControl>
+          <FormControl isInvalid={state.submitted && !state.email} isRequired>
             <FormControlLabel>
               <FormControlLabelText>Email</FormControlLabelText>
             </FormControlLabel>
