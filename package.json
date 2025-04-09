@@ -64,7 +64,7 @@
     "nativewind": "^4.1.23",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-native": "0.76.8",
+    "react-native": "0.76.9",
     "react-native-css-interop": "^0.1.22",
     "react-native-date-picker": "^5.0.8",
     "react-native-modal-datetime-picker": "^18.0.0",
