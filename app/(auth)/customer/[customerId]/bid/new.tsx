@@ -22,11 +22,13 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { CloseIcon, Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
+import { VStack } from "@/components/ui/vstack";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
@@ -287,12 +289,13 @@ function Totals({
   hideCommissions?: boolean;
   formState: IFormState<IBidFields>;
 }) {
-  const calculatedTotal = formState.fields.products.reduce((acc, product) => {
-    return acc + Number(product.unit_price) * Number(product.units ?? 0);
-  }, 0);
+  const { commission, discount } = formState.fields;
+  const calculatedTotal =
+    formState.fields.products.reduce((acc, product) => {
+      return acc + Number(product.unit_price) * Number(product.units ?? 0);
+    }, 0) + discount;
 
-  const commission = formState.fields.commission;
-  const bidTotal = calculatedTotal + commission;
+  const bidTotal = calculatedTotal + commission - discount;
 
   return (
     <Card className="border border-gray-200 gap-y-2">
@@ -309,9 +312,15 @@ function Totals({
               <Text>Commission</Text>
               <Text>{formatAsCurrency(commission)}</Text>
             </View>
-            <Divider />
           </Fragment>
         )}
+        <View className="flex-row items-center justify-between">
+          <Text>Discount</Text>
+          <Text>
+            {`${discount > 0 ? "-" : ""} ${formatAsCurrency(discount)}`}
+          </Text>
+        </View>
+        <Divider />
         <View className="flex-row items-center justify-between bord">
           <Text bold>Bid Total</Text>
           <Text bold>{formatAsCurrency(bidTotal)}</Text>
@@ -322,11 +331,13 @@ function Totals({
 }
 
 interface IBidFields {
-  name: string;
-  products: IProduct[];
-  notes: string;
   commission: number;
+  discount: number;
+  lead_type: string;
   media: { id: string; path: string }[];
+  name: string;
+  notes: string;
+  products: IProduct[];
 }
 
 enum FormReducerActionType {
@@ -338,6 +349,13 @@ enum FormReducerActionType {
   SET_NOTES = "SET_NOTES",
   SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
   SET_COMMISSION = "SET_COMMISSION",
+  SET_LEAD_TYPE = "SET_LEAD_TYPE",
+  SET_DISCOUNT = "SET_DISCOUNT",
+}
+
+interface ISET_LEAD_TYPE_ACTION {
+  type: FormReducerActionType.SET_LEAD_TYPE;
+  payload: string;
 }
 
 interface IREMOVE_MEDIA_ACTION {
@@ -365,6 +383,11 @@ interface ISET_COMMISSION_ACTION {
   payload: number;
 }
 
+interface ISET_DISCOUNT_ACTION {
+  type: FormReducerActionType.SET_DISCOUNT;
+  payload: number;
+}
+
 interface ISET_NAME_ACTION {
   type: FormReducerActionType.SET_NAME;
   payload: string;
@@ -388,7 +411,9 @@ type TAction =
   | ISET_IS_SUBMITTING_ACTION
   | ISET_ERROR_ACTION
   | ISET_MEDIA_ACTION
-  | IREMOVE_MEDIA_ACTION;
+  | IREMOVE_MEDIA_ACTION
+  | ISET_LEAD_TYPE_ACTION
+  | ISET_DISCOUNT_ACTION;
 
 function formReducer(
   state: IFormState<IBidFields>,
@@ -435,6 +460,12 @@ function formReducer(
         fields: { ...state.fields, commission: action.payload },
       };
     }
+    case FormReducerActionType.SET_DISCOUNT: {
+      return {
+        ...state,
+        fields: { ...state.fields, discount: action.payload },
+      };
+    }
     case FormReducerActionType.SET_MEDIA: {
       return {
         ...state,
@@ -450,6 +481,15 @@ function formReducer(
         fields: {
           ...state.fields,
           media: state.fields.media.filter((m) => m.id !== action.payload),
+        },
+      };
+    }
+    case FormReducerActionType.SET_LEAD_TYPE: {
+      return {
+        ...state,
+        fields: {
+          ...state.fields,
+          lead_type: action.payload,
         },
       };
     }
@@ -653,6 +693,58 @@ function BidMedia({
   );
 }
 
+function LeadSelector({
+  formState,
+  dispatch,
+}: {
+  formState: IFormState<IBidFields>;
+  dispatch: React.Dispatch<TAction>;
+}) {
+  const actionPropValue = (opt: string) =>
+    formState.fields.lead_type === opt ? "primary" : "secondary";
+
+  return (
+    <HStack className="bg-white" space="xs">
+      <Button
+        action={actionPropValue("setter")}
+        className="grow"
+        onPress={() =>
+          dispatch({
+            type: FormReducerActionType.SET_LEAD_TYPE,
+            payload: "setter",
+          })
+        }
+      >
+        <ButtonText>Setter</ButtonText>
+      </Button>
+      <Button
+        action={actionPropValue("self_gen")}
+        className="grow"
+        onPress={() =>
+          dispatch({
+            type: FormReducerActionType.SET_LEAD_TYPE,
+            payload: "self_gen",
+          })
+        }
+      >
+        <ButtonText>Self Gen</ButtonText>
+      </Button>
+      <Button
+        action={actionPropValue("paid")}
+        className="grow"
+        onPress={() =>
+          dispatch({
+            type: FormReducerActionType.SET_LEAD_TYPE,
+            payload: "paid",
+          })
+        }
+      >
+        <ButtonText>Paid</ButtonText>
+      </Button>
+    </HStack>
+  );
+}
+
 function BidForm({
   formState,
   dispatch,
@@ -670,6 +762,12 @@ function BidForm({
           <AlertText>{formState.error}</AlertText>
         </Alert>
       )}
+      <FormControl>
+        <FormControlLabel>
+          <FormControlLabelText>Lead</FormControlLabelText>
+        </FormControlLabel>
+        <LeadSelector formState={formState} dispatch={dispatch} />
+      </FormControl>
       <FormControl isRequired>
         <FormControlLabel>
           <FormControlLabelText>Name</FormControlLabelText>
@@ -733,6 +831,25 @@ function BidForm({
           />
         </Input>
       </FormControl>
+
+      <FormControl>
+        <FormControlLabel>
+          <FormControlLabelText>Discount</FormControlLabelText>
+        </FormControlLabel>
+        <Input className="bg-white" size="lg">
+          <InputField
+            keyboardType="numeric"
+            autoCorrect={false}
+            onChangeText={(discount) =>
+              dispatch({
+                type: FormReducerActionType.SET_DISCOUNT,
+                payload: Number(discount),
+              })
+            }
+            defaultValue={formState.fields.discount.toString()}
+          />
+        </Input>
+      </FormControl>
       <Totals formState={formState} />
       <FormControl>
         <FormControlLabel>
@@ -755,38 +872,16 @@ function BidForm({
 }
 
 function Preview({ formState }: { formState: IFormState<IBidFields> }) {
-  const totalNumberOfUnits = formState.fields.products.reduce(
-    (acc, product) => {
-      return acc + Number(product.units ?? 0);
-    },
-    0
-  );
-  const commissionPerUnit =
-    formState.fields.commission / (totalNumberOfUnits || 1);
-
+  const { products } = formState.fields;
   return (
-    <Fragment>
+    <VStack space="sm">
       <Heading>{formState.fields.name}</Heading>
-      {formState.fields.products.map((product) => {
-        const units = product.units ?? 0;
-        const unitPrice = product.unit_price ?? 0;
-        const calculatedUnitPrice = unitPrice + commissionPerUnit;
-        const calculatedProductTotal =
-          Number(calculatedUnitPrice) * Number(units);
-
-        return (
-          <Card className="gap-y-2" key={product.id} variant="filled">
-            <Text>{product.name}</Text>
-            <Divider />
-            <View className="flex-row justify-between items-center">
-              <Text size="sm">{`${formatAsCurrency(
-                calculatedUnitPrice
-              )} x ${units} ${product.unit}`}</Text>
-              <Text bold>{formatAsCurrency(calculatedProductTotal)}</Text>
-            </View>
-          </Card>
-        );
-      })}
+      {products.map((product) => (
+        <Card key={product.id}>
+          <Text size="lg">{product.name}</Text>
+          <Text size="sm">{`${product.units} x ${product.unit}`}</Text>
+        </Card>
+      ))}
       {formState.fields.notes && (
         <Card className="border border-gray-200 gap-y-2">
           <Heading size="sm">Notes</Heading>
@@ -795,7 +890,7 @@ function Preview({ formState }: { formState: IFormState<IBidFields> }) {
         </Card>
       )}
       <Totals hideCommissions formState={formState} />
-    </Fragment>
+    </VStack>
   );
 }
 
@@ -810,9 +905,11 @@ export default function Screen() {
     error: null,
     fields: {
       commission: 0,
+      discount: 0,
+      lead_type: "setter",
+      media: [],
       name: "Bid",
       notes: "",
-      media: [],
       products: [],
     },
     isSubmitting: false,
@@ -847,6 +944,7 @@ export default function Screen() {
       name: formState.fields.name,
       commission: formState.fields.commission,
       notes: formState.fields.notes,
+      lead_type: formState.fields.lead_type,
     };
 
     const { data, error } = await supabase
