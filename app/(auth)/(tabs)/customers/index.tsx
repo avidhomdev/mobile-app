@@ -54,7 +54,7 @@ import { Text } from "@/components/ui/text";
 import {
   DISPOSITION_STATUS_KEYS,
   DISPOSITION_STATUSES,
-} from "@/constants/disposition_statuses";
+} from "@/constants/disposition-statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";

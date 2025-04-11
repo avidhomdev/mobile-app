@@ -34,7 +34,7 @@ import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
 import {
   DISPOSITION_STATUS_KEYS,
   DISPOSITION_STATUSES,
-} from "@/constants/disposition_statuses";
+} from "@/constants/disposition-statuses";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { useLocationContext } from "@/contexts/location-context";
 import {

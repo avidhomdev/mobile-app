@@ -9,7 +9,7 @@ import React, {
   useState,
 } from "react";
 import { LocationProvider } from "./location-context";
-import { DISPOSITION_STATUS_KEYS } from "@/constants/disposition_statuses";
+import { DISPOSITION_STATUS_KEYS } from "@/constants/disposition-statuses";
 
 export interface IProfile
   extends Omit<Tables<"profiles">, "created_at" | "id"> {

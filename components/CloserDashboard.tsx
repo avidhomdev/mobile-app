@@ -1,4 +1,4 @@
-import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
+import { DISPOSITION_STATUSES } from "@/constants/disposition-statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";

@@ -26,7 +26,7 @@ import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { TIME_FORMAT } from "@/constants/date-formats";
-import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
+import { DISPOSITION_STATUSES } from "@/constants/disposition-statuses";
 import {
   IAppointments,
   ILocationCustomer,

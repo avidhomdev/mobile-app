@@ -1,5 +1,5 @@
 import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
-import { DISPOSITION_STATUSES } from "@/constants/disposition_statuses";
+import { DISPOSITION_STATUSES } from "@/constants/disposition-statuses";
 import { useLocationContext } from "@/contexts/location-context";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
