@@ -26,19 +26,38 @@ import { HStack } from "@/components/ui/hstack";
 import { CloseIcon, Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectSectionHeaderText,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
+import { MEDIA_TYPES, MEDIA_TYPES_KEYS } from "@/constants/media-types";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { IFormState } from "@/hooks/useFormState";
+import {
+  IProduct,
+  useLocationProductsData,
+} from "@/hooks/useLocationProductsData";
 import { supabase } from "@/lib/supabase";
-import { Tables } from "@/supabase";
 import { formatAsCurrency } from "@/utils/format-as-currency";
+import dayjs from "dayjs";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import {
+  ChevronDown,
   Construction,
   Eye,
   EyeOff,
@@ -47,7 +66,16 @@ import {
   Plus,
   UploadCloud,
 } from "lucide-react-native";
-import { Fragment, useCallback, useEffect, useReducer, useState } from "react";
+import {
+  createContext,
+  Fragment,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -56,39 +84,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
-
-interface IProduct extends Tables<"business_products"> {
-  locations: Tables<"business_product_locations">[];
-  units: number;
-}
-
-const useProductsData = ({ locationId }: { locationId: number }) => {
-  const [products, setProducts] = useState<IProduct[]>([]);
-
-  useEffect(() => {
-    const fetchProducts = async () =>
-      supabase
-        .from("business_products")
-        .select(
-          `
-          *,
-          locations: business_product_locations!inner(*)
-          `
-        )
-        .match({
-          "business_product_locations.status": 1,
-          "business_product_locations.location_id": locationId,
-        })
-        .returns<IProduct[]>()
-        .then(({ data }) => data || []);
-
-    fetchProducts().then(setProducts);
-  }, []);
-
-  return {
-    products,
-  };
-};
 
 function ProductItem({
   product,
@@ -153,30 +148,25 @@ function ProductItem({
   );
 }
 
-function AddProductBottomSheet({
-  locationId,
-  selectedProducts,
-  setSelectedProducts,
-}: {
-  locationId: number;
-  selectedProducts: IProduct[];
-  setSelectedProducts: (payload: IProduct[]) => void;
-}) {
+function AddProductBottomSheet() {
+  const { dispatch, formState, products } = useNewBidContext();
+  const { products: selectedProducts } = formState.fields;
   const { bottom } = useSafeAreaInsets();
   const [showActionsheet, setShowActionsheet] = useState(false);
   const handleClose = () => setShowActionsheet(false);
-  const { products } = useProductsData({
-    locationId,
-  });
 
   const handleCloseAndAddProduct = (product: IProduct) => {
-    setSelectedProducts([
-      ...selectedProducts,
-      {
-        ...product,
-        units: product.min_units,
-      },
-    ]);
+    dispatch({
+      type: FormReducerActionType.SET_PRODUCTS,
+      payload: [
+        ...selectedProducts,
+        {
+          ...product,
+          units: product.min_units,
+        },
+      ],
+    });
+
     handleClose();
   };
 
@@ -226,24 +216,20 @@ function AddProductBottomSheet({
   );
 }
 
-function Products({
-  locationId,
-  selectedProducts,
-  setSelectedProducts,
-}: {
-  locationId: number;
-  selectedProducts: IProduct[];
-  setSelectedProducts: (payload: IProduct[]) => void;
-}) {
+function BidProducts() {
+  const { dispatch, formState } = useNewBidContext();
+  const { products: selectedProducts } = formState.fields;
+  const setSelectedProducts = (payload: IProduct[]) =>
+    dispatch({
+      type: FormReducerActionType.SET_PRODUCTS,
+      payload,
+    });
+
   return (
     <Fragment>
       <View className="flex-row items-end justify-between">
         <Text>Products*</Text>
-        <AddProductBottomSheet
-          locationId={locationId}
-          selectedProducts={selectedProducts}
-          setSelectedProducts={setSelectedProducts}
-        />
+        <AddProductBottomSheet />
       </View>
       {selectedProducts.length > 0 ? (
         <View className="gap-y-2">
@@ -282,13 +268,8 @@ function Products({
   );
 }
 
-function Totals({
-  hideCommissions = false,
-  formState,
-}: {
-  hideCommissions?: boolean;
-  formState: IFormState<IBidFields>;
-}) {
+function Totals() {
+  const { formState, preview } = useNewBidContext();
   const { commission, discount } = formState.fields;
   const calculatedTotal =
     formState.fields.products.reduce((acc, product) => {
@@ -302,7 +283,7 @@ function Totals({
       <Heading size="sm">Total</Heading>
       <Divider />
       <View className="gap-y-2">
-        {!hideCommissions && (
+        {!preview && (
           <Fragment>
             <View className="flex-row items-center justify-between">
               <Text>Products Total</Text>
@@ -334,7 +315,7 @@ interface IBidFields {
   commission: number;
   discount: number;
   lead_type: string;
-  media: { id: string; path: string }[];
+  media: { id: string; path: string; type: MEDIA_TYPES_KEYS }[];
   name: string;
   notes: string;
   products: IProduct[];
@@ -344,13 +325,14 @@ enum FormReducerActionType {
   SET_ERROR = "SET_ERROR",
   SET_NAME = "SET_NAME",
   SET_PRODUCTS = "SET_PRODUCTS",
-  SET_MEDIA = "SET_MEDIA",
+  ADD_MEDIA = "ADD_MEDIA",
   REMOVE_MEDIA = "REMOVE_MEDIA",
   SET_NOTES = "SET_NOTES",
   SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
   SET_COMMISSION = "SET_COMMISSION",
   SET_LEAD_TYPE = "SET_LEAD_TYPE",
   SET_DISCOUNT = "SET_DISCOUNT",
+  UPDATE_MEDIA = "UPDATE_MEDIA",
 }
 
 interface ISET_LEAD_TYPE_ACTION {
@@ -363,9 +345,14 @@ interface IREMOVE_MEDIA_ACTION {
   payload: string;
 }
 
-interface ISET_MEDIA_ACTION {
-  type: FormReducerActionType.SET_MEDIA;
-  payload: { id: string; path: string };
+interface IADD_MEDIA_ACTION {
+  type: FormReducerActionType.ADD_MEDIA;
+  payload: { id: string; path: string; type: MEDIA_TYPES_KEYS };
+}
+
+interface IUPDATE_MEDIA_ACTION {
+  type: FormReducerActionType.UPDATE_MEDIA;
+  payload: { id: string; path: string; type: MEDIA_TYPES_KEYS }[];
 }
 
 interface ISET_ERROR_ACTION {
@@ -410,102 +397,131 @@ type TAction =
   | ISET_COMMISSION_ACTION
   | ISET_IS_SUBMITTING_ACTION
   | ISET_ERROR_ACTION
-  | ISET_MEDIA_ACTION
+  | IADD_MEDIA_ACTION
   | IREMOVE_MEDIA_ACTION
   | ISET_LEAD_TYPE_ACTION
-  | ISET_DISCOUNT_ACTION;
+  | ISET_DISCOUNT_ACTION
+  | IUPDATE_MEDIA_ACTION;
 
-function formReducer(
-  state: IFormState<IBidFields>,
-  action: TAction
-): IFormState<IBidFields> {
-  switch (action.type) {
-    case FormReducerActionType.SET_ERROR: {
-      return {
-        ...state,
-        error: action.payload,
-      };
+function formReducer(products: IProduct[]) {
+  return (
+    state: IFormState<IBidFields>,
+    action: TAction
+  ): IFormState<IBidFields> => {
+    switch (action.type) {
+      case FormReducerActionType.SET_ERROR: {
+        return {
+          ...state,
+          error: action.payload,
+        };
+      }
+      case FormReducerActionType.SET_IS_SUBMITTING:
+        return {
+          ...state,
+          isSubmitting: action.payload,
+        };
+      case FormReducerActionType.SET_NAME:
+        return {
+          ...state,
+          fields: {
+            ...state.fields,
+            name: action.payload,
+          },
+        };
+      case FormReducerActionType.SET_PRODUCTS: {
+        const isSetter = state.fields.lead_type === "setter";
+        return {
+          ...state,
+          fields: {
+            ...state.fields,
+            products: action.payload.map((product) => {
+              const { unit_price, lead_price } =
+                products.find((p) => p.id === product.id) || {};
+
+              return {
+                ...product,
+                unit_price: isSetter
+                  ? Number(unit_price) + Number(lead_price)
+                  : Number(unit_price),
+              };
+            }),
+          },
+        };
+      }
+      case FormReducerActionType.SET_NOTES: {
+        return {
+          ...state,
+          fields: { ...state.fields, notes: action.payload },
+        };
+      }
+      case FormReducerActionType.SET_COMMISSION: {
+        return {
+          ...state,
+          fields: { ...state.fields, commission: action.payload },
+        };
+      }
+      case FormReducerActionType.SET_DISCOUNT: {
+        return {
+          ...state,
+          fields: { ...state.fields, discount: action.payload },
+        };
+      }
+      case FormReducerActionType.ADD_MEDIA: {
+        return {
+          ...state,
+          fields: {
+            ...state.fields,
+            media: [...state.fields.media, action.payload],
+          },
+        };
+      }
+      case FormReducerActionType.UPDATE_MEDIA: {
+        return {
+          ...state,
+          fields: {
+            ...state.fields,
+            media: action.payload,
+          },
+        };
+      }
+      case FormReducerActionType.REMOVE_MEDIA: {
+        return {
+          ...state,
+          fields: {
+            ...state.fields,
+            media: state.fields.media.filter((m) => m.id !== action.payload),
+          },
+        };
+      }
+      case FormReducerActionType.SET_LEAD_TYPE: {
+        return {
+          ...state,
+          fields: {
+            ...state.fields,
+            lead_type: action.payload,
+            products: state.fields.products.map((product) => {
+              const { unit_price: baseUnitPrice, lead_price: baseLeadPrice } =
+                products.find((p) => p.id === product.id) || {};
+              const isSetter = action.payload === "setter";
+              return {
+                ...product,
+                unit_price: isSetter
+                  ? Number(baseUnitPrice) + Number(baseLeadPrice)
+                  : Number(baseUnitPrice),
+              };
+            }),
+          },
+        };
+      }
+      default:
+        return state;
     }
-    case FormReducerActionType.SET_IS_SUBMITTING:
-      return {
-        ...state,
-        isSubmitting: action.payload,
-      };
-    case FormReducerActionType.SET_NAME:
-      return {
-        ...state,
-        fields: {
-          ...state.fields,
-          name: action.payload,
-        },
-      };
-    case FormReducerActionType.SET_PRODUCTS: {
-      return {
-        ...state,
-        fields: {
-          ...state.fields,
-          products: action.payload,
-        },
-      };
-    }
-    case FormReducerActionType.SET_NOTES: {
-      return {
-        ...state,
-        fields: { ...state.fields, notes: action.payload },
-      };
-    }
-    case FormReducerActionType.SET_COMMISSION: {
-      return {
-        ...state,
-        fields: { ...state.fields, commission: action.payload },
-      };
-    }
-    case FormReducerActionType.SET_DISCOUNT: {
-      return {
-        ...state,
-        fields: { ...state.fields, discount: action.payload },
-      };
-    }
-    case FormReducerActionType.SET_MEDIA: {
-      return {
-        ...state,
-        fields: {
-          ...state.fields,
-          media: [...state.fields.media, action.payload],
-        },
-      };
-    }
-    case FormReducerActionType.REMOVE_MEDIA: {
-      return {
-        ...state,
-        fields: {
-          ...state.fields,
-          media: state.fields.media.filter((m) => m.id !== action.payload),
-        },
-      };
-    }
-    case FormReducerActionType.SET_LEAD_TYPE: {
-      return {
-        ...state,
-        fields: {
-          ...state.fields,
-          lead_type: action.payload,
-        },
-      };
-    }
-    default:
-      return state;
-  }
+  };
 }
-function BidMedia({
-  media,
-  removeMedia,
-  setSelectedMedia,
-}: {
-  media: { id: string; path: string }[];
-  removeMedia: (id: string) => void;
-  setSelectedMedia: (p: { id: string; path: string }) => void;
-}) {
+
+function BidMedia() {
+  const { dispatch, formState } = useNewBidContext();
+  const { media } = formState.fields;
   const { customer } = useCustomerContext();
   const { location } = useLocationContext();
   const { bottom } = useSafeAreaInsets();
@@ -530,7 +546,7 @@ function BidMedia({
         ...result.assets.flatMap((asset) =>
           asset.fileName
             ? {
-                filePath: `${fileRootPath}/${asset.fileName}`,
+                filePath: `${fileRootPath}/${dayjs().unix()}_${asset.fileName}`,
                 file: asset.uri,
                 fileName: asset.fileName,
               }
@@ -556,7 +572,13 @@ function BidMedia({
         .then(async ({ data: storageFile }) => {
           if (!storageFile) return;
 
-          setSelectedMedia(storageFile);
+          dispatch({
+            type: FormReducerActionType.ADD_MEDIA,
+            payload: {
+              ...storageFile,
+              type: "GENERAL",
+            },
+          });
         })
         .catch(() => {
           alert("Error uploading file");
@@ -586,12 +608,12 @@ function BidMedia({
           showsHorizontalScrollIndicator={false}
           contentContainerClassName="flex-row gap-2"
         >
-          {media.map((m) => {
+          {media.map((m, i) => {
             return (
-              <Box
+              <VStack
                 key={m.id}
                 className="rounded-lg overflow-hidden relative"
-                style={{ marginBottom: 10 }}
+                space="sm"
               >
                 <SupabaseSignedImage
                   size="2xl"
@@ -600,11 +622,65 @@ function BidMedia({
                 />
                 <Pressable
                   className="absolute top-1 right-1 rounded-full p-1 bg-background-50"
-                  onPress={() => removeMedia(m.id)}
+                  onPress={() =>
+                    dispatch({
+                      type: FormReducerActionType.REMOVE_MEDIA,
+                      payload: m.id,
+                    })
+                  }
                 >
                   <Icon as={CloseIcon} size="xl" />
                 </Pressable>
-              </Box>
+                <Select
+                  defaultValue={m.type}
+                  initialLabel={MEDIA_TYPES[m.type as MEDIA_TYPES_KEYS].name}
+                  onValueChange={(newType) =>
+                    dispatch({
+                      type: FormReducerActionType.UPDATE_MEDIA,
+                      payload: media.map((item, idx) => {
+                        if (i !== idx) return item;
+                        return {
+                          ...item,
+                          type: newType as MEDIA_TYPES_KEYS,
+                        };
+                      }),
+                    })
+                  }
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectInput
+                      placeholder="Select option"
+                      className="flex-1"
+                    />
+                    <SelectIcon className="mr-3" as={ChevronDown} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent
+                      className="max-h-80"
+                      style={{ paddingBottom: bottom }}
+                    >
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectSectionHeaderText>
+                        Select a category
+                      </SelectSectionHeaderText>
+                      <ScrollView className="w-full">
+                        {Object.entries(MEDIA_TYPES).map(
+                          ([typeValue, type]) => (
+                            <SelectItem
+                              label={type.name}
+                              key={typeValue}
+                              value={typeValue}
+                            />
+                          )
+                        )}
+                      </ScrollView>
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+              </VStack>
             );
           })}
         </ScrollView>
@@ -693,13 +769,8 @@ function BidMedia({
   );
 }
 
-function LeadSelector({
-  formState,
-  dispatch,
-}: {
-  formState: IFormState<IBidFields>;
-  dispatch: React.Dispatch<TAction>;
-}) {
+function LeadSelector() {
+  const { dispatch, formState } = useNewBidContext();
   const actionPropValue = (opt: string) =>
     formState.fields.lead_type === opt ? "primary" : "secondary";
 
@@ -745,14 +816,8 @@ function LeadSelector({
   );
 }
 
-function BidForm({
-  formState,
-  dispatch,
-}: {
-  formState: IFormState<IBidFields>;
-  dispatch: React.Dispatch<TAction>;
-}) {
-  const { customer } = useCustomerContext();
+function BidForm() {
+  const { dispatch, formState, handleSubmit } = useNewBidContext();
 
   return (
     <Fragment>
@@ -766,13 +831,13 @@ function BidForm({
         <FormControlLabel>
           <FormControlLabelText>Lead</FormControlLabelText>
         </FormControlLabel>
-        <LeadSelector formState={formState} dispatch={dispatch} />
+        <LeadSelector />
       </FormControl>
       <FormControl isRequired>
         <FormControlLabel>
           <FormControlLabelText>Name</FormControlLabelText>
         </FormControlLabel>
-        <Input variant="outline" size="lg">
+        <Input className="bg-white" variant="outline" size="lg">
           <InputField
             autoCapitalize="none"
             autoCorrect={false}
@@ -786,71 +851,49 @@ function BidForm({
           />
         </Input>
       </FormControl>
-      <BidMedia
-        media={formState.fields.media}
-        removeMedia={(id) =>
-          dispatch({
-            type: FormReducerActionType.REMOVE_MEDIA,
-            payload: id,
-          })
-        }
-        setSelectedMedia={(payload) =>
-          dispatch({
-            type: FormReducerActionType.SET_MEDIA,
-            payload,
-          })
-        }
-      />
-      {/* <Text>nearmap integration? or upload?</Text> */}
-      <Products
-        locationId={Number(customer?.location_id)}
-        selectedProducts={formState.fields.products}
-        setSelectedProducts={(payload) =>
-          dispatch({
-            type: FormReducerActionType.SET_PRODUCTS,
-            payload,
-          })
-        }
-      />
+      <BidMedia />
+      <BidProducts />
 
-      <FormControl isRequired>
-        <FormControlLabel>
-          <FormControlLabelText>Commission</FormControlLabelText>
-        </FormControlLabel>
-        <Input className="bg-white" size="lg">
-          <InputField
-            keyboardType="numeric"
-            autoCorrect={false}
-            onChangeText={(commission) =>
-              dispatch({
-                type: FormReducerActionType.SET_COMMISSION,
-                payload: Number(commission),
-              })
-            }
-            defaultValue={formState.fields.commission.toString()}
-          />
-        </Input>
-      </FormControl>
+      <HStack space="lg">
+        <FormControl className="grow" isRequired>
+          <FormControlLabel>
+            <FormControlLabelText>Commission</FormControlLabelText>
+          </FormControlLabel>
+          <Input className="bg-white" size="lg">
+            <InputField
+              keyboardType="numeric"
+              autoCorrect={false}
+              onChangeText={(commission) =>
+                dispatch({
+                  type: FormReducerActionType.SET_COMMISSION,
+                  payload: Number(commission),
+                })
+              }
+              defaultValue={formState.fields.commission.toString()}
+            />
+          </Input>
+        </FormControl>
 
-      <FormControl>
-        <FormControlLabel>
-          <FormControlLabelText>Discount</FormControlLabelText>
-        </FormControlLabel>
-        <Input className="bg-white" size="lg">
-          <InputField
-            keyboardType="numeric"
-            autoCorrect={false}
-            onChangeText={(discount) =>
-              dispatch({
-                type: FormReducerActionType.SET_DISCOUNT,
-                payload: Number(discount),
-              })
-            }
-            defaultValue={formState.fields.discount.toString()}
-          />
-        </Input>
-      </FormControl>
-      <Totals formState={formState} />
+        <FormControl className="grow">
+          <FormControlLabel>
+            <FormControlLabelText>Discount</FormControlLabelText>
+          </FormControlLabel>
+          <Input className="bg-white" size="lg">
+            <InputField
+              keyboardType="numeric"
+              autoCorrect={false}
+              onChangeText={(discount) =>
+                dispatch({
+                  type: FormReducerActionType.SET_DISCOUNT,
+                  payload: Number(discount),
+                })
+              }
+              defaultValue={formState.fields.discount.toString()}
+            />
+          </Input>
+        </FormControl>
+      </HStack>
+      <Totals />
       <FormControl>
         <FormControlLabel>
           <FormControlLabelText>Notes</FormControlLabelText>
@@ -867,11 +910,15 @@ function BidForm({
           />
         </Textarea>
       </FormControl>
+      <Button onPress={handleSubmit}>
+        <ButtonText>Submit Bid</ButtonText>
+      </Button>
     </Fragment>
   );
 }
 
-function Preview({ formState }: { formState: IFormState<IBidFields> }) {
+function Preview() {
+  const { formState } = useNewBidContext();
   const { products } = formState.fields;
   return (
     <VStack space="sm">
@@ -889,19 +936,61 @@ function Preview({ formState }: { formState: IFormState<IBidFields> }) {
           <Text>{formState.fields.notes}</Text>
         </Card>
       )}
-      <Totals hideCommissions formState={formState} />
+      <Totals />
     </VStack>
   );
 }
 
-export default function Screen() {
-  const { profile, refreshData } = useUserContext();
-  const [preview, setPreview] = useState(false);
-  const { top } = useSafeAreaInsets();
-  const { customer } = useCustomerContext();
-  const router = useRouter();
+const NewBidContext = createContext<{
+  formState: IFormState<IBidFields>;
+  dispatch: React.Dispatch<TAction>;
+  handleSubmit: () => void;
+  preview: boolean;
+  products: IProduct[];
+  togglePreview: () => void;
+}>({
+  formState: {
+    error: null,
+    fields: {
+      commission: 0,
+      discount: 0,
+      lead_type: "SETTER",
+      media: [],
+      name: "Bid",
+      notes: "",
+      products: [],
+    },
+    isSubmitting: false,
+  },
+  dispatch: () => {},
+  handleSubmit: () => {},
+  preview: false,
+  products: [],
+  togglePreview: () => {},
+});
 
-  const [formState, dispatch] = useReducer(formReducer, {
+function useNewBidContext() {
+  const value = useContext(NewBidContext);
+  if (process.env.NODE_ENV !== "production") {
+    if (!value) {
+      throw new Error(
+        "useNewBidContext must be wrapped in a <NewBidProvider />"
+      );
+    }
+  }
+
+  return value;
+}
+
+function NewBidProvider(props: PropsWithChildren) {
+  const [preview, setPreview] = useState(false);
+  const { profile, refreshData } = useUserContext();
+  const router = useRouter();
+  const { customer } = useCustomerContext();
+  const { products } = useLocationProductsData({
+    locationId: customer.location_id,
+  });
+  const [formState, dispatch] = useReducer(formReducer(products), {
     error: null,
     fields: {
       commission: 0,
@@ -914,7 +1003,6 @@ export default function Screen() {
     },
     isSubmitting: false,
   });
-
   const handleSubmit = useCallback(async () => {
     if (!formState.fields.name) {
       return dispatch({
@@ -934,17 +1022,48 @@ export default function Screen() {
         payload: "Commission is required",
       });
     }
+
+    if (formState.fields.media.length === 0) {
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: "Media is required",
+      });
+    }
+
+    const formStateMediaTypes = formState.fields.media.map((m) => m.type);
+    const missingRequiredMediaTypes = Object.entries(MEDIA_TYPES).flatMap(
+      ([typeKey, type]) => {
+        if (!type.required) return [];
+        if (formStateMediaTypes.includes(typeKey as MEDIA_TYPES_KEYS))
+          return [];
+        return typeKey;
+      }
+    );
+
+    if (missingRequiredMediaTypes.length) {
+      const missingRequiredMediaTypeStringParts = missingRequiredMediaTypes.map(
+        (type) => MEDIA_TYPES[type as MEDIA_TYPES_KEYS].name
+      );
+
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: `Missing media: ${missingRequiredMediaTypeStringParts.join(
+          ", "
+        )} is required`,
+      });
+    }
+
     dispatch({ type: FormReducerActionType.SET_IS_SUBMITTING, payload: true });
 
     const insertFields = {
       business_id: customer?.business_id,
+      commission: formState.fields.commission,
       creator_id: profile?.id,
       customer_id: customer?.id,
+      lead_type: formState.fields.lead_type,
       location_id: customer?.location_id,
       name: formState.fields.name,
-      commission: formState.fields.commission,
       notes: formState.fields.notes,
-      lead_type: formState.fields.lead_type,
     };
 
     const { data, error } = await supabase
@@ -960,10 +1079,11 @@ export default function Screen() {
       bid_id: data.id,
       business_id: customer?.business_id,
       creator_id: profile?.id,
-      location_id: customer?.location_id,
       customer_id: customer?.id,
-      path: m.path,
+      location_id: customer?.location_id,
       name: m.id,
+      path: m.path,
+      type: m.type,
     }));
 
     const { error: mediaError } = await supabase
@@ -997,48 +1117,78 @@ export default function Screen() {
     router.back();
   }, [formState]);
 
+  const value = useMemo(
+    () => ({
+      dispatch,
+      formState,
+      handleSubmit,
+      preview,
+      products,
+      togglePreview: () => setPreview((prevState) => !prevState),
+    }),
+    [dispatch, formState, handleSubmit, products, preview]
+  );
+
   return (
-    <Fragment>
-      <View className="p-4 gap-x-4" style={{ paddingBlockStart: top }}>
-        <View className="flex-row items-center gap-x-4 justify-between">
-          <BackHeaderButton />
-          <Pressable onPress={() => setPreview(!preview)}>
-            <Icon
-              as={preview ? EyeOff : Eye}
-              className={twMerge(
-                preview ? "text-typography-500" : "text-primary-400"
-              )}
-              size="2xl"
-            />
-          </Pressable>
-        </View>
+    <NewBidContext.Provider value={value}>
+      {props.children}
+    </NewBidContext.Provider>
+  );
+}
+
+function ScreenHeader() {
+  const { customer } = useCustomerContext();
+  const { preview } = useNewBidContext();
+  return (
+    <View className="flex-row items-center gap-x-2">
+      <Icon as={Construction} className="text-typography-500" size="lg" />
+      <View className="w-0.5 h-full bg-typography-100" />
+      <View>
+        <Heading size="md">{`${preview ? "Previewing" : "New"} Bid`}</Heading>
+        <Text size="xs">{`Start a new bid for ${customer?.full_name}`}</Text>
       </View>
+    </View>
+  );
+}
+
+function ScreenContent() {
+  const { preview } = useNewBidContext();
+  return preview ? <Preview /> : <BidForm />;
+}
+
+function ScreenHeaderActions() {
+  const { preview, togglePreview } = useNewBidContext();
+  const { top } = useSafeAreaInsets();
+
+  return (
+    <View className="p-4 gap-x-4" style={{ paddingBlockStart: top }}>
+      <View className="flex-row items-center gap-x-4 justify-between">
+        <BackHeaderButton />
+        <Pressable onPress={togglePreview}>
+          <Icon
+            as={preview ? EyeOff : Eye}
+            className={twMerge(
+              preview ? "text-typography-500" : "text-primary-400"
+            )}
+            size="2xl"
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+export default function Screen() {
+  return (
+    <NewBidProvider>
+      <ScreenHeaderActions />
       <KeyboardAvoidingView behavior="padding">
         <ScrollView contentContainerClassName="gap-y-6 p-6 pt-0">
-          <View className="flex-row items-center gap-x-2">
-            <Icon as={Construction} className="text-typography-500" size="lg" />
-            <View className="w-0.5 h-full bg-typography-100" />
-            <View>
-              <Heading size="md">{`${
-                preview ? "Previewing" : "New"
-              } Bid`}</Heading>
-              <Text size="xs">{`Start a new bid for ${customer?.full_name}`}</Text>
-            </View>
-          </View>
-
-          {preview ? (
-            <Preview formState={formState} />
-          ) : (
-            <BidForm formState={formState} dispatch={dispatch} />
-          )}
-
-          <Button onPress={handleSubmit}>
-            <ButtonText>Submit Bid</ButtonText>
-          </Button>
-          <ScreenEnd />
+          <ScreenHeader />
+          <ScreenContent />
           <ScreenEnd />
         </ScrollView>
       </KeyboardAvoidingView>
-    </Fragment>
+    </NewBidProvider>
   );
 }

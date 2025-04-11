@@ -247,6 +247,7 @@ export type Database = {
           location_id: number
           name: string
           path: string
+          type: string
         }
         Insert: {
           bid_id: number
@@ -258,6 +259,7 @@ export type Database = {
           location_id: number
           name: string
           path: string
+          type?: string
         }
         Update: {
           bid_id?: number
@@ -269,6 +271,7 @@ export type Database = {
           location_id?: number
           name?: string
           path?: string
+          type?: string
         }
         Relationships: [
           {
@@ -388,6 +391,7 @@ export type Database = {
           creator_id: string
           customer_id: number
           id: number
+          lead_type: string
           location_id: number
           name: string
           notes: string | null
@@ -399,6 +403,7 @@ export type Database = {
           creator_id: string
           customer_id: number
           id?: number
+          lead_type?: string
           location_id: number
           name: string
           notes?: string | null
@@ -410,6 +415,7 @@ export type Database = {
           creator_id?: string
           customer_id?: number
           id?: number
+          lead_type?: string
           location_id?: number
           name?: string
           notes?: string | null
@@ -713,6 +719,7 @@ export type Database = {
           location_id: number
           name: string
           path: string
+          type: string
         }
         Insert: {
           business_id: string
@@ -722,6 +729,7 @@ export type Database = {
           location_id: number
           name: string
           path: string
+          type?: string
         }
         Update: {
           business_id?: string
@@ -731,6 +739,7 @@ export type Database = {
           location_id?: number
           name?: string
           path?: string
+          type?: string
         }
         Relationships: [
           {
