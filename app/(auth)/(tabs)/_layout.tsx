@@ -244,7 +244,7 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
           </ActionsheetDragIndicatorWrapper>
           <ActionsheetItem
             onPress={() => {
-              router.push(`/(auth)/(modals)/new-customer-modal`);
+              router.push(`/new-customer`);
               handleClose();
             }}
           >
