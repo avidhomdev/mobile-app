@@ -39,23 +39,23 @@ import {
   SelectSectionHeaderText,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { MEDIA_TYPES, MEDIA_TYPES_KEYS } from "@/constants/media-types";
+import {
+  CustomerBidFormContextProvider,
+  FormReducerActionType,
+  useCustomerBidFormContext,
+} from "@/contexts/customer-bid-form-context";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { useLocationContext } from "@/contexts/location-context";
-import { useUserContext } from "@/contexts/user-context";
-import { IFormState } from "@/hooks/useFormState";
-import {
-  IProduct,
-  useLocationProductsData,
-} from "@/hooks/useLocationProductsData";
+import { IProduct } from "@/hooks/useLocationProductsData";
 import { supabase } from "@/lib/supabase";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
 import {
   ChevronDown,
   Construction,
@@ -66,16 +66,7 @@ import {
   Plus,
   UploadCloud,
 } from "lucide-react-native";
-import {
-  createContext,
-  Fragment,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useMemo,
-  useReducer,
-  useState,
-} from "react";
+import { Fragment, useState } from "react";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -149,7 +140,7 @@ function ProductItem({
 }
 
 function AddProductBottomSheet() {
-  const { dispatch, formState, products } = useNewBidContext();
+  const { dispatch, formState, products } = useCustomerBidFormContext();
   const { products: selectedProducts } = formState.fields;
   const { bottom } = useSafeAreaInsets();
   const [showActionsheet, setShowActionsheet] = useState(false);
@@ -217,7 +208,7 @@ function AddProductBottomSheet() {
 }
 
 function BidProducts() {
-  const { dispatch, formState } = useNewBidContext();
+  const { dispatch, formState } = useCustomerBidFormContext();
   const { products: selectedProducts } = formState.fields;
   const setSelectedProducts = (payload: IProduct[]) =>
     dispatch({
@@ -269,7 +260,7 @@ function BidProducts() {
 }
 
 function Totals() {
-  const { formState, preview } = useNewBidContext();
+  const { formState, preview } = useCustomerBidFormContext();
   const { commission, discount } = formState.fields;
   const calculatedTotal =
     formState.fields.products.reduce((acc, product) => {
@@ -311,216 +302,8 @@ function Totals() {
   );
 }
 
-interface IBidFields {
-  commission: number;
-  discount: number;
-  lead_type: string;
-  media: { id: string; path: string; type: MEDIA_TYPES_KEYS }[];
-  name: string;
-  notes: string;
-  products: IProduct[];
-}
-
-enum FormReducerActionType {
-  SET_ERROR = "SET_ERROR",
-  SET_NAME = "SET_NAME",
-  SET_PRODUCTS = "SET_PRODUCTS",
-  ADD_MEDIA = "ADD_MEDIA",
-  REMOVE_MEDIA = "REMOVE_MEDIA",
-  SET_NOTES = "SET_NOTES",
-  SET_IS_SUBMITTING = "SET_IS_SUBMITTING",
-  SET_COMMISSION = "SET_COMMISSION",
-  SET_LEAD_TYPE = "SET_LEAD_TYPE",
-  SET_DISCOUNT = "SET_DISCOUNT",
-  UPDATE_MEDIA = "UPDATE_MEDIA",
-}
-
-interface ISET_LEAD_TYPE_ACTION {
-  type: FormReducerActionType.SET_LEAD_TYPE;
-  payload: string;
-}
-
-interface IREMOVE_MEDIA_ACTION {
-  type: FormReducerActionType.REMOVE_MEDIA;
-  payload: string;
-}
-
-interface IADD_MEDIA_ACTION {
-  type: FormReducerActionType.ADD_MEDIA;
-  payload: { id: string; path: string; type: MEDIA_TYPES_KEYS };
-}
-
-interface IUPDATE_MEDIA_ACTION {
-  type: FormReducerActionType.UPDATE_MEDIA;
-  payload: { id: string; path: string; type: MEDIA_TYPES_KEYS }[];
-}
-
-interface ISET_ERROR_ACTION {
-  type: FormReducerActionType.SET_ERROR;
-  payload: string | null;
-}
-
-interface ISET_IS_SUBMITTING_ACTION {
-  type: FormReducerActionType.SET_IS_SUBMITTING;
-  payload: boolean;
-}
-
-interface ISET_COMMISSION_ACTION {
-  type: FormReducerActionType.SET_COMMISSION;
-  payload: number;
-}
-
-interface ISET_DISCOUNT_ACTION {
-  type: FormReducerActionType.SET_DISCOUNT;
-  payload: number;
-}
-
-interface ISET_NAME_ACTION {
-  type: FormReducerActionType.SET_NAME;
-  payload: string;
-}
-
-interface ISET_PRODUCTS_ACTION {
-  type: FormReducerActionType.SET_PRODUCTS;
-  payload: IProduct[];
-}
-
-interface ISET_NOTES_ACTION {
-  type: FormReducerActionType.SET_NOTES;
-  payload: string;
-}
-
-type TAction =
-  | ISET_NAME_ACTION
-  | ISET_PRODUCTS_ACTION
-  | ISET_NOTES_ACTION
-  | ISET_COMMISSION_ACTION
-  | ISET_IS_SUBMITTING_ACTION
-  | ISET_ERROR_ACTION
-  | IADD_MEDIA_ACTION
-  | IREMOVE_MEDIA_ACTION
-  | ISET_LEAD_TYPE_ACTION
-  | ISET_DISCOUNT_ACTION
-  | IUPDATE_MEDIA_ACTION;
-
-function formReducer(products: IProduct[]) {
-  return (
-    state: IFormState<IBidFields>,
-    action: TAction
-  ): IFormState<IBidFields> => {
-    switch (action.type) {
-      case FormReducerActionType.SET_ERROR: {
-        return {
-          ...state,
-          error: action.payload,
-        };
-      }
-      case FormReducerActionType.SET_IS_SUBMITTING:
-        return {
-          ...state,
-          isSubmitting: action.payload,
-        };
-      case FormReducerActionType.SET_NAME:
-        return {
-          ...state,
-          fields: {
-            ...state.fields,
-            name: action.payload,
-          },
-        };
-      case FormReducerActionType.SET_PRODUCTS: {
-        const isSetter = state.fields.lead_type === "setter";
-        return {
-          ...state,
-          fields: {
-            ...state.fields,
-            products: action.payload.map((product) => {
-              const { unit_price, lead_price } =
-                products.find((p) => p.id === product.id) || {};
-
-              return {
-                ...product,
-                unit_price: isSetter
-                  ? Number(unit_price) + Number(lead_price)
-                  : Number(unit_price),
-              };
-            }),
-          },
-        };
-      }
-      case FormReducerActionType.SET_NOTES: {
-        return {
-          ...state,
-          fields: { ...state.fields, notes: action.payload },
-        };
-      }
-      case FormReducerActionType.SET_COMMISSION: {
-        return {
-          ...state,
-          fields: { ...state.fields, commission: action.payload },
-        };
-      }
-      case FormReducerActionType.SET_DISCOUNT: {
-        return {
-          ...state,
-          fields: { ...state.fields, discount: action.payload },
-        };
-      }
-      case FormReducerActionType.ADD_MEDIA: {
-        return {
-          ...state,
-          fields: {
-            ...state.fields,
-            media: [...state.fields.media, action.payload],
-          },
-        };
-      }
-      case FormReducerActionType.UPDATE_MEDIA: {
-        return {
-          ...state,
-          fields: {
-            ...state.fields,
-            media: action.payload,
-          },
-        };
-      }
-      case FormReducerActionType.REMOVE_MEDIA: {
-        return {
-          ...state,
-          fields: {
-            ...state.fields,
-            media: state.fields.media.filter((m) => m.id !== action.payload),
-          },
-        };
-      }
-      case FormReducerActionType.SET_LEAD_TYPE: {
-        return {
-          ...state,
-          fields: {
-            ...state.fields,
-            lead_type: action.payload,
-            products: state.fields.products.map((product) => {
-              const { unit_price: baseUnitPrice, lead_price: baseLeadPrice } =
-                products.find((p) => p.id === product.id) || {};
-              const isSetter = action.payload === "setter";
-              return {
-                ...product,
-                unit_price: isSetter
-                  ? Number(baseUnitPrice) + Number(baseLeadPrice)
-                  : Number(baseUnitPrice),
-              };
-            }),
-          },
-        };
-      }
-      default:
-        return state;
-    }
-  };
-}
-
 function BidMedia() {
-  const { dispatch, formState } = useNewBidContext();
+  const { dispatch, formState } = useCustomerBidFormContext();
   const { media } = formState.fields;
   const { customer } = useCustomerContext();
   const { location } = useLocationContext();
@@ -612,16 +395,16 @@ function BidMedia() {
             return (
               <VStack
                 key={m.id}
-                className="rounded-lg overflow-hidden relative"
+                className="overflow-hidden relative items-center"
                 space="sm"
               >
                 <SupabaseSignedImage
-                  size="2xl"
+                  size="xl"
                   path={m.path}
                   cacheInSeconds={3600}
                 />
                 <Pressable
-                  className="absolute top-1 right-1 rounded-full p-1 bg-background-50"
+                  className="absolute top-1 right-1 p-1 bg-background-200"
                   onPress={() =>
                     dispatch({
                       type: FormReducerActionType.REMOVE_MEDIA,
@@ -770,7 +553,7 @@ function BidMedia() {
 }
 
 function LeadSelector() {
-  const { dispatch, formState } = useNewBidContext();
+  const { dispatch, formState } = useCustomerBidFormContext();
   const actionPropValue = (opt: string) =>
     formState.fields.lead_type === opt ? "primary" : "secondary";
 
@@ -817,7 +600,8 @@ function LeadSelector() {
 }
 
 function BidForm() {
-  const { dispatch, formState, handleSubmit } = useNewBidContext();
+  const { dispatch, formState, handleSubmit, isFormInvalid } =
+    useCustomerBidFormContext();
 
   return (
     <Fragment>
@@ -851,11 +635,153 @@ function BidForm() {
           />
         </Input>
       </FormControl>
-      <BidMedia />
       <BidProducts />
+      <BidMedia />
+      <FormControl>
+        <FormControlLabel>
+          <FormControlLabelText>Notes</FormControlLabelText>
+        </FormControlLabel>
+        <Textarea className="bg-white" size="md">
+          <TextareaInput
+            defaultValue={formState.fields.notes}
+            onChangeText={(text) =>
+              dispatch({
+                type: FormReducerActionType.SET_NOTES,
+                payload: text,
+              })
+            }
+          />
+        </Textarea>
+      </FormControl>
+      <FormControl>
+        <FormControlLabel>
+          <HStack className="justify-between items-center w-full" space="md">
+            <FormControlLabelText>HOA Approval Needed</FormControlLabelText>
+            <Switch
+              value={formState.fields.hoa_approval_required}
+              onToggle={(payload: boolean) =>
+                dispatch({
+                  type: FormReducerActionType.SET_HOA_APPROVAL_NEEDED,
+                  payload,
+                })
+              }
+            />
+          </HStack>
+        </FormControlLabel>
+      </FormControl>
+      {formState.fields.hoa_approval_required && (
+        <Card>
+          <VStack space="sm">
+            <FormControl
+              isRequired
+              isInvalid={
+                formState.fields.hoa_approval_required &&
+                !formState.fields.hoa_contact_name
+              }
+            >
+              <FormControlLabel>
+                <FormControlLabelText>Contact Name</FormControlLabelText>
+              </FormControlLabel>
+              <Input className="bg-white" variant="outline" size="lg">
+                <InputField
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={(payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_HOA_CONTACT_NAME,
+                      payload,
+                    })
+                  }
+                  defaultValue={formState.fields.hoa_contact_name}
+                />
+              </Input>
+            </FormControl>
+            <FormControl>
+              <FormControlLabel>
+                <FormControlLabelText>Contact Email</FormControlLabelText>
+              </FormControlLabel>
+              <Input className="bg-white" variant="outline" size="lg">
+                <InputField
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={(payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_HOA_CONTACT_EMAIL,
+                      payload,
+                    })
+                  }
+                  defaultValue={formState.fields.hoa_contact_email}
+                />
+              </Input>
+            </FormControl>
+            <FormControl>
+              <FormControlLabel>
+                <FormControlLabelText>Contact Phone</FormControlLabelText>
+              </FormControlLabel>
+              <Input className="bg-white" variant="outline" size="lg">
+                <InputField
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={(payload) =>
+                    dispatch({
+                      type: FormReducerActionType.SET_HOA_CONTACT_PHONE,
+                      payload,
+                    })
+                  }
+                  defaultValue={formState.fields.hoa_contact_phone}
+                />
+              </Input>
+            </FormControl>
+          </VStack>
+        </Card>
+      )}
+      <FormControl>
+        <FormControlLabel>
+          <HStack className="justify-between items-center w-full" space="md">
+            <FormControlLabelText>Water Rebate</FormControlLabelText>
+            <Switch
+              value={formState.fields.has_water_rebate}
+              onToggle={(payload: boolean) =>
+                dispatch({
+                  type: FormReducerActionType.SET_HAS_WATER_REBATE,
+                  payload,
+                })
+              }
+            />
+          </HStack>
+        </FormControlLabel>
+      </FormControl>
+      {formState.fields.has_water_rebate && (
+        <Card>
+          <FormControl
+            isInvalid={
+              formState.fields.has_water_rebate &&
+              !formState.fields.water_rebate_company
+            }
+            isRequired
+          >
+            <FormControlLabel>
+              <FormControlLabelText>Company</FormControlLabelText>
+            </FormControlLabel>
+            <Input className="bg-white" variant="outline" size="lg">
+              <InputField
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={(payload) =>
+                  dispatch({
+                    type: FormReducerActionType.SET_HOA_WATER_REBATE_COMPANY,
+                    payload,
+                  })
+                }
+                defaultValue={formState.fields.water_rebate_company}
+              />
+            </Input>
+          </FormControl>
+        </Card>
+      )}
 
       <HStack space="lg">
-        <FormControl className="grow" isRequired>
+        <FormControl className="grow">
           <FormControlLabel>
             <FormControlLabelText>Commission</FormControlLabelText>
           </FormControlLabel>
@@ -894,23 +820,7 @@ function BidForm() {
         </FormControl>
       </HStack>
       <Totals />
-      <FormControl>
-        <FormControlLabel>
-          <FormControlLabelText>Notes</FormControlLabelText>
-        </FormControlLabel>
-        <Textarea className="bg-white" size="md">
-          <TextareaInput
-            defaultValue={formState.fields.notes}
-            onChangeText={(text) =>
-              dispatch({
-                type: FormReducerActionType.SET_NOTES,
-                payload: text,
-              })
-            }
-          />
-        </Textarea>
-      </FormControl>
-      <Button onPress={handleSubmit}>
+      <Button action="primary" onPress={handleSubmit}>
         <ButtonText>Submit Bid</ButtonText>
       </Button>
     </Fragment>
@@ -918,7 +828,7 @@ function BidForm() {
 }
 
 function Preview() {
-  const { formState } = useNewBidContext();
+  const { formState } = useCustomerBidFormContext();
   const { products } = formState.fields;
   return (
     <VStack space="sm">
@@ -941,204 +851,9 @@ function Preview() {
   );
 }
 
-const NewBidContext = createContext<{
-  formState: IFormState<IBidFields>;
-  dispatch: React.Dispatch<TAction>;
-  handleSubmit: () => void;
-  preview: boolean;
-  products: IProduct[];
-  togglePreview: () => void;
-}>({
-  formState: {
-    error: null,
-    fields: {
-      commission: 0,
-      discount: 0,
-      lead_type: "SETTER",
-      media: [],
-      name: "Bid",
-      notes: "",
-      products: [],
-    },
-    isSubmitting: false,
-  },
-  dispatch: () => {},
-  handleSubmit: () => {},
-  preview: false,
-  products: [],
-  togglePreview: () => {},
-});
-
-function useNewBidContext() {
-  const value = useContext(NewBidContext);
-  if (process.env.NODE_ENV !== "production") {
-    if (!value) {
-      throw new Error(
-        "useNewBidContext must be wrapped in a <NewBidProvider />"
-      );
-    }
-  }
-
-  return value;
-}
-
-function NewBidProvider(props: PropsWithChildren) {
-  const [preview, setPreview] = useState(false);
-  const { profile, refreshData } = useUserContext();
-  const router = useRouter();
-  const { customer } = useCustomerContext();
-  const { products } = useLocationProductsData({
-    locationId: customer.location_id,
-  });
-  const [formState, dispatch] = useReducer(formReducer(products), {
-    error: null,
-    fields: {
-      commission: 0,
-      discount: 0,
-      lead_type: "setter",
-      media: [],
-      name: "Bid",
-      notes: "",
-      products: [],
-    },
-    isSubmitting: false,
-  });
-  const handleSubmit = useCallback(async () => {
-    if (!formState.fields.name) {
-      return dispatch({
-        type: FormReducerActionType.SET_ERROR,
-        payload: "Name is required",
-      });
-    }
-    if (!formState.fields.products.length) {
-      return dispatch({
-        type: FormReducerActionType.SET_ERROR,
-        payload: "At least one product is required",
-      });
-    }
-    if (!formState.fields.commission) {
-      return dispatch({
-        type: FormReducerActionType.SET_ERROR,
-        payload: "Commission is required",
-      });
-    }
-
-    if (formState.fields.media.length === 0) {
-      return dispatch({
-        type: FormReducerActionType.SET_ERROR,
-        payload: "Media is required",
-      });
-    }
-
-    const formStateMediaTypes = formState.fields.media.map((m) => m.type);
-    const missingRequiredMediaTypes = Object.entries(MEDIA_TYPES).flatMap(
-      ([typeKey, type]) => {
-        if (!type.required) return [];
-        if (formStateMediaTypes.includes(typeKey as MEDIA_TYPES_KEYS))
-          return [];
-        return typeKey;
-      }
-    );
-
-    if (missingRequiredMediaTypes.length) {
-      const missingRequiredMediaTypeStringParts = missingRequiredMediaTypes.map(
-        (type) => MEDIA_TYPES[type as MEDIA_TYPES_KEYS].name
-      );
-
-      return dispatch({
-        type: FormReducerActionType.SET_ERROR,
-        payload: `Missing media: ${missingRequiredMediaTypeStringParts.join(
-          ", "
-        )} is required`,
-      });
-    }
-
-    dispatch({ type: FormReducerActionType.SET_IS_SUBMITTING, payload: true });
-
-    const insertFields = {
-      business_id: customer?.business_id,
-      commission: formState.fields.commission,
-      creator_id: profile?.id,
-      customer_id: customer?.id,
-      lead_type: formState.fields.lead_type,
-      location_id: customer?.location_id,
-      name: formState.fields.name,
-      notes: formState.fields.notes,
-    };
-
-    const { data, error } = await supabase
-      .from("business_location_customer_bids")
-      .insert(insertFields)
-      .select("id")
-      .single();
-
-    if (error) throw error;
-    if (!data) throw new Error("Bid not created");
-
-    const mediaInsert = formState.fields.media.map((m) => ({
-      bid_id: data.id,
-      business_id: customer?.business_id,
-      creator_id: profile?.id,
-      customer_id: customer?.id,
-      location_id: customer?.location_id,
-      name: m.id,
-      path: m.path,
-      type: m.type,
-    }));
-
-    const { error: mediaError } = await supabase
-      .from("business_location_customer_bid_media")
-      .insert(mediaInsert);
-
-    if (mediaError) throw mediaError;
-
-    const productsInsert = formState.fields.products.map((product) => ({
-      bid_id: data.id,
-      business_id: customer?.business_id,
-      customer_id: customer?.id,
-      location_id: customer?.location_id,
-      product_id: product.id,
-      unit_price: product.unit_price,
-      units: product.units,
-    }));
-
-    const { error: productsError } = await supabase
-      .from("business_location_customer_bid_products")
-      .insert(productsInsert);
-
-    if (productsError) throw productsError;
-
-    dispatch({
-      type: FormReducerActionType.SET_IS_SUBMITTING,
-      payload: false,
-    });
-
-    await refreshData();
-    router.back();
-  }, [formState]);
-
-  const value = useMemo(
-    () => ({
-      dispatch,
-      formState,
-      handleSubmit,
-      preview,
-      products,
-      togglePreview: () => setPreview((prevState) => !prevState),
-    }),
-    [dispatch, formState, handleSubmit, products, preview]
-  );
-
-  return (
-    <NewBidContext.Provider value={value}>
-      {props.children}
-    </NewBidContext.Provider>
-  );
-}
-
 function ScreenHeader() {
   const { customer } = useCustomerContext();
-  const { preview } = useNewBidContext();
+  const { preview } = useCustomerBidFormContext();
   return (
     <View className="flex-row items-center gap-x-2">
       <Icon as={Construction} className="text-typography-500" size="lg" />
@@ -1152,12 +867,12 @@ function ScreenHeader() {
 }
 
 function ScreenContent() {
-  const { preview } = useNewBidContext();
+  const { preview } = useCustomerBidFormContext();
   return preview ? <Preview /> : <BidForm />;
 }
 
 function ScreenHeaderActions() {
-  const { preview, togglePreview } = useNewBidContext();
+  const { preview, togglePreview } = useCustomerBidFormContext();
   const { top } = useSafeAreaInsets();
 
   return (
@@ -1180,7 +895,7 @@ function ScreenHeaderActions() {
 
 export default function Screen() {
   return (
-    <NewBidProvider>
+    <CustomerBidFormContextProvider>
       <ScreenHeaderActions />
       <KeyboardAvoidingView behavior="padding">
         <ScrollView contentContainerClassName="gap-y-6 p-6 pt-0">
@@ -1189,6 +904,6 @@ export default function Screen() {
           <ScreenEnd />
         </ScrollView>
       </KeyboardAvoidingView>
-    </NewBidProvider>
+    </CustomerBidFormContextProvider>
   );
 }

@@ -390,11 +390,18 @@ export type Database = {
           created_at: string
           creator_id: string
           customer_id: number
+          has_water_rebate: boolean
+          hoa_approval_required: boolean
+          hoa_contact_email: string | null
+          hoa_contact_name: string | null
+          hoa_contact_phone: string | null
           id: number
           lead_type: string
           location_id: number
           name: string
           notes: string | null
+          status: Database["public"]["Enums"]["row_status"]
+          water_rebate_company: string | null
         }
         Insert: {
           business_id: string
@@ -402,11 +409,18 @@ export type Database = {
           created_at?: string
           creator_id: string
           customer_id: number
+          has_water_rebate?: boolean
+          hoa_approval_required?: boolean
+          hoa_contact_email?: string | null
+          hoa_contact_name?: string | null
+          hoa_contact_phone?: string | null
           id?: number
           lead_type?: string
           location_id: number
           name: string
           notes?: string | null
+          status?: Database["public"]["Enums"]["row_status"]
+          water_rebate_company?: string | null
         }
         Update: {
           business_id?: string
@@ -414,11 +428,18 @@ export type Database = {
           created_at?: string
           creator_id?: string
           customer_id?: number
+          has_water_rebate?: boolean
+          hoa_approval_required?: boolean
+          hoa_contact_email?: string | null
+          hoa_contact_name?: string | null
+          hoa_contact_phone?: string | null
           id?: number
           lead_type?: string
           location_id?: number
           name?: string
           notes?: string | null
+          status?: Database["public"]["Enums"]["row_status"]
+          water_rebate_company?: string | null
         }
         Relationships: [
           {
@@ -1745,7 +1766,7 @@ export type Database = {
         | "canceled"
         | "complete"
       location_profile_roles: "admin" | "manager" | "base"
-      row_status: "inactive" | "active"
+      row_status: "inactive" | "active" | "draft"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2189,7 +2210,7 @@ export const Constants = {
         "complete",
       ],
       location_profile_roles: ["admin", "manager", "base"],
-      row_status: ["inactive", "active"],
+      row_status: ["inactive", "active", "draft"],
     },
   },
   storage: {
