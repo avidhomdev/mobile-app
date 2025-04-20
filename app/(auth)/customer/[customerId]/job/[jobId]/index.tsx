@@ -1186,11 +1186,6 @@ function Tiles({ job }: { job: ILocationJob }) {
     }, 0);
   };
 
-  const calculateJobProductUnitsTotal = () => {
-    return job?.products.reduce((acc, product) => {
-      return acc + Number(product.number_of_units);
-    }, 0);
-  };
   return (
     <VStack space="sm">
       <HStack space="sm">
@@ -1200,7 +1195,7 @@ function Tiles({ job }: { job: ILocationJob }) {
         </Card>
         <Card className="w-1/3">
           <Text sub>Hours</Text>
-          <Text size="2xl">32</Text>
+          <Text size="2xl">NA</Text>
         </Card>
       </HStack>
       <HStack space="sm" reversed>
@@ -1209,10 +1204,6 @@ function Tiles({ job }: { job: ILocationJob }) {
           <Text size="2xl">
             {formatAsCurrency(Number(calculateJobProductsTotal()))}
           </Text>
-        </Card>
-        <Card className="w-1/3">
-          <Text sub>Payments Received</Text>
-          <Text size="2xl">{calculateJobProductUnitsTotal()}</Text>
         </Card>
       </HStack>
     </VStack>
@@ -1239,21 +1230,12 @@ function Products({ job }: { job: ILocationJob }) {
         <VStack space="sm">
           {job.products.map((product) => (
             <Card className="bg-white" key={product.id} size="sm">
-              <VStack space="sm">
-                <VStack>
-                  <Text>{product.product.name}</Text>
-                  <Text
-                    sub
-                  >{`Price is calculated per ${product.product.unit}`}</Text>
-                </VStack>
-                <Divider />
-                <HStack className="justify-between">
-                  <Text>{`${product.number_of_units} x ${product.product.unit}`}</Text>
-                  <Text size="lg">
-                    {formatAsCurrency(Number(product.total_price))}
-                  </Text>
-                </HStack>
-              </VStack>
+              <HStack className="justify-between items-center">
+                <Text className="flex-1">{product.product.name}</Text>
+                <Text bold>{`${product.number_of_units.toLocaleString()} ${
+                  product.product.unit
+                }`}</Text>
+              </HStack>
             </Card>
           ))}
         </VStack>
