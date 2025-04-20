@@ -771,6 +771,7 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
       job_id: job.id,
       path: m.path,
       name: m.name,
+      type: m.type,
     }));
 
     const { error: jobMediaInsertError } = await supabase
