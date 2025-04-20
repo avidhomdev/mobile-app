@@ -56,7 +56,7 @@ export default function ActionSheetUpload({
 
       setSelected((prevState) => [...prevState, ...assetsMappedToSelected]);
     }
-  }, []);
+  }, [filePath]);
 
   const handleUploadSelected = useCallback(async () => {
     setIsUploading(true);
@@ -86,7 +86,7 @@ export default function ActionSheetUpload({
     setIsUploading(false);
     setIsVisible(false);
     setSelected([]);
-  }, [selected]);
+  }, [onUpload, selected, setIsVisible]);
 
   return (
     <Actionsheet isOpen={isVisible} onClose={handleCloseActionSheet}>

@@ -33,7 +33,7 @@ export default function Screen() {
 
   useEffect(() => {
     getJobPayments(Number(jobId)).then(setPayments);
-  }, []);
+  }, [jobId]);
 
   return (
     <ScrollView

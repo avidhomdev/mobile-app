@@ -32,7 +32,7 @@ export const useLocationProductsData = ({
         .then(({ data }) => data || []);
 
     fetchProducts().then(setProducts);
-  }, []);
+  }, [locationId]);
 
   return {
     products,

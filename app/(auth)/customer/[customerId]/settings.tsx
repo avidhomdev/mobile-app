@@ -168,7 +168,7 @@ export default function Screen() {
       )
       .then(refreshData)
       .then(router.back);
-  }, [state, customer?.id]);
+  }, [customer, updateCustomer, state.fields, refreshData, router.back]);
 
   return (
     <KeyboardAvoidingView behavior="padding">

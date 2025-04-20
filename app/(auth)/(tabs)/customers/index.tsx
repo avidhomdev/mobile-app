@@ -98,7 +98,7 @@ function CustomerCard({ customer }: { customer: ILocationCustomer }) {
         .then(refreshData)
         .then(handleCloserAlertDialog)
         .then(handleCloseActionSheet),
-    []
+    [customer.id, refreshData]
   );
 
   return (

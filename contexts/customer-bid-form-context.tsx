@@ -485,7 +485,27 @@ export function CustomerBidFormContextProvider(props: PropsWithChildren) {
 
     await refreshData();
     router.back();
-  }, [formState]);
+  }, [
+    customer?.business_id,
+    customer?.id,
+    customer?.location_id,
+    formState.fields.commission,
+    formState.fields.discount,
+    formState.fields.has_water_rebate,
+    formState.fields.hoa_approval_required,
+    formState.fields.hoa_contact_email,
+    formState.fields.hoa_contact_name,
+    formState.fields.hoa_contact_phone,
+    formState.fields.lead_type,
+    formState.fields.media,
+    formState.fields.name,
+    formState.fields.notes,
+    formState.fields.products,
+    formState.fields.water_rebate_company,
+    profile?.id,
+    refreshData,
+    router,
+  ]);
 
   const value = useMemo(
     () => ({

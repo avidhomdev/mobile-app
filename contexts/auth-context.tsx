@@ -42,7 +42,7 @@ export function SessionProvider(props: React.PropsWithChildren) {
     supabase.auth.onAuthStateChange((_, s) => {
       setSession(s?.user.id || null);
     });
-  }, []);
+  }, [setSession]);
 
   return (
     <AuthContext.Provider

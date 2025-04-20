@@ -43,15 +43,14 @@ export function LocationProvider({
   const selectedLocationProfile = selectedLocation?.profiles.find(
     (lP) => lP.profile_id === profile_id
   );
-  const location = { ...selectedLocation, ...selectedLocationProfile };
 
   const value = useMemo(
     () => ({
-      location,
+      location: { ...selectedLocation, ...selectedLocationProfile },
       refreshData: () => {},
       changeLocation: (id?: number) => setSelectedLocationId(id),
     }),
-    [location, setSelectedLocationId]
+    [selectedLocation, selectedLocationProfile, setSelectedLocationId]
   );
 
   return (

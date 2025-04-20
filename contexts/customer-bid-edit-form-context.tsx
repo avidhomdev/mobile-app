@@ -587,7 +587,31 @@ export function CustomerBidEditFormContextProvider(
 
     await refreshData();
     router.back();
-  }, [formState]);
+  }, [
+    bid.business_id,
+    bid.customer_id,
+    bid.id,
+    bid.location_id,
+    bid.media,
+    bid.products,
+    formState.fields.commission,
+    formState.fields.discount,
+    formState.fields.has_water_rebate,
+    formState.fields.hoa_approval_required,
+    formState.fields.hoa_contact_email,
+    formState.fields.hoa_contact_name,
+    formState.fields.hoa_contact_phone,
+    formState.fields.lead_type,
+    formState.fields.media,
+    formState.fields.name,
+    formState.fields.notes,
+    formState.fields.products,
+    formState.fields.water_rebate_company,
+    formState.isSubmitting,
+    profile.id,
+    refreshData,
+    router,
+  ]);
 
   const value = useMemo(
     () => ({

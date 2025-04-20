@@ -139,7 +139,18 @@ function TimeSlotRow({
         })
       )
       .then(handleCloseTimeSlotActionSheet);
-  }, [duration]);
+  }, [
+    closer.id,
+    duration,
+    isSubmitting,
+    location.business_id,
+    location.id,
+    params.customerId,
+    refreshData,
+    router,
+    time,
+    updateCustomer,
+  ]);
 
   return (
     <TouchableOpacity
@@ -286,7 +297,7 @@ export default function ScheduleClosingScreen() {
           if (data) setAppointments(data);
         });
     fetchTodaysAppointments();
-  }, [selectedDayJs]);
+  }, [location.id, selectedDayJs]);
 
   const timeArr = Array.from({ length: 25 }, (_, num) =>
     selectedDayJs

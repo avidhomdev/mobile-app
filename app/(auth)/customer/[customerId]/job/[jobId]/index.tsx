@@ -324,7 +324,13 @@ function FabPlusActionSheetMediaItem({
       refreshData();
       closeFabPlusMenu();
     },
-    []
+    [
+      closeFabPlusMenu,
+      customer.business_id,
+      customer.location_id,
+      jobId,
+      refreshData,
+    ]
   );
 
   return (
@@ -366,7 +372,7 @@ function FabPlusActionSheetNoteItem({
     setIsSubmitting(true);
     await handleSubmitNoteToJob(note);
     setIsSubmitting(false);
-  }, [note]);
+  }, [handleSubmitNoteToJob, note]);
 
   return (
     <Fragment>
@@ -651,7 +657,16 @@ function FabPlusActionSheetPaymentItem({
 
     dispatch({ type: FormReducerActionType.SET_IS_SUBMITTING, payload: false });
     onSubmitCallback();
-  }, [name, amount, type, customer, job]);
+  }, [
+    name,
+    type,
+    amount,
+    customer.business_id,
+    customer.location_id,
+    customer.id,
+    job.id,
+    onSubmitCallback,
+  ]);
 
   return (
     <Fragment>
@@ -866,7 +881,6 @@ function FabPlusMenu({ job }: { job: ILocationJob }) {
           <FabPlusActionSheetPaymentItem
             customer={customer}
             job={job}
-            closeFabPlusMenu={handleCloseActionSheet}
             onSubmitCallback={() => {
               refreshData();
               handleCloseActionSheet();
@@ -949,7 +963,7 @@ function AddTaskMenuItem({
     await supabase.from("business_location_job_tasks").insert(insert);
     setIsSubmitting(false);
     onSubmit(task);
-  }, [task]);
+  }, [job.business_id, job.business_location_id, job.id, onSubmit, task]);
 
   return (
     <Fragment>

@@ -35,7 +35,7 @@ function useSupabaseSignedImage({
     };
 
     fetchSignedUrl().then(setUri);
-  }, [path]);
+  }, [cacheInSeconds, path]);
 
   return { uri };
 }

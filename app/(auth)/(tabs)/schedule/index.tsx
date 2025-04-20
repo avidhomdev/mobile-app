@@ -61,7 +61,7 @@ function ConfirmCancelAppointment({
         .then(refreshData)
         .then(() => setIsActionSheetVisible(false))
         .then(handleClose),
-    []
+    [id, refreshData, setIsActionSheetVisible]
   );
 
   return (

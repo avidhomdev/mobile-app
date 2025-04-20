@@ -92,7 +92,7 @@ export default function JobNotesScreen() {
     return () => {
       channel.unsubscribe();
     };
-  }, [jobId, router, supabase]);
+  }, [jobId, refreshData]);
 
   return (
     <KeyboardAvoidingView
@@ -163,44 +163,7 @@ export default function JobNotesScreen() {
         }}
         inverted
       />
-      {/* <ScrollView
-        contentContainerClassName="gap-y-6 py-6"
-        showsVerticalScrollIndicator={false}
-      >
-        {job?.notes && job.notes.length > 0 ? (
-          job.notes.map((note) => {
-            const isAuthor = note.author_id === profile.id;
-            return (
-              <View
-                key={note.id}
-                className={twMerge(
-                  "gap-x-4 px-6",
-                  isAuthor ? "flex-row-reverse" : "flex-row "
-                )}
-              >
-                <View
-                  className={twMerge(
-                    isAuthor ? "bg-gray-200" : "bg-sky-600",
-                    "size-12  rounded-full"
-                  )}
-                />
-                <View
-                  className={twMerge(
-                    isAuthor ? "bg-gray-200" : "bg-sky-600",
-                    " rounded shadow-sm w-3/4 p-3"
-                  )}
-                >
-                  <Text className={twMerge(isAuthor ? "" : "text-white")}>
-                    {note.message}
-                  </Text>
-                </View>
-              </View>
-            );
-          })
-        ) : (
-          <Text>No messages.</Text>
-        )}
-      </ScrollView> */}
+
       <NewMessage />
     </KeyboardAvoidingView>
   );
