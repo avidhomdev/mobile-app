@@ -696,7 +696,7 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
     )
       .then((res) => res.json())
       .then(async (res) => {
-        if (!res.job) return;
+        if (res.error) throw new Error(res.error);
         await refreshData();
         router.push({
           pathname: "/customer/[customerId]/job/[jobId]",
@@ -709,7 +709,7 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
       .finally(() => {
         setIsStarting(false);
       })
-      .catch((err) =>
+      .catch((err) => {
         toast.show({
           id: "new-job-error",
           placement: "bottom",
@@ -722,8 +722,8 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
               </Toast>
             );
           },
-        })
-      );
+        });
+      });
   }, [bid.id, customer.id, isStarting, refreshData, router, toast]);
 
   return (
