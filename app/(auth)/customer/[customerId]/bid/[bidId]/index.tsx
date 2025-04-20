@@ -1,4 +1,5 @@
 import BackHeaderButton from "@/components/BackHeaderButton";
+import { BidRequirementsList } from "@/components/BidRequirementsList";
 import ScreenEnd from "@/components/ScreenEnd";
 import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
@@ -13,17 +14,30 @@ import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { MEDIA_TYPES, MEDIA_TYPES_KEYS } from "@/constants/media-types";
 import { useCustomerContext } from "@/contexts/customer-context";
-import { useUserContext } from "@/contexts/user-context";
+import { ILocationCustomerBid, useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { formatAsCurrency } from "@/utils/format-as-currency";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Trash } from "lucide-react-native";
+import { getBidRequirementsForJob } from "@/utils/get-bid-requirements-for-job";
+import { toggleState } from "@/utils/toggle-state";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Construction,
+  Eye,
+  EyeOff,
+  Settings,
+  Trash,
+} from "lucide-react-native";
 import { Fragment, useState } from "react";
 
-import { ScrollView, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 
 function DeleteBidButton({ bidId }: { bidId: number }) {
   const { refreshData } = useUserContext();
@@ -84,36 +98,160 @@ function DeleteBidButton({ bidId }: { bidId: number }) {
   );
 }
 
-export default function Screen() {
-  const { customer } = useCustomerContext();
-  const { bidId } = useLocalSearchParams();
+function Header({
+  bid,
+  isPreviewing,
+  togglePreviewing,
+}: {
+  bid: ILocationCustomerBid;
+  isPreviewing: boolean;
+  togglePreviewing: () => void;
+}) {
   const { top } = useSafeAreaInsets();
-  const bid = customer?.bids.find((bid) => bid.id === Number(bidId));
-  const totalNumberOfUnits = bid?.products.reduce((acc, product) => {
-    return acc + Number(product.units ?? 0);
-  }, 0);
-  const commissionPerUnit = Number(bid?.commission) / (totalNumberOfUnits || 1);
-  const calculatedTotal = bid?.products.reduce((acc, product) => {
-    return acc + Number(product.unit_price) * Number(product.units ?? 0);
-  }, 0);
-
-  const commission = bid?.commission;
-  const bidTotal = Number(calculatedTotal) + Number(commission);
 
   return (
-    <ScrollView className="px-6" contentContainerClassName="gap-y-6">
-      <View style={{ paddingTop: top }}>
+    <VStack className="px-6" space="sm">
+      <HStack
+        className="justify-between items-center"
+        style={{ paddingBlockStart: top }}
+      >
         <BackHeaderButton />
-        <Heading>{`View ${bid?.name} bid`}</Heading>
+        <HStack space="lg">
+          <Pressable onPress={togglePreviewing}>
+            <Icon
+              as={isPreviewing ? EyeOff : Eye}
+              className={twMerge(
+                isPreviewing ? "text-typography-500" : "text-primary-400"
+              )}
+              size="2xl"
+            />
+          </Pressable>
+          <Link
+            href={{
+              pathname: "/customer/[customerId]/bid/[bidId]/edit",
+              params: { customerId: bid.customer_id, bidId: bid.id },
+            }}
+          >
+            <Icon as={Settings} className="text-typography-600" size="2xl" />
+          </Link>
+        </HStack>
+      </HStack>
+      <View className="flex-row items-center gap-x-2">
+        <Icon as={Construction} className="text-typography-500" size="lg" />
+        <View className="w-0.5 h-full bg-typography-100" />
+        <View>
+          <Heading size="md">{`${isPreviewing ? "Previewing" : ""} ${
+            bid.name
+          }`}</Heading>
+        </View>
       </View>
-      {bid!.media.length > 0 ? (
+    </VStack>
+  );
+}
+
+function PerfectPacketCheck({ bid }: { bid: ILocationCustomerBid }) {
+  const bidRequirementsForJob = getBidRequirementsForJob(bid);
+  return (
+    <Card>
+      <VStack space="md">
+        <Heading size="sm">Requirements</Heading>
+        <View>
+          <BidRequirementsList requirements={bidRequirementsForJob} />
+        </View>
+      </VStack>
+    </Card>
+  );
+}
+
+function BidProducts({
+  bid,
+  isPreviewing,
+}: {
+  bid: ILocationCustomerBid;
+  isPreviewing?: boolean;
+}) {
+  const { commission, discount = 0 } = bid;
+  const calculatedTotal =
+    bid.products.reduce((acc, product) => {
+      return acc + Number(product.unit_price) * Number(product.units ?? 0);
+    }, 0) + discount;
+
+  const bidTotal = calculatedTotal + commission - discount;
+
+  return (
+    <Card>
+      <VStack space="md">
+        <Heading size="sm">Products</Heading>
+        {bid.products.map((product) => {
+          const units = product.units ?? 0;
+
+          return (
+            <HStack
+              className="items-center justify-between"
+              key={product.product_id}
+              space="md"
+            >
+              <Text className="flex-1">{product.product.name}</Text>
+              <Text>{`${units.toLocaleString()} ${product.product.unit}`}</Text>
+            </HStack>
+          );
+        })}
+
+        <Divider />
+
+        {!isPreviewing && (
+          <>
+            <View className="flex-row items-center justify-between">
+              <Text>Products Total</Text>
+              <Text>{formatAsCurrency(calculatedTotal)}</Text>
+            </View>
+            <View className="flex-row items-center justify-between">
+              <Text>Commission</Text>
+              <Text>{formatAsCurrency(commission)}</Text>
+            </View>
+          </>
+        )}
+        <View className="flex-row items-center justify-between">
+          <Text>Discount</Text>
+          <Text>
+            {`${discount > 0 ? "-" : ""} ${formatAsCurrency(discount)}`}
+          </Text>
+        </View>
+
+        <Divider />
+
+        <View className="flex-row items-center justify-between bord">
+          <Text bold>Total</Text>
+          <Text bold>{formatAsCurrency(bidTotal)}</Text>
+        </View>
+      </VStack>
+    </Card>
+  );
+}
+
+function BidMedia({ bid }: { bid: ILocationCustomerBid }) {
+  return (
+    <VStack space="md">
+      <Heading size="sm">Media</Heading>
+      {bid.media.length > 0 ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerClassName="flex-row gap-x-2"
         >
           {bid!.media.map((media) => (
-            <SupabaseSignedImage key={media.id} path={media.path} size="2xl" />
+            <VStack key={media.id}>
+              <SupabaseSignedImage
+                key={media.id}
+                path={media.path}
+                size="2xl"
+              />
+              <View className="p-2 bg-white">
+                <Text bold className="text-center" size="lg">
+                  {MEDIA_TYPES[media.type as MEDIA_TYPES_KEYS].name}
+                </Text>
+              </View>
+            </VStack>
           ))}
         </ScrollView>
       ) : (
@@ -121,45 +259,103 @@ export default function Screen() {
           <Text>No media found</Text>
         </View>
       )}
-      <View className="gap-y-2">
-        {bid?.products.map((product) => {
-          const units = product.units ?? 0;
-          const unitPrice = product.unit_price ?? 0;
-          const calculatedUnitPrice = unitPrice + commissionPerUnit;
-          const calculatedProductTotal =
-            Number(calculatedUnitPrice) * Number(units);
+    </VStack>
+  );
+}
 
-          return (
-            <Card className="gap-y-2" key={product.id} variant="filled">
-              <Text>{product.product.name}</Text>
-              <Divider />
-              <View className="flex-row justify-between items-center">
-                <Text size="sm">{`${formatAsCurrency(
-                  calculatedUnitPrice
-                )} x ${units} ${product.product.unit}`}</Text>
-                <Text bold>{formatAsCurrency(calculatedProductTotal)}</Text>
-              </View>
-            </Card>
-          );
-        })}
+function HOAInformationCard({ bid }: { bid: ILocationCustomerBid }) {
+  if (!bid.hoa_approval_required) return null;
+
+  return (
+    <Card>
+      <VStack space="md">
+        <Heading size="sm">HOA Contact</Heading>
+        <HStack className="justify-between">
+          <Text bold>Name</Text>
+          <Text>{bid.hoa_contact_name}</Text>
+        </HStack>
+        <HStack className="justify-between">
+          <Text bold>Email</Text>
+          <Text>{bid.hoa_contact_email}</Text>
+        </HStack>
+        <HStack className="justify-between">
+          <Text bold>Phone</Text>
+          <Text>{bid.hoa_contact_phone}</Text>
+        </HStack>
+      </VStack>
+    </Card>
+  );
+}
+
+function WaterRebateCard({ bid }: { bid: ILocationCustomerBid }) {
+  if (!bid.has_water_rebate) return null;
+
+  return (
+    <Card>
+      <VStack space="md">
+        <Heading size="sm">Water Rebate</Heading>
+        <HStack className="justify-between">
+          <Text bold>Company</Text>
+          <Text>{bid.water_rebate_company}</Text>
+        </HStack>
+      </VStack>
+    </Card>
+  );
+}
+
+export default function Screen() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { refreshData } = useUserContext();
+  const { customer } = useCustomerContext();
+  const { bidId } = useLocalSearchParams();
+  const bid = customer?.bids.find((bid) => bid.id === Number(bidId));
+
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
+  if (!bid) {
+    return (
+      <View>
+        <Text>Not found.</Text>
       </View>
-      <Card className="border border-gray-200 gap-y-2">
-        <Heading size="sm">Notes</Heading>
-        <Divider />
-        <Text>{bid?.notes}</Text>
-      </Card>
-      <Card className="border border-gray-200 gap-y-2">
-        <Heading size="sm">Total</Heading>
-        <Divider />
-        <View className="gap-y-2">
-          <View className="flex-row items-center justify-between bord">
-            <Text bold>Bid Total</Text>
-            <Text bold>{formatAsCurrency(bidTotal)}</Text>
-          </View>
-        </View>
-      </Card>
-      <DeleteBidButton bidId={Number(bidId)} />
-      <ScreenEnd />
+    );
+  }
+
+  return (
+    <ScrollView
+      contentContainerClassName="gap-y-6"
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          onRefresh={async () => {
+            setIsRefreshing(true);
+            await refreshData();
+            setIsRefreshing(false);
+          }}
+          refreshing={isRefreshing}
+        />
+      }
+    >
+      <Header
+        bid={bid}
+        isPreviewing={isPreviewing}
+        togglePreviewing={toggleState(setIsPreviewing)}
+      />
+      <VStack className="mx-6" space="xl">
+        {!isPreviewing && <PerfectPacketCheck bid={bid} />}
+        <BidProducts bid={bid} isPreviewing={isPreviewing} />
+        <BidMedia bid={bid} />
+        <HOAInformationCard bid={bid} />
+        <WaterRebateCard bid={bid} />
+        {!isPreviewing && (
+          <Card className="border border-gray-200 gap-y-2">
+            <Heading size="sm">Notes</Heading>
+            <Divider />
+            <Text>{bid.notes}</Text>
+          </Card>
+        )}
+        <DeleteBidButton bidId={Number(bidId)} />
+        <ScreenEnd />
+      </VStack>
     </ScrollView>
   );
 }

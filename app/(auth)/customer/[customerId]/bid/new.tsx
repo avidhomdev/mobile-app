@@ -600,8 +600,7 @@ function LeadSelector() {
 }
 
 function BidForm() {
-  const { dispatch, formState, handleSubmit, isFormInvalid } =
-    useCustomerBidFormContext();
+  const { dispatch, formState, handleSubmit } = useCustomerBidFormContext();
 
   return (
     <Fragment>

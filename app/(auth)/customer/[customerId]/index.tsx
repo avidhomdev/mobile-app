@@ -1,5 +1,6 @@
 import map from "@/assets/images/map.jpg";
 import BackHeaderButton from "@/components/BackHeaderButton";
+import { BidRequirementsList } from "@/components/BidRequirementsList";
 import ScreenEnd from "@/components/ScreenEnd";
 import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
@@ -22,14 +23,22 @@ import {
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
 import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Box } from "@/components/ui/box";
+import {
+  Button,
+  ButtonGroup,
+  ButtonIcon,
+  ButtonText,
+} from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { Fab } from "@/components/ui/fab";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
 import {
   DISPOSITION_STATUS_KEYS,
@@ -47,10 +56,13 @@ import {
 import { supabase } from "@/lib/supabase";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
+import { getBidRequirementsForJob } from "@/utils/get-bid-requirements-for-job";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
   Calendar1,
+  CheckCircle,
+  Circle,
   Construction,
   Ellipsis,
   Eye,
@@ -58,7 +70,6 @@ import {
   Mail,
   MapPin,
   MessageCircle,
-  Minus,
   Phone,
   Plus,
   Settings,
@@ -73,6 +84,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 
 function EmailButton() {
   const { customer } = useCustomerContext();
@@ -460,8 +472,21 @@ function ConvertBidToJobActionItem({
     });
   };
 
+  const bidRequirementsForJob = getBidRequirementsForJob(bid);
+  const hasMetAllRequirementsForJob = Object.values(
+    bidRequirementsForJob
+  ).every((r) => r.value === true);
+
   return (
     <Fragment>
+      <Card className="w-full" variant="filled">
+        <VStack space="sm">
+          <Heading className="" size="xs">
+            JOB REQUIREMENTS
+          </Heading>
+          <BidRequirementsList requirements={bidRequirementsForJob} />
+        </VStack>
+      </Card>
       <AlertDialog isOpen={isVisible} onClose={handleCloseDialog} size="md">
         <AlertDialogBackdrop />
         <AlertDialogContent>
@@ -490,10 +515,30 @@ function ConvertBidToJobActionItem({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <ActionsheetItem onPress={() => setIsVisible(true)}>
-        <ActionsheetIcon as={HardHat} className="text-typography-500" />
-        <ActionsheetItemText className="text-typography-700">
-          Start job
+      <ActionsheetItem
+        disabled={!hasMetAllRequirementsForJob}
+        onPress={() => setIsVisible(true)}
+      >
+        <ActionsheetIcon
+          as={HardHat}
+          className={twMerge(
+            hasMetAllRequirementsForJob
+              ? "text-success-500"
+              : "text-typography-500"
+          )}
+          size={hasMetAllRequirementsForJob ? "lg" : "sm"}
+        />
+        <ActionsheetItemText
+          className={twMerge(
+            hasMetAllRequirementsForJob
+              ? "text-success-700 font-semibold"
+              : "text-typography-700"
+          )}
+          size={hasMetAllRequirementsForJob ? "lg" : "sm"}
+        >
+          {`Start job${
+            hasMetAllRequirementsForJob ? "" : " - Missing job requirements"
+          }`}
         </ActionsheetItemText>
       </ActionsheetItem>
     </Fragment>
@@ -616,71 +661,79 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
 
 function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
   const { location } = useLocationContext();
-  const [showAllProducts, setShowAllProducts] = useState(false);
-  const bidTotal = bid.products.reduce((acc, product) => {
-    return acc + Number(product.unit_price) * Number(product.units);
-  }, 0);
-  const filteredProducts = showAllProducts
-    ? bid.products
-    : bid.products.slice(0, 1);
+  const router = useRouter();
+
+  const bidRequirementsForJob = getBidRequirementsForJob(bid);
+  const hasMetAllRequirementsForJob = Object.values(
+    bidRequirementsForJob
+  ).every((r) => r.value === true);
 
   return (
     <Card key={bid.id} className="border border-gray-200 gap-y-4 w-80">
-      <View className="flex-row justify-between gap-x-2 items-center">
-        <Text className="shrink" size="lg">
-          {bid.name}
-        </Text>
-        {location.is_closer && <CustomerBidMenu bid={bid} />}
-      </View>
-      {bid.media.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="flex-row gap-x-2"
-        >
-          {bid.media.map((media) => (
-            <SupabaseSignedImage key={media.id} path={media.path} size="xl" />
-          ))}
-        </ScrollView>
-      ) : (
-        <View className="bg-warning-50 aspect-video justify-center items-center">
-          <Text>No media found</Text>
-        </View>
-      )}
-
-      <View className="gap-y-1">
-        {filteredProducts.map((p) => (
-          <Card variant="filled" key={p.id}>
-            <Text size="sm">{p.product.name}</Text>
-            <View className="flex-row items-center justify-between">
-              <Text size="xs">{`${p.units} ${p.product.unit}`}</Text>
-              <Text bold size="sm">
-                {formatAsCompactCurrency(p.units * p.unit_price)}
-              </Text>
-            </View>
-          </Card>
-        ))}
-        {bid.products.length > 1 ? (
+      <VStack space="sm">
+        <HStack className="justify-between items-center">
+          <HStack className="items-center" space="xs">
+            <Icon
+              className={twMerge(
+                hasMetAllRequirementsForJob
+                  ? "text-success-600"
+                  : "text-typography-300"
+              )}
+              as={hasMetAllRequirementsForJob ? CheckCircle : Circle}
+              size="xl"
+            />
+            <Text className="shrink" size="lg">
+              {bid.name}
+            </Text>
+          </HStack>
+          {location.is_closer && <CustomerBidMenu bid={bid} />}
+        </HStack>
+        {bid.media.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="flex-row gap-x-2"
+          >
+            {bid.media.map((media) => (
+              <SupabaseSignedImage key={media.id} path={media.path} size="xl" />
+            ))}
+          </ScrollView>
+        ) : (
+          <Box className="bg-warning-50 aspect-video justify-center items-center">
+            <Text>No media found</Text>
+          </Box>
+        )}
+        <Card variant="filled">
+          <Text>{`${bid.products.length} products`}</Text>
+        </Card>
+        <ButtonGroup flexDirection="row">
           <Button
             action="secondary"
-            onPress={() => setShowAllProducts(!showAllProducts)}
-            size="sm"
+            className="grow"
+            onPress={() =>
+              router.push({
+                pathname: "/(auth)/customer/[customerId]/bid/[bidId]/edit",
+                params: {
+                  customerId: bid.customer_id,
+                  bidId: bid.id,
+                },
+              })
+            }
           >
-            <ButtonIcon as={showAllProducts ? Minus : Plus} />
-            <ButtonText>{`${
-              showAllProducts ? "Hide" : "Show more"
-            }`}</ButtonText>
+            <ButtonIcon as={Settings} />
+            <ButtonText>Edit</ButtonText>
           </Button>
-        ) : null}
-      </View>
-      <View className="flex-row items-center justify-between">
-        <Text size="sm">Commission</Text>
-        <Text size="sm">{formatAsCurrency(bid.commission)}</Text>
-      </View>
-      <Divider className="mt-auto" />
-      <Text bold className="ml-auto">
-        {formatAsCurrency(bidTotal + bid.commission)}
-      </Text>
+          <Button
+            action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
+            className="grow"
+            disabled={!hasMetAllRequirementsForJob}
+            variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
+          >
+            <ButtonIcon as={HardHat} />
+            <ButtonText>Start Job</ButtonText>
+          </Button>
+        </ButtonGroup>
+      </VStack>
     </Card>
   );
 }
@@ -704,13 +757,17 @@ function CustomerBids() {
 
       {hasBids ? (
         <ScrollView
-          contentContainerClassName="gap-x-4 items-start px-6"
+          contentContainerClassName="px-6"
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          {bids.map((bid) => {
-            return <CustomerBid key={bid.id} bid={bid} />;
-          })}
+          <HStack space="md">
+            {bids
+              .sort((a, b) => b.created_at.localeCompare(a.created_at))
+              .map((bid) => {
+                return <CustomerBid key={bid.id} bid={bid} />;
+              })}
+          </HStack>
           <ScreenEnd />
         </ScrollView>
       ) : (

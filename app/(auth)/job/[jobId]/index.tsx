@@ -99,7 +99,7 @@ function Products() {
         showsHorizontalScrollIndicator={false}
       >
         {job?.products.map((product) => (
-          <Card className="w-72 flex-1 p-3 gap-y-2" key={product.id}>
+          <Card className="w-72 flex-1 p-3 gap-y-2" key={product.product_id}>
             <View>
               <Text>{product.product.name}</Text>
               <Text>{`${product.number_of_units} x ${product.product.unit}`}</Text>

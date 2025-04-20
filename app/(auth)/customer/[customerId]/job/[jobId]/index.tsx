@@ -1343,6 +1343,7 @@ function Header({ job }: { job: ILocationJob }) {
     </HStack>
   );
 }
+
 export default function Screen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { refreshData } = useUserContext();

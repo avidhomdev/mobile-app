@@ -1,3 +1,12 @@
+import { MEDIA_TYPES_KEYS } from "@/constants/media-types";
+import { IFormState } from "@/hooks/useFormState";
+import {
+  IProduct,
+  useLocationProductsData,
+} from "@/hooks/useLocationProductsData";
+import { supabase } from "@/lib/supabase";
+import { Tables } from "@/supabase";
+import { useRouter } from "expo-router";
 import {
   createContext,
   PropsWithChildren,
@@ -7,22 +16,20 @@ import {
   useReducer,
   useState,
 } from "react";
-import { useUserContext } from "./user-context";
-import { useRouter } from "expo-router";
 import { useCustomerContext } from "./customer-context";
-import {
-  IProduct,
-  useLocationProductsData,
-} from "@/hooks/useLocationProductsData";
-import { IFormState } from "@/hooks/useFormState";
-import { MEDIA_TYPES_KEYS } from "@/constants/media-types";
-import { supabase } from "@/lib/supabase";
+import { ILocationCustomerBid, useUserContext } from "./user-context";
 
+interface IBidFieldsMediaItem {
+  id: string | number;
+  path: string;
+  type: MEDIA_TYPES_KEYS;
+}
 export interface IBidFields {
+  id: number;
   commission: number;
   discount: number;
   lead_type: string;
-  media: { id: string; path: string; type: MEDIA_TYPES_KEYS }[];
+  media: IBidFieldsMediaItem[];
   name: string;
   notes: string;
   products: IProduct[];
@@ -89,7 +96,7 @@ interface ISET_LEAD_TYPE_ACTION {
 
 interface IREMOVE_MEDIA_ACTION {
   type: FormReducerActionType.REMOVE_MEDIA;
-  payload: string;
+  payload: string | number;
 }
 
 interface IADD_MEDIA_ACTION {
@@ -99,7 +106,7 @@ interface IADD_MEDIA_ACTION {
 
 interface IUPDATE_MEDIA_ACTION {
   type: FormReducerActionType.UPDATE_MEDIA;
-  payload: { id: string; path: string; type: MEDIA_TYPES_KEYS }[];
+  payload: { id: string | number; path: string; type: MEDIA_TYPES_KEYS }[];
 }
 
 interface ISET_ERROR_ACTION {
@@ -232,6 +239,7 @@ function formReducer(products: IProduct[]) {
         return {
           ...state,
           error: action.payload,
+          isSubmitting: false,
         };
       }
       case FormReducerActionType.SET_IS_SUBMITTING:
@@ -338,7 +346,8 @@ function formReducer(products: IProduct[]) {
   };
 }
 
-const CustomerBidFormContext = createContext<{
+type CustomerContextType = {
+  bid: ILocationCustomerBid;
   formState: IFormState<IBidFields>;
   dispatch: React.Dispatch<TCustomerBidFormAction>;
   handleSubmit: () => void;
@@ -346,47 +355,30 @@ const CustomerBidFormContext = createContext<{
   preview: boolean;
   products: IProduct[];
   togglePreview: () => void;
-}>({
-  formState: {
-    error: null,
-    fields: {
-      commission: 0,
-      discount: 0,
-      lead_type: "SETTER",
-      media: [],
-      name: "Bid",
-      notes: "",
-      products: [],
-      has_water_rebate: false,
-      hoa_approval_required: false,
-      hoa_contact_email: "",
-      hoa_contact_name: "",
-      hoa_contact_phone: "",
-      water_rebate_company: "",
-    },
-    isSubmitting: false,
-  },
-  dispatch: () => {},
-  handleSubmit: () => {},
-  preview: false,
-  products: [],
-  togglePreview: () => {},
-});
+};
 
-export function useCustomerBidFormContext() {
+const CustomerBidFormContext = createContext<CustomerContextType | null>(null);
+
+export function useCustomerBidEditFormContext(): CustomerContextType {
   const value = useContext(CustomerBidFormContext);
-  if (process.env.NODE_ENV !== "production") {
-    if (!value) {
-      throw new Error(
-        "useCustomerBidFormContext must be wrapped in a <CustomerBidFormContextProvider />"
-      );
-    }
+  if (!value) {
+    throw new Error(
+      "useCustomerBidEditFormContext must be wrapped in a <CustomerBidEditFormContextProvider />"
+    );
   }
 
   return value;
 }
 
-export function CustomerBidFormContextProvider(props: PropsWithChildren) {
+type CustomerBidEditFormContextProviderProps = PropsWithChildren<{
+  bid: ILocationCustomerBid;
+}>;
+
+export function CustomerBidEditFormContextProvider(
+  props: CustomerBidEditFormContextProviderProps
+) {
+  const { bid } = props;
+
   const [preview, setPreview] = useState(false);
   const { profile, refreshData } = useUserContext();
   const router = useRouter();
@@ -397,31 +389,40 @@ export function CustomerBidFormContextProvider(props: PropsWithChildren) {
   const [formState, dispatch] = useReducer(formReducer(products), {
     error: null,
     fields: {
-      commission: 0,
-      discount: 0,
-      lead_type: "setter",
-      media: [],
-      name: "Bid",
-      notes: "",
-      products: [],
-      has_water_rebate: false,
-      hoa_approval_required: false,
-      hoa_contact_email: "",
-      hoa_contact_name: "",
-      hoa_contact_phone: "",
-      water_rebate_company: "",
+      id: bid.id,
+      commission: bid.commission,
+      discount: bid.discount,
+      lead_type: bid.lead_type,
+      media: bid.media.map((m) => ({
+        id: m.id,
+        path: m.path,
+        type: m.type as MEDIA_TYPES_KEYS,
+      })),
+      name: bid.name,
+      notes: bid.notes ?? "",
+      products: bid.products.map((product) => ({
+        ...product.product,
+        locations: [
+          { location_id: bid.location_id, product_id: product.product.id },
+        ] as Tables<"business_product_locations">[],
+        units: product.units,
+      })),
+      has_water_rebate: bid.has_water_rebate,
+      hoa_approval_required: bid.hoa_approval_required,
+      hoa_contact_email: bid.hoa_contact_email ?? "",
+      hoa_contact_name: bid.hoa_contact_name ?? "",
+      hoa_contact_phone: bid.hoa_contact_phone ?? "",
+      water_rebate_company: bid.water_rebate_company ?? "",
     },
     isSubmitting: false,
   });
 
   const handleSubmit = useCallback(async () => {
+    if (formState.isSubmitting) return;
     dispatch({ type: FormReducerActionType.SET_IS_SUBMITTING, payload: true });
 
-    const insertFields = {
-      business_id: customer?.business_id,
+    const updateFields = {
       commission: formState.fields.commission,
-      creator_id: profile?.id,
-      customer_id: customer?.id,
       discount: formState.fields.discount,
       has_water_rebate: formState.fields.has_water_rebate,
       hoa_approval_required: formState.fields.hoa_approval_required,
@@ -429,59 +430,160 @@ export function CustomerBidFormContextProvider(props: PropsWithChildren) {
       hoa_contact_name: formState.fields.hoa_contact_name,
       hoa_contact_phone: formState.fields.hoa_contact_phone,
       lead_type: formState.fields.lead_type,
-      location_id: customer?.location_id,
       name: formState.fields.name,
       notes: formState.fields.notes,
-      status: "active",
       water_rebate_company: formState.fields.water_rebate_company,
     };
 
     const { data, error } = await supabase
       .from("business_location_customer_bids")
-      .insert(insertFields)
+      .update(updateFields)
+      .eq("id", bid.id)
       .select("id")
       .single();
 
-    if (error) throw error;
-    if (!data) throw new Error("Bid not created");
+    if (error) {
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: error.message,
+      });
+    }
 
-    const mediaInsert = formState.fields.media.map((m) => ({
-      bid_id: data.id,
-      business_id: customer?.business_id,
-      creator_id: profile?.id,
-      customer_id: customer?.id,
-      location_id: customer?.location_id,
-      name: m.id,
-      path: m.path,
-      type: m.type,
-    }));
+    if (!data)
+      return dispatch({
+        type: FormReducerActionType.SET_ERROR,
+        payload: "No bid found to update.",
+      });
 
-    const { error: mediaError } = await supabase
-      .from("business_location_customer_bid_media")
-      .insert(mediaInsert);
+    const { mediaInsert, mediaUpsert } = formState.fields.media.reduce<{
+      mediaInsert: Omit<
+        Tables<"business_location_customer_bid_media">,
+        "id" | "created_at"
+      >[];
+      mediaUpsert: IBidFieldsMediaItem[];
+    }>(
+      (dictionary, m) => {
+        const existingMedia = bid.media.find((bM) => bM.id === m.id);
+        if (existingMedia) {
+          if (m.type !== existingMedia.type) {
+            dictionary.mediaUpsert = dictionary.mediaUpsert.concat({
+              ...existingMedia,
+              type: m.type as MEDIA_TYPES_KEYS,
+            });
+          }
+        } else {
+          dictionary.mediaInsert = dictionary.mediaInsert.concat({
+            bid_id: Number(bid.id),
+            business_id: bid.business_id,
+            creator_id: profile.id,
+            customer_id: bid.customer_id,
+            location_id: bid.location_id,
+            name: m.id.toString(),
+            path: m.path,
+            type: m.type as MEDIA_TYPES_KEYS,
+          });
+        }
 
-    if (mediaError) throw mediaError;
+        return dictionary;
+      },
+      { mediaInsert: [], mediaUpsert: [] }
+    );
 
-    const productsInsert = formState.fields.products.map((product) => ({
-      bid_id: data.id,
-      business_id: customer?.business_id,
-      customer_id: customer?.id,
-      location_id: customer?.location_id,
-      product_id: product.id,
-      unit_price: product.unit_price,
-      units: product.units,
-    }));
+    if (mediaUpsert.length) {
+      const { error: mediaError } = await supabase
+        .from("business_location_customer_bid_media")
+        .upsert(mediaUpsert);
 
-    const { error: productsError } = await supabase
-      .from("business_location_customer_bid_products")
-      .insert(productsInsert);
+      if (mediaError) {
+        return dispatch({
+          type: FormReducerActionType.SET_ERROR,
+          payload: mediaError.message,
+        });
+      }
+    }
 
-    if (productsError) throw productsError;
+    if (mediaInsert.length) {
+      const { error: mediaError } = await supabase
+        .from("business_location_customer_bid_media")
+        .insert(mediaInsert);
 
-    dispatch({
-      type: FormReducerActionType.SET_IS_SUBMITTING,
-      payload: false,
-    });
+      if (mediaError) {
+        return dispatch({
+          type: FormReducerActionType.SET_ERROR,
+          payload: mediaError.message,
+        });
+      }
+    }
+
+    const { productsInsert, productsUpsert } =
+      formState.fields.products.reduce<{
+        productsInsert: Omit<
+          Tables<"business_location_customer_bid_products">,
+          "created_at"
+        >[];
+        productsUpsert: Omit<
+          Tables<"business_location_customer_bid_products">,
+          "created_at"
+        >[];
+      }>(
+        (dictionary, p) => {
+          const existingProduct = bid.products.find(
+            (bP) => bP.product_id === p.id
+          );
+          if (existingProduct) {
+            if (p.units !== existingProduct.units) {
+              dictionary.productsUpsert = dictionary.productsUpsert.concat({
+                bid_id: existingProduct.bid_id,
+                business_id: existingProduct.business_id,
+                customer_id: existingProduct.customer_id,
+                location_id: existingProduct.location_id,
+                product_id: existingProduct.product_id,
+                unit_price: existingProduct.unit_price,
+                units: p.units,
+              });
+            }
+          } else {
+            dictionary.productsInsert = dictionary.productsInsert.concat({
+              bid_id: bid.id,
+              business_id: bid.business_id,
+              customer_id: bid.customer_id,
+              location_id: bid.location_id,
+              product_id: p.id,
+              unit_price: Number(p.unit_price),
+              units: p.units,
+            });
+          }
+
+          return dictionary;
+        },
+        { productsInsert: [], productsUpsert: [] }
+      );
+
+    if (productsUpsert.length) {
+      const { error: productsUpsertError } = await supabase
+        .from("business_location_customer_bid_products")
+        .upsert(productsUpsert);
+
+      if (productsUpsertError) {
+        return dispatch({
+          type: FormReducerActionType.SET_ERROR,
+          payload: productsUpsertError.message,
+        });
+      }
+    }
+
+    if (productsInsert.length) {
+      const { error: productsInsertError } = await supabase
+        .from("business_location_customer_bid_products")
+        .insert(productsInsert);
+
+      if (productsInsertError) {
+        return dispatch({
+          type: FormReducerActionType.SET_ERROR,
+          payload: productsInsertError.message,
+        });
+      }
+    }
 
     await refreshData();
     router.back();
@@ -489,6 +591,7 @@ export function CustomerBidFormContextProvider(props: PropsWithChildren) {
 
   const value = useMemo(
     () => ({
+      bid,
       dispatch,
       formState,
       handleSubmit,
@@ -496,7 +599,7 @@ export function CustomerBidFormContextProvider(props: PropsWithChildren) {
       products,
       togglePreview: () => setPreview((prevState) => !prevState),
     }),
-    [dispatch, formState, handleSubmit, products, preview]
+    [bid, dispatch, formState, handleSubmit, products, preview]
   );
 
   return (

@@ -22,7 +22,7 @@ export interface ILocationProfile extends Tables<"business_location_profiles"> {
   profile: Tables<"profiles">;
 }
 
-interface ILocationCustomerBidProduct
+export interface ILocationCustomerBidProduct
   extends Tables<"business_location_customer_bid_products"> {
   product: Tables<"business_products">;
 }
