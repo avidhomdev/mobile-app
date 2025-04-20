@@ -56,7 +56,6 @@ import {
   ILocationCustomer,
   ILocationCustomerBid,
   ILocationJob,
-  IProfile,
   useUserContext,
 } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
@@ -83,6 +82,7 @@ import {
 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -386,96 +386,77 @@ function ConvertBidToJobActionItem({
   bid,
   customer,
   handleCloseActionSheet,
-  profile,
 }: {
   bid: ILocationCustomerBid;
   customer: ILocationCustomer;
   handleCloseActionSheet: () => void;
-  profile: IProfile;
 }) {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const handleCloseDialog = () => setIsVisible(false);
+  const toast = useToast();
   const handleStartBidToJob = async () => {
-    const insert = {
-      address: customer.address,
-      bid_id: bid.id,
-      business_id: customer.business_id,
-      business_location_id: customer.location_id,
-      city: customer.city,
-      commission: bid.commission,
-      creator_id: profile.id,
-      customer_id: customer.id,
-      full_name: customer.full_name,
-      postal_code: customer.postal_code,
-      state: customer.state,
-    };
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
 
-    const { data: job } = await supabase
-      .from("business_location_jobs")
-      .insert(insert)
-      .select("id")
-      .single();
+    if (!session || error) {
+      return toast.show({
+        id: "new-job-error",
+        placement: "bottom",
+        duration: 3000,
+        render: () => {
+          return (
+            <Toast action="error">
+              <ToastTitle>Process failed.</ToastTitle>
+              <ToastDescription>
+                {error?.message || "No session found."}
+              </ToastDescription>
+            </Toast>
+          );
+        },
+      });
+    }
 
-    if (!job) return;
-
-    const jobProfiles = [
+    return fetch(
+      `${process.env.EXPO_PUBLIC_HOM_API_URL}/bid/${bid.id}/convert-to-job`,
       {
-        profile_id: profile.id,
-        role: "closer",
-      },
-      ...(customer.creator_id !== profile.id
-        ? [
-            {
-              profile_id: customer.creator_id,
-              role: "setter",
-            },
-          ]
-        : []),
-    ];
-
-    const jobProfileInsert = jobProfiles.map((jobProfile) => ({
-      ...jobProfile,
-      business_id: customer.business_id,
-      location_id: customer.location_id,
-      job_id: job.id,
-    }));
-
-    await supabase
-      .from("business_location_job_profiles")
-      .insert(jobProfileInsert);
-
-    const jobMediaInsert = bid.media.map((m) => ({
-      business_id: m.business_id,
-      location_id: m.location_id,
-      job_id: job.id,
-      path: m.path,
-      name: m.name,
-    }));
-
-    await supabase.from("business_location_job_media").insert(jobMediaInsert);
-
-    await supabase.from("business_location_job_products").insert(
-      bid.products.map((product) => ({
-        job_id: job.id,
-        business_id: customer.business_id,
-        location_id: customer.location_id,
-        product_id: product.product_id,
-        number_of_units: product.units,
-        unit_price: product.unit_price,
-        total_price: product.units * product.unit_price,
-      }))
-    );
-
-    handleCloseDialog();
-    handleCloseActionSheet();
-    router.push({
-      pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
-      params: {
-        customerId: customer.id,
-        jobId: job.id,
-      },
-    });
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }
+    )
+      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.job) return;
+        handleCloseDialog();
+        handleCloseActionSheet();
+        router.push({
+          pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
+          params: {
+            customerId: customer.id,
+            jobId: res.job.id,
+          },
+        });
+      })
+      .catch((err) =>
+        toast.show({
+          id: "new-job-error",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="error">
+                <ToastTitle>Process failed.</ToastTitle>
+                <ToastDescription>{err.message}</ToastDescription>
+              </Toast>
+            );
+          },
+        })
+      );
   };
 
   const bidRequirementsForJob = getBidRequirementsForJob(bid);
@@ -553,7 +534,7 @@ function ConvertBidToJobActionItem({
 
 function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
   const { location } = useLocationContext();
-  const { refreshData, profile } = useUserContext();
+  const { refreshData } = useUserContext();
   const { customer } = useCustomerContext();
   const { bottom: paddingBlockEnd } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
@@ -628,7 +609,6 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
                 refreshData();
                 handleClose();
               }}
-              profile={profile}
             />
           )}
           <ActionsheetItem
@@ -668,9 +648,10 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
 function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
   const { customer } = useCustomerContext();
   const { location } = useLocationContext();
-  const { profile, refreshData } = useUserContext();
+  const { refreshData } = useUserContext();
   const toast = useToast();
   const router = useRouter();
+  const [isStarting, setIsStarting] = useState(false);
 
   const bidRequirementsForJob = getBidRequirementsForJob(bid);
   const hasMetAllRequirementsForJob = Object.values(
@@ -678,35 +659,14 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
   ).every((r) => r.value === true);
 
   const handleStartJob = useCallback(async () => {
-    const insert = {
-      address: customer.address,
-      bid_id: bid.id,
-      business_id: bid.business_id,
-      business_location_id: bid.location_id,
-      city: customer.city,
-      commission: bid.commission,
-      creator_id: profile.id,
-      customer_id: customer.id,
-      full_name: customer.full_name,
-      postal_code: customer.postal_code,
-      state: customer.state,
-      has_water_rebate: bid.has_water_rebate,
-      water_rebate_company: bid.water_rebate_company,
-      hoa_approval_required: bid.hoa_approval_required,
-      hoa_contact_name: bid.hoa_contact_name,
-      hoa_contact_email: bid.hoa_contact_email,
-      hoa_contact_phone: bid.hoa_contact_phone,
-      discount: bid.discount,
-      lead_type: bid.lead_type,
-    };
+    if (isStarting) return;
+    setIsStarting(true);
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
 
-    const { data: job, error } = await supabase
-      .from("business_location_jobs")
-      .insert(insert)
-      .select("id")
-      .single();
-
-    if (error)
+    if (!session || error) {
       return toast.show({
         id: "new-job-error",
         placement: "bottom",
@@ -715,126 +675,56 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
           return (
             <Toast action="error">
               <ToastTitle>Process failed.</ToastTitle>
-              <ToastDescription>{error.message}</ToastDescription>
+              <ToastDescription>
+                {error?.message || "No session found."}
+              </ToastDescription>
             </Toast>
           );
         },
       });
+    }
 
-    const jobProfiles = [
+    return fetch(
+      `${process.env.EXPO_PUBLIC_HOM_API_URL}/bid/${bid.id}/convert-to-job`,
       {
-        profile_id: profile.id,
-        role: "closer",
-      },
-      ...(customer.creator_id !== profile.id
-        ? [
-            {
-              profile_id: customer.creator_id,
-              role: "setter",
-            },
-          ]
-        : []),
-    ];
-
-    const jobProfileInsert = jobProfiles.map((jobProfile) => ({
-      ...jobProfile,
-      business_id: customer.business_id,
-      location_id: customer.location_id,
-      job_id: job.id,
-    }));
-
-    const { error: jobProfileInsertError } = await supabase
-      .from("business_location_job_profiles")
-      .insert(jobProfileInsert);
-
-    if (jobProfileInsertError) {
-      return toast.show({
-        id: "new-job-profile-insert-error",
-        placement: "bottom",
-        duration: 3000,
-        render: () => {
-          return (
-            <Toast action="error">
-              <ToastTitle>Attaching profiles to job failed.</ToastTitle>
-              <ToastDescription>
-                {jobProfileInsertError.message}
-              </ToastDescription>
-            </Toast>
-          );
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
         },
-      });
-    }
-
-    const jobMediaInsert = bid.media.map((m) => ({
-      business_id: m.business_id,
-      location_id: m.location_id,
-      job_id: job.id,
-      path: m.path,
-      name: m.name,
-      type: m.type,
-    }));
-
-    const { error: jobMediaInsertError } = await supabase
-      .from("business_location_job_media")
-      .insert(jobMediaInsert);
-
-    if (jobMediaInsertError) {
-      return toast.show({
-        id: "new-job-media-insert-error",
-        placement: "bottom",
-        duration: 3000,
-        render: () => {
-          return (
-            <Toast action="error">
-              <ToastTitle>Attaching media to job failed.</ToastTitle>
-              <ToastDescription>{jobMediaInsertError.message}</ToastDescription>
-            </Toast>
-          );
-        },
-      });
-    }
-
-    const { error: jobProductsInsertError } = await supabase
-      .from("business_location_job_products")
-      .insert(
-        bid.products.map((product) => ({
-          job_id: job.id,
-          business_id: customer.business_id,
-          location_id: customer.location_id,
-          product_id: product.product_id,
-          number_of_units: product.units,
-          unit_price: product.unit_price,
-          total_price: product.units * product.unit_price,
-        }))
+        method: "POST",
+      }
+    )
+      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.job) return;
+        await refreshData();
+        router.push({
+          pathname: "/customer/[customerId]/job/[jobId]",
+          params: {
+            customerId: customer.id,
+            jobId: res.job.id,
+          },
+        });
+      })
+      .finally(() => {
+        setIsStarting(false);
+      })
+      .catch((err) =>
+        toast.show({
+          id: "new-job-error",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="error">
+                <ToastTitle>Process failed.</ToastTitle>
+                <ToastDescription>{err.message}</ToastDescription>
+              </Toast>
+            );
+          },
+        })
       );
-
-    if (jobProductsInsertError) {
-      return toast.show({
-        id: "new-job-products-insert-error",
-        placement: "bottom",
-        duration: 3000,
-        render: () => {
-          return (
-            <Toast action="error">
-              <ToastTitle>Attaching products to job failed.</ToastTitle>
-              <ToastDescription>
-                {jobProductsInsertError.message}
-              </ToastDescription>
-            </Toast>
-          );
-        },
-      });
-    }
-
-    await refreshData();
-    router.push({
-      pathname: "/customer/[customerId]/job/[jobId]",
-      params: {
-        customerId: customer.id,
-        jobId: job.id,
-      },
-    });
-  }, []);
+  }, [bid.id, customer.id, isStarting, refreshData, router, toast]);
 
   return (
     <Card key={bid.id} className="border border-gray-200 gap-y-4 w-80">
@@ -894,12 +784,16 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
           <Button
             action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
             className="grow"
-            disabled={!hasMetAllRequirementsForJob}
+            disabled={isStarting || !hasMetAllRequirementsForJob}
             onPress={handleStartJob}
             variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
           >
-            <ButtonIcon as={HardHat} />
-            <ButtonText>Start Job</ButtonText>
+            {isStarting ? (
+              <ActivityIndicator size="small" />
+            ) : (
+              <ButtonIcon as={HardHat} />
+            )}
+            <ButtonText>{isStarting ? "Starting..." : "Start Job"}</ButtonText>
           </Button>
         </ButtonGroup>
       </VStack>

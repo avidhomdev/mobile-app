@@ -3,7 +3,7 @@ import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import pluginReact from "eslint-plugin-react";
 import eslintConfigPrettier from "eslint-config-prettier";
-
+import * as reactHooks from "eslint-plugin-react-hooks";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
@@ -21,6 +21,7 @@ export default [
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat["jsx-runtime"],
+  reactHooks.configs["recommended-latest"],
   eslintConfigPrettier,
   {
     rules: {
