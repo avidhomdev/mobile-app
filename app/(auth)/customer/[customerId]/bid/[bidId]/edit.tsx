@@ -113,7 +113,7 @@ function ProductItem({
                 keyboardType="numeric"
                 onChangeText={(text) => updateProduct("units", Number(text))}
                 placeholder="0"
-                value={Number(units).toString()}
+                value={units?.toString()}
               />
               <InputSlot className="pl-2 pr-1">
                 <Text size="xs">{product.unit}</Text>
@@ -815,7 +815,7 @@ function BidForm() {
                   payload: Number(commission),
                 })
               }
-              defaultValue={formState.fields.commission.toString()}
+              defaultValue={formState.fields.commission?.toString()}
             />
           </Input>
         </FormControl>
@@ -834,7 +834,7 @@ function BidForm() {
                   payload: Number(discount),
                 })
               }
-              defaultValue={formState.fields.discount.toString()}
+              defaultValue={formState.fields.discount?.toString()}
             />
           </Input>
         </FormControl>
