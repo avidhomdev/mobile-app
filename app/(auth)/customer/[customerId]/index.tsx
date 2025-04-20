@@ -38,6 +38,12 @@ import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { FRIENDLY_DATE_FORMAT, TIME_FORMAT } from "@/constants/date-formats";
 import {
@@ -75,7 +81,7 @@ import {
   Settings,
   Trash,
 } from "lucide-react-native";
-import { Fragment, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import {
   Linking,
   Pressable,
@@ -660,13 +666,174 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
 }
 
 function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
+  const { customer } = useCustomerContext();
   const { location } = useLocationContext();
+  const { profile, refreshData } = useUserContext();
+  const toast = useToast();
   const router = useRouter();
 
   const bidRequirementsForJob = getBidRequirementsForJob(bid);
   const hasMetAllRequirementsForJob = Object.values(
     bidRequirementsForJob
   ).every((r) => r.value === true);
+
+  const handleStartJob = useCallback(async () => {
+    const insert = {
+      address: customer.address,
+      bid_id: bid.id,
+      business_id: bid.business_id,
+      business_location_id: bid.location_id,
+      city: customer.city,
+      commission: bid.commission,
+      creator_id: profile.id,
+      customer_id: customer.id,
+      full_name: customer.full_name,
+      postal_code: customer.postal_code,
+      state: customer.state,
+      has_water_rebate: bid.has_water_rebate,
+      water_rebate_company: bid.water_rebate_company,
+      hoa_approval_required: bid.hoa_approval_required,
+      hoa_contact_name: bid.hoa_contact_name,
+      hoa_contact_email: bid.hoa_contact_email,
+      hoa_contact_phone: bid.hoa_contact_phone,
+      discount: bid.discount,
+      lead_type: bid.lead_type,
+    };
+
+    const { data: job, error } = await supabase
+      .from("business_location_jobs")
+      .insert(insert)
+      .select("id")
+      .single();
+
+    if (error)
+      return toast.show({
+        id: "new-job-error",
+        placement: "bottom",
+        duration: 3000,
+        render: () => {
+          return (
+            <Toast action="error">
+              <ToastTitle>Process failed.</ToastTitle>
+              <ToastDescription>{error.message}</ToastDescription>
+            </Toast>
+          );
+        },
+      });
+
+    const jobProfiles = [
+      {
+        profile_id: profile.id,
+        role: "closer",
+      },
+      ...(customer.creator_id !== profile.id
+        ? [
+            {
+              profile_id: customer.creator_id,
+              role: "setter",
+            },
+          ]
+        : []),
+    ];
+
+    const jobProfileInsert = jobProfiles.map((jobProfile) => ({
+      ...jobProfile,
+      business_id: customer.business_id,
+      location_id: customer.location_id,
+      job_id: job.id,
+    }));
+
+    const { error: jobProfileInsertError } = await supabase
+      .from("business_location_job_profiles")
+      .insert(jobProfileInsert);
+
+    if (jobProfileInsertError) {
+      return toast.show({
+        id: "new-job-profile-insert-error",
+        placement: "bottom",
+        duration: 3000,
+        render: () => {
+          return (
+            <Toast action="error">
+              <ToastTitle>Attaching profiles to job failed.</ToastTitle>
+              <ToastDescription>
+                {jobProfileInsertError.message}
+              </ToastDescription>
+            </Toast>
+          );
+        },
+      });
+    }
+
+    const jobMediaInsert = bid.media.map((m) => ({
+      business_id: m.business_id,
+      location_id: m.location_id,
+      job_id: job.id,
+      path: m.path,
+      name: m.name,
+    }));
+
+    const { error: jobMediaInsertError } = await supabase
+      .from("business_location_job_media")
+      .insert(jobMediaInsert);
+
+    if (jobMediaInsertError) {
+      return toast.show({
+        id: "new-job-media-insert-error",
+        placement: "bottom",
+        duration: 3000,
+        render: () => {
+          return (
+            <Toast action="error">
+              <ToastTitle>Attaching media to job failed.</ToastTitle>
+              <ToastDescription>{jobMediaInsertError.message}</ToastDescription>
+            </Toast>
+          );
+        },
+      });
+    }
+
+    const { error: jobProductsInsertError } = await supabase
+      .from("business_location_job_products")
+      .insert(
+        bid.products.map((product) => ({
+          job_id: job.id,
+          business_id: customer.business_id,
+          location_id: customer.location_id,
+          product_id: product.product_id,
+          number_of_units: product.units,
+          unit_price: product.unit_price,
+          total_price: product.units * product.unit_price,
+        }))
+      );
+
+    if (jobProductsInsertError) {
+      return toast.show({
+        id: "new-job-products-insert-error",
+        placement: "bottom",
+        duration: 3000,
+        render: () => {
+          return (
+            <Toast action="error">
+              <ToastTitle>Attaching products to job failed.</ToastTitle>
+              <ToastDescription>
+                {jobProductsInsertError.message}
+              </ToastDescription>
+            </Toast>
+          );
+        },
+      });
+    }
+
+    await refreshData();
+    router.push({
+      pathname: "/customer/[customerId]/job/[jobId]",
+      params: {
+        customerId: customer.id,
+        jobId: job.id,
+      },
+    });
+  }, []);
 
   return (
     <Card key={bid.id} className="border border-gray-200 gap-y-4 w-80">
@@ -727,6 +894,7 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
             action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
             className="grow"
             disabled={!hasMetAllRequirementsForJob}
+            onPress={handleStartJob}
             variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
           >
             <ButtonIcon as={HardHat} />
@@ -878,51 +1046,53 @@ function CustomerJobs() {
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          {jobs.map((job) => (
-            <TouchableOpacity
-              key={job.id}
-              onPress={() =>
-                router.push({
-                  pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
-                  params: {
-                    customerId: customer.id,
-                    jobId: job.id,
-                  },
-                })
-              }
-            >
-              <Card
-                className="border border-gray-200 gap-y-4 w-80"
+          {jobs
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .map((job) => (
+              <TouchableOpacity
                 key={job.id}
+                onPress={() =>
+                  router.push({
+                    pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
+                    params: {
+                      customerId: customer.id,
+                      jobId: job.id,
+                    },
+                  })
+                }
               >
-                <View className="flex-row items-center justify-between">
-                  <Badge action="info">
-                    <BadgeText>{job.status}</BadgeText>
-                  </Badge>
-                  <Heading>{`JOB-${job.id}`}</Heading>
-                </View>
-                {job.media.length > 0 ? (
-                  <ScrollView
-                    contentContainerClassName="flex-row items-center gap-x-2"
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                  >
-                    {job.media.slice(0, 3).map((media) => (
-                      <SupabaseSignedImage key={media.id} path={media.path} />
-                    ))}
-                  </ScrollView>
-                ) : (
-                  <View className="bg-warning-50 aspect-video justify-center items-center">
-                    <Text>No media found</Text>
+                <Card
+                  className="border border-gray-200 gap-y-4 w-80"
+                  key={job.id}
+                >
+                  <View className="flex-row items-center justify-between">
+                    <Badge action="info">
+                      <BadgeText>{job.status}</BadgeText>
+                    </Badge>
+                    <Heading>{`JOB-${job.id}`}</Heading>
                   </View>
-                )}
-                <Divider />
-                <Text className="text-right text-success-300" size="2xl" bold>
-                  {formatAsCurrency(caculateJobTotal(job))}
-                </Text>
-              </Card>
-            </TouchableOpacity>
-          ))}
+                  {job.media.length > 0 ? (
+                    <ScrollView
+                      contentContainerClassName="flex-row items-center gap-x-2"
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                    >
+                      {job.media.slice(0, 3).map((media) => (
+                        <SupabaseSignedImage key={media.id} path={media.path} />
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <View className="bg-warning-50 aspect-video justify-center items-center">
+                      <Text>No media found</Text>
+                    </View>
+                  )}
+                  <Divider />
+                  <Text className="text-right text-success-300" size="2xl" bold>
+                    {formatAsCurrency(caculateJobTotal(job))}
+                  </Text>
+                </Card>
+              </TouchableOpacity>
+            ))}
         </ScrollView>
       ) : (
         <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
