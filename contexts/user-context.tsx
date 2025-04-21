@@ -40,6 +40,10 @@ interface IJobProduct extends Tables<"business_location_job_products"> {
   total: number;
 }
 
+interface IJobProfile extends Tables<"business_location_job_profiles"> {
+  profile: Tables<"profiles">;
+}
+
 interface ILocationJobMessage extends Tables<"business_location_job_messages"> {
   profile: Tables<"profiles">;
 }
@@ -51,6 +55,7 @@ export interface ILocationJob extends Tables<"business_location_jobs"> {
   media: Tables<"business_location_job_media">[];
   messages: ILocationJobMessage[];
   products: IJobProduct[];
+  profiles: IJobProfile[];
   tasks: ILocationJobTask[];
 }
 export interface ILocationCustomer
@@ -165,13 +170,17 @@ const fetchUserContextData = async (
               *,
               product: product_id(*)
             ),
+            profiles: business_location_job_profiles(
+              *,
+              profile: profile_id(*)
+            ),
             tasks: business_location_job_tasks(
               *,
               profile: completed_by_profile_id(*)
             )
           )
         ),
-        jobs: business_location_jobs(*),
+        jobs: business_location_jobs(*, tasks: business_location_job_tasks(*)),
         profiles: business_location_profiles(
           *,
           profile: profile_id(*)

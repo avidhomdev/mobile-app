@@ -1180,6 +1180,10 @@ function Tasks({ job }: { job: ILocationJob }) {
 }
 
 function Tiles({ job }: { job: ILocationJob }) {
+  const { profile } = useUserContext();
+  const jobCloser = job.profiles.find((profile) => profile.role === "closer");
+  const isUserJobCloser = jobCloser?.profile_id === profile.id;
+
   const calculateJobProductsTotal = () => {
     return job?.products.reduce((acc, product) => {
       return acc + Number(product.total_price);
@@ -1189,16 +1193,14 @@ function Tiles({ job }: { job: ILocationJob }) {
   return (
     <VStack space="sm">
       <HStack space="sm">
-        <Card className="grow justify-center">
-          <Text sub>Commission</Text>
-          <Text size="2xl">{formatAsCurrency(Number(job?.commission))}</Text>
-        </Card>
-        <Card className="w-1/3">
-          <Text sub>Hours</Text>
-          <Text size="2xl">NA</Text>
-        </Card>
-      </HStack>
-      <HStack space="sm" reversed>
+        {isUserJobCloser && (
+          <Card className="grow justify-center">
+            <Text sub>Commission</Text>
+            <Text bold className="text-success-400" size="2xl">
+              {formatAsCurrency(Number(job?.commission))}
+            </Text>
+          </Card>
+        )}
         <Card className="grow">
           <Text sub>Product Total</Text>
           <Text size="2xl">
@@ -1367,9 +1369,9 @@ export default function Screen() {
           />
         }
       >
-        <Tiles job={job} />
-        <Products job={job} />
         <Tasks job={job} />
+        <Products job={job} />
+        <Tiles job={job} />
         <Media job={job} />
         <Notes job={job} />
         <ScreenEnd />

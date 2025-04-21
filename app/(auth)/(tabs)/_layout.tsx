@@ -40,6 +40,7 @@ import { Tabs, useRouter } from "expo-router";
 import {
   Calendar1,
   ChevronDown,
+  HardHat,
   Home,
   HomeIcon,
   LogOut,
@@ -288,6 +289,13 @@ export default function TabLayout() {
           options={{
             title: "Dashboard",
             tabBarIcon: HomeIcon,
+          }}
+        />
+        <Tabs.Screen
+          name="jobs"
+          options={{
+            title: "Jobs",
+            tabBarIcon: HardHat,
           }}
         />
         <Tabs.Screen
