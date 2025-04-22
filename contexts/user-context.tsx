@@ -70,9 +70,10 @@ export interface ILocationCustomer
 export interface IAppointments extends Tables<"business_appointments"> {
   profiles: Tables<"business_appointment_profiles">[];
 }
+
 export interface ILocation extends Partial<Tables<"business_locations">> {
   appointments: IAppointments[];
-  jobs: Tables<"business_location_jobs">[];
+  jobs: ILocationJob[];
   customers: ILocationCustomer[];
   profiles: ILocationProfile[];
 }
@@ -180,7 +181,11 @@ const fetchUserContextData = async (
             )
           )
         ),
-        jobs: business_location_jobs(*, tasks: business_location_job_tasks(*)),
+        jobs: business_location_jobs(
+          *,
+          profiles: business_location_job_profiles(*),
+          tasks: business_location_job_tasks(*)
+        ),
         profiles: business_location_profiles(
           *,
           profile: profile_id(*)
