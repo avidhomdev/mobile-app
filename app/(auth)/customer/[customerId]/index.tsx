@@ -66,6 +66,7 @@ import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
   Calendar1,
+  CalendarCheck,
   CheckCircle,
   Circle,
   Construction,
@@ -896,8 +897,20 @@ function CustomerAppointments() {
             ))}
         </View>
       ) : (
-        <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+        <VStack className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
           <Text className="text-center">No appointments found.</Text>
+          <Button
+            action="secondary"
+            onPress={() =>
+              router.push({
+                pathname: "/customer/[customerId]/schedule-closing",
+                params: { customerId: customer.id },
+              })
+            }
+          >
+            <ButtonIcon as={CalendarCheck} />
+            <ButtonText>Schedule Closing</ButtonText>
+          </Button>
           <Button
             action="secondary"
             onPress={() =>
@@ -907,7 +920,7 @@ function CustomerAppointments() {
             <ButtonIcon as={Calendar1} />
             <ButtonText>Add Appointment</ButtonText>
           </Button>
-        </View>
+        </VStack>
       )}
     </View>
   );

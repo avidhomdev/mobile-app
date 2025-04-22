@@ -47,11 +47,13 @@ import { useLocationContext } from "@/contexts/location-context";
 import { IProfile, useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronDownIcon } from "lucide-react-native";
 import { twMerge } from "tailwind-merge";
 import BackHeaderButton from "@/components/BackHeaderButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { HStack } from "@/components/ui/hstack";
+import { VStack } from "@/components/ui/vstack";
 
 function TimeSlotRow({
   closer,
@@ -77,7 +79,7 @@ function TimeSlotRow({
   const { refreshData } = useUserContext();
   const { location } = useLocationContext();
   const params = useLocalSearchParams();
-  const [duration, setDuration] = useState(30);
+  const [duration, setDuration] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [
     isConfirmTimeSlotActionSheetVisible,
@@ -307,16 +309,28 @@ export default function ScheduleClosingScreen() {
   );
 
   return (
-    <View className="flex-1" style={{ paddingTop: top }}>
-      <View className="px-6">
-        <BackHeaderButton />
-        <Heading className="text-typography-800" size="xl">
-          Planning Appointment
-        </Heading>
-        <Text className="text-typography-400">
-          {`Schedule appointment for ${customer?.full_name}`}
-        </Text>
-      </View>
+    <VStack space="sm">
+      <HStack
+        space="sm"
+        className="px-6 pb-4 bg-white items-center"
+        style={{ paddingTop: top }}
+      >
+        <Box className="flex-1">
+          <BackHeaderButton />
+          <Heading size="xl">Appointment</Heading>
+          <Text className="text-typography-400">
+            {`Schedule appointment for ${customer?.full_name}`}
+          </Text>
+        </Box>
+        <Link
+          href={{
+            pathname: "/(auth)/customer/[customerId]",
+            params: { customerId: customer.id },
+          }}
+        >
+          Skip
+        </Link>
+      </HStack>
       <Box>
         <View className="px-6 pt-2">
           <Heading className="text-center" size="sm">
@@ -378,6 +392,6 @@ export default function ScheduleClosingScreen() {
           <ScreenEnd />
         </ScrollView>
       )}
-    </View>
+    </VStack>
   );
 }
