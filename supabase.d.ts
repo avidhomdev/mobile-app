@@ -384,6 +384,7 @@ export type Database = {
         Row: {
           business_id: string
           commission: number
+          converted_to_job_id: number | null
           created_at: string
           creator_id: string
           customer_id: number
@@ -404,6 +405,7 @@ export type Database = {
         Insert: {
           business_id: string
           commission: number
+          converted_to_job_id?: number | null
           created_at?: string
           creator_id: string
           customer_id: number
@@ -424,6 +426,7 @@ export type Database = {
         Update: {
           business_id?: string
           commission?: number
+          converted_to_job_id?: number | null
           created_at?: string
           creator_id?: string
           customer_id?: number
@@ -447,6 +450,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_customer_bids_converted_to_job_id_fkey"
+            columns: ["converted_to_job_id"]
+            isOneToOne: false
+            referencedRelation: "business_location_jobs"
             referencedColumns: ["id"]
           },
           {

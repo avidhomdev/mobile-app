@@ -65,6 +65,7 @@ import { getBidRequirementsForJob } from "@/utils/get-bid-requirements-for-job";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
+  AxeIcon,
   Calendar1,
   CalendarCheck,
   CheckCircle,
@@ -73,6 +74,7 @@ import {
   Ellipsis,
   Eye,
   HardHat,
+  LockIcon,
   Mail,
   MapPin,
   MessageCircle,
@@ -766,20 +768,45 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
         <Card variant="filled">
           <Text>{`${bid.products.length} products`}</Text>
         </Card>
-        <Button
-          action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
-          className="grow"
-          disabled={isStarting || !hasMetAllRequirementsForJob}
-          onPress={handleStartJob}
-          variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
-        >
-          {isStarting ? (
-            <ActivityIndicator size="small" />
-          ) : (
-            <ButtonIcon as={HardHat} />
-          )}
-          <ButtonText>{isStarting ? "Starting..." : "Start Job"}</ButtonText>
-        </Button>
+        {bid.converted_to_job_id ? (
+          <Button
+            action="secondary"
+            onPress={() => {
+              router.push({
+                pathname: "/customer/[customerId]/job/[jobId]",
+                params: {
+                  customerId: customer.id,
+                  jobId: bid.converted_to_job_id!,
+                },
+              });
+            }}
+          >
+            <ButtonText>View Job</ButtonText>
+          </Button>
+        ) : (
+          <Button
+            action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
+            className="grow"
+            disabled={isStarting || !hasMetAllRequirementsForJob}
+            onPress={handleStartJob}
+            variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
+          >
+            {isStarting ? (
+              <ActivityIndicator size="small" />
+            ) : (
+              <ButtonIcon
+                as={hasMetAllRequirementsForJob ? HardHat : LockIcon}
+              />
+            )}
+            <ButtonText>
+              {isStarting
+                ? "Starting..."
+                : hasMetAllRequirementsForJob
+                ? "Start job"
+                : "Missing job requirements"}
+            </ButtonText>
+          </Button>
+        )}
       </VStack>
     </Card>
   );
