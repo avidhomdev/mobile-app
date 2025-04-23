@@ -1182,7 +1182,8 @@ export type Database = {
           commission: number
           created_at: string
           creator_id: string
-          customer_id: number | null
+          customer_id: number
+          discount: number | null
           down_payment_collected: number | null
           email: string | null
           estimated_end_date: string | null
@@ -1211,7 +1212,8 @@ export type Database = {
           commission?: number
           created_at?: string
           creator_id: string
-          customer_id?: number | null
+          customer_id: number
+          discount?: number | null
           down_payment_collected?: number | null
           email?: string | null
           estimated_end_date?: string | null
@@ -1240,7 +1242,8 @@ export type Database = {
           commission?: number
           created_at?: string
           creator_id?: string
-          customer_id?: number | null
+          customer_id?: number
+          discount?: number | null
           down_payment_collected?: number | null
           email?: string | null
           estimated_end_date?: string | null

@@ -80,6 +80,7 @@ import {
   Plus,
   Settings,
   Trash,
+  UserSearch,
 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
 import {
@@ -765,38 +766,20 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
         <Card variant="filled">
           <Text>{`${bid.products.length} products`}</Text>
         </Card>
-        <ButtonGroup flexDirection="row">
-          <Button
-            action="secondary"
-            className="grow"
-            onPress={() =>
-              router.push({
-                pathname: "/(auth)/customer/[customerId]/bid/[bidId]/edit",
-                params: {
-                  customerId: bid.customer_id,
-                  bidId: bid.id,
-                },
-              })
-            }
-          >
-            <ButtonIcon as={Settings} />
-            <ButtonText>Edit</ButtonText>
-          </Button>
-          <Button
-            action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
-            className="grow"
-            disabled={isStarting || !hasMetAllRequirementsForJob}
-            onPress={handleStartJob}
-            variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
-          >
-            {isStarting ? (
-              <ActivityIndicator size="small" />
-            ) : (
-              <ButtonIcon as={HardHat} />
-            )}
-            <ButtonText>{isStarting ? "Starting..." : "Start Job"}</ButtonText>
-          </Button>
-        </ButtonGroup>
+        <Button
+          action={hasMetAllRequirementsForJob ? "primary" : "secondary"}
+          className="grow"
+          disabled={isStarting || !hasMetAllRequirementsForJob}
+          onPress={handleStartJob}
+          variant={hasMetAllRequirementsForJob ? "solid" : "outline"}
+        >
+          {isStarting ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <ButtonIcon as={HardHat} />
+          )}
+          <ButtonText>{isStarting ? "Starting..." : "Start Job"}</ButtonText>
+        </Button>
       </VStack>
     </Card>
   );
@@ -809,44 +792,45 @@ function CustomerBids() {
   const hasBids = bids.length > 0;
 
   return (
-    <Fragment>
-      <View className="flex-row items-center gap-x-2 px-6">
+    <VStack space="xl">
+      <HStack className="items-center px-6" space="sm">
         <Icon as={Construction} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View>
+        <Divider orientation="vertical" />
+        <VStack>
           <Heading size="md">Bids</Heading>
-          <Text size="xs">Create bids for the customer</Text>
-        </View>
-      </View>
-
+          <Text className="text-typography-500" size="xs">
+            Create bids for the customer
+          </Text>
+        </VStack>
+      </HStack>
       {hasBids ? (
         <ScrollView
-          contentContainerClassName="px-6"
+          contentContainerClassName="items-start gap-x-4 px-4"
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          <HStack space="md">
-            {bids
-              .sort((a, b) => b.created_at.localeCompare(a.created_at))
-              .map((bid) => {
-                return <CustomerBid key={bid.id} bid={bid} />;
-              })}
-          </HStack>
-          <ScreenEnd />
+          {bids
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .map((bid) => {
+              return <CustomerBid key={bid.id} bid={bid} />;
+            })}
         </ScrollView>
       ) : (
-        <View className="p-6 bg-gray-100 rounded border border-gray-200 gap-y-2 items-center mx-6">
-          <Text className="text-center">No bids found.</Text>
-          <Button
-            action="secondary"
-            onPress={() => router.push(`/customer/[customerId]/bid/new`)}
-          >
-            <ButtonIcon as={Construction} />
-            <ButtonText>Add Bid</ButtonText>
-          </Button>
-        </View>
+        <Card className="mx-6" variant="filled">
+          <VStack space="lg">
+            <Text className="text-center">No bids found.</Text>
+            <Button
+              action="secondary"
+              className="self-center"
+              onPress={() => router.push(`/customer/[customerId]/bid/new`)}
+            >
+              <ButtonIcon as={Construction} />
+              <ButtonText>Add Bid</ButtonText>
+            </Button>
+          </VStack>
+        </Card>
       )}
-    </Fragment>
+    </VStack>
   );
 }
 
@@ -854,17 +838,19 @@ function CustomerAppointments() {
   const { customer } = useCustomerContext();
   const router = useRouter();
   return (
-    <View className="px-6">
-      <View className="flex-row items-center gap-x-2">
+    <VStack className="px-6" space="xl">
+      <HStack className="items-center" space="sm">
         <Icon as={Calendar1} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View>
+        <Divider orientation="vertical" />
+        <VStack>
           <Heading size="md">Appointments</Heading>
-          <Text size="xs">Schedule appointments with the customer</Text>
-        </View>
-      </View>
+          <Text className="text-typography-500" size="xs">
+            Schedule appointments with the customer
+          </Text>
+        </VStack>
+      </HStack>
       {customer?.appointments?.length ? (
-        <View className="gap-y-2 py-6">
+        <VStack>
           {customer?.appointments
             .sort(
               (a, b) =>
@@ -895,34 +881,40 @@ function CustomerAppointments() {
                 </View>
               </View>
             ))}
-        </View>
-      ) : (
-        <VStack className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
-          <Text className="text-center">No appointments found.</Text>
-          <Button
-            action="secondary"
-            onPress={() =>
-              router.push({
-                pathname: "/customer/[customerId]/schedule-closing",
-                params: { customerId: customer.id },
-              })
-            }
-          >
-            <ButtonIcon as={CalendarCheck} />
-            <ButtonText>Schedule Closing</ButtonText>
-          </Button>
-          <Button
-            action="secondary"
-            onPress={() =>
-              router.push("/customer/[customerId]/new-appointment")
-            }
-          >
-            <ButtonIcon as={Calendar1} />
-            <ButtonText>Add Appointment</ButtonText>
-          </Button>
         </VStack>
+      ) : (
+        <Card variant="filled">
+          <VStack space="lg">
+            <Text className="text-center">No appointments found.</Text>
+            <ButtonGroup className="justify-center" flexDirection="row">
+              <Button
+                action="secondary"
+                onPress={() =>
+                  router.push({
+                    pathname: "/customer/[customerId]/schedule-closing",
+                    params: { customerId: customer.id },
+                  })
+                }
+                size="sm"
+              >
+                <ButtonIcon as={CalendarCheck} />
+                <ButtonText>Closing</ButtonText>
+              </Button>
+              <Button
+                action="secondary"
+                onPress={() =>
+                  router.push("/customer/[customerId]/new-appointment")
+                }
+                size="sm"
+              >
+                <ButtonIcon as={Calendar1} />
+                <ButtonText>Appointment</ButtonText>
+              </Button>
+            </ButtonGroup>
+          </VStack>
+        </Card>
       )}
-    </View>
+    </VStack>
   );
 }
 
@@ -933,83 +925,132 @@ function caculateJobTotal(job: ILocationJob) {
   return productsTotal + job.commission;
 }
 
-function CustomerJobs() {
-  const { customer } = useCustomerContext();
-  const { jobs } = customer;
+function JobCard({ job }: { job: ILocationJob }) {
   const router = useRouter();
+  const { bottom } = useSafeAreaInsets();
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+  const handleCloseActionSheet = () => setIsActionSheetVisible(false);
+
+  const { completed, total } = job.tasks.reduce(
+    (dictionary, task) => {
+      dictionary.total++;
+
+      if (task.complete) dictionary.completed++;
+
+      return dictionary;
+    },
+    { completed: 0, total: 0 }
+  );
+
   return (
     <Fragment>
-      <View className="flex-row items-center gap-x-2 px-6">
-        <Icon as={HardHat} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View>
-          <Heading size="md">Jobs</Heading>
-          <Text size="xs">Create job for the customer</Text>
-        </View>
-      </View>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <ActionsheetContent style={{ paddingBottom: bottom }}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+            <ActionsheetSectionHeaderText>
+              {job.full_name}
+            </ActionsheetSectionHeaderText>
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem
+            onPress={() => {
+              router.push({
+                pathname: "/customer/[customerId]/job/[jobId]",
+                params: { customerId: job.customer_id!, jobId: job.id },
+              });
+              handleCloseActionSheet();
+            }}
+          >
+            <ActionsheetIcon as={UserSearch} className="text-typography-500" />
+            <ActionsheetItemText className="text-typography-700">
+              View Job
+            </ActionsheetItemText>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
+      <TouchableOpacity
+        onLongPress={() => setIsActionSheetVisible(true)}
+        onPress={() =>
+          router.push({
+            pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
+            params: {
+              customerId: job.customer_id,
+              jobId: job.id,
+            },
+          })
+        }
+      >
+        <Card size="sm" variant="elevated">
+          <HStack className="items-center justify-between">
+            <VStack>
+              <Text bold>{`JOB-${job.id} - ${job.full_name}`}</Text>
+              <Text isTruncated size="xs">
+                {`${job.address}, ${job.city} ${job.state} ${job.postal_code}`}
+              </Text>
+            </VStack>
+            <Badge action="info" variant="outline" size="lg">
+              <BadgeText>{`${completed}/${total}`}</BadgeText>
+            </Badge>
+          </HStack>
+        </Card>
+      </TouchableOpacity>
+    </Fragment>
+  );
+}
 
-      {jobs.length > 0 ? (
-        <ScrollView
-          contentContainerClassName="gap-x-4 items-start px-6"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {jobs
-            .sort((a, b) => b.created_at.localeCompare(a.created_at))
-            .map((job) => (
-              <TouchableOpacity
-                key={job.id}
-                onPress={() =>
-                  router.push({
-                    pathname: `/(auth)/customer/[customerId]/job/[jobId]`,
-                    params: {
-                      customerId: customer.id,
-                      jobId: job.id,
-                    },
-                  })
-                }
-              >
-                <Card
-                  className="border border-gray-200 gap-y-4 w-80"
-                  key={job.id}
-                >
-                  <View className="flex-row items-center justify-between">
-                    <Badge action="info">
-                      <BadgeText>{job.status}</BadgeText>
-                    </Badge>
-                    <Heading>{`JOB-${job.id}`}</Heading>
-                  </View>
-                  {job.media.length > 0 ? (
-                    <ScrollView
-                      contentContainerClassName="flex-row items-center gap-x-2"
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                    >
-                      {job.media.slice(0, 3).map((media) => (
-                        <SupabaseSignedImage key={media.id} path={media.path} />
-                      ))}
-                    </ScrollView>
-                  ) : (
-                    <View className="bg-warning-50 aspect-video justify-center items-center">
-                      <Text>No media found</Text>
-                    </View>
-                  )}
-                  <Divider />
-                  <Text className="text-right text-success-300" size="2xl" bold>
-                    {formatAsCurrency(caculateJobTotal(job))}
-                  </Text>
-                </Card>
-              </TouchableOpacity>
-            ))}
-        </ScrollView>
+function CustomerJobs() {
+  const [visibleNumberOfJobs, setVisibleNumberOfJobs] = useState(5);
+  const { customer } = useCustomerContext();
+  const { jobs } = customer;
+
+  const sortedJobs = jobs.sort((a, b) =>
+    b.created_at.localeCompare(a.created_at)
+  );
+
+  const slicedJobs = sortedJobs.slice(0, visibleNumberOfJobs);
+
+  return (
+    <VStack className="px-6" space="xl">
+      <HStack className="items-center" space="sm">
+        <Icon as={HardHat} className="text-typography-500" size="lg" />
+        <Divider orientation="vertical" />
+        <VStack>
+          <Heading size="md">Jobs</Heading>
+          <Text className="text-typography-500" size="xs">
+            Create job for the customer
+          </Text>
+        </VStack>
+      </HStack>
+
+      {slicedJobs.length > 0 ? (
+        <VStack space="sm">
+          {slicedJobs.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+          {slicedJobs.length < jobs.length && (
+            <Button
+              action="secondary"
+              className="self-center mt-2"
+              onPress={() =>
+                setVisibleNumberOfJobs((prevState) => prevState + 5)
+              }
+            >
+              <ButtonText>Load More</ButtonText>
+            </Button>
+          )}
+        </VStack>
       ) : (
-        <View className="p-6 bg-gray-100 rounded border mt-6 border-gray-200 gap-y-2 items-center">
+        <Card variant="filled">
           <Text className="text-center">
             No jobs found. Start with a bid to begin a job
           </Text>
-        </View>
+        </Card>
       )}
-    </Fragment>
+    </VStack>
   );
 }
 
