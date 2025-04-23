@@ -107,32 +107,42 @@ export function CloserDashboard() {
           </VStack>
         </HStack>
         <VStack space="sm">
-          {closers?.map((closer) => (
-            <Card
-              className={twMerge(closer.id === profile.id ? "bg-info-50" : "")}
-              key={closer.id}
-              size="sm"
-            >
-              <HStack className="justify-between">
-                <HStack className="items-center" space="sm">
-                  <Avatar size="xs">
-                    <AvatarFallbackText>{closer.full_name}</AvatarFallbackText>
-                    <AvatarImage
-                      source={{
-                        uri: closer.avatar_url ?? undefined,
-                      }}
-                    />
-                  </Avatar>
-                  <Text>{closer.full_name}</Text>
+          {[...(closers ?? [])]
+            .sort(
+              (a, b) =>
+                Number(closerLeaderboardDictionary[b.id] ?? 0) -
+                Number(closerLeaderboardDictionary[a.id] ?? 0)
+            )
+            .map((closer) => (
+              <Card
+                className={twMerge(
+                  closer.id === profile.id ? "bg-info-50" : ""
+                )}
+                key={closer.id}
+                size="sm"
+              >
+                <HStack className="justify-between">
+                  <HStack className="items-center" space="sm">
+                    <Avatar size="xs">
+                      <AvatarFallbackText>
+                        {closer.full_name}
+                      </AvatarFallbackText>
+                      <AvatarImage
+                        source={{
+                          uri: closer.avatar_url ?? undefined,
+                        }}
+                      />
+                    </Avatar>
+                    <Text>{closer.full_name}</Text>
+                  </HStack>
+                  <Badge action="success">
+                    <BadgeText>
+                      {closerLeaderboardDictionary[closer.id] ?? 0}
+                    </BadgeText>
+                  </Badge>
                 </HStack>
-                <Badge action="success">
-                  <BadgeText>
-                    {closerLeaderboardDictionary[closer.id] ?? 0}
-                  </BadgeText>
-                </Badge>
-              </HStack>
-            </Card>
-          ))}
+              </Card>
+            ))}
         </VStack>
       </VStack>
     </VStack>
