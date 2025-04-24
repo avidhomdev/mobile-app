@@ -1109,8 +1109,9 @@ export default function Screen() {
 
   return (
     <Fragment>
-      <View
-        className="flex-row items-center p-4 gap-x-4 border-b-8 border-gray-500"
+      <HStack
+        className="items-center border-b-8 border-gray-500 px-4 pb-4"
+        space="sm"
         style={{ paddingBlockStart: top }}
       >
         <BackHeaderButton
@@ -1122,21 +1123,23 @@ export default function Screen() {
         >
           <Icon as={Settings} className="text-typography-600" size="xl" />
         </Pressable>
-      </View>
+      </HStack>
       <ScrollView contentContainerClassName="gap-y-6">
         <View className="w-full aspect-video border-gray-500 border-b-8">
           <Image alt="Map" source={map} size="full" />
         </View>
-        <View className="px-6">
-          <Heading size="2xl">{customer?.full_name}</Heading>
-          <Text size="sm">{customer?.address}</Text>
-          <View className="mt-2 flex-row items-center gap-x-2">
+        <VStack className="px-6" space="sm">
+          <VStack>
+            <Heading size="2xl">{customer?.full_name}</Heading>
+            <Text size="sm">{customer?.address}</Text>
+          </VStack>
+          <HStack space="sm">
             {customer.address && <MapPinButton />}
             {customer.phone && <PhoneButton />}
             {customer.email && <EmailButton />}
-          </View>
-        </View>
-        <View className="px-6 flex-row items-center gap-x-4">
+          </HStack>
+        </VStack>
+        <HStack className="px-6 flex-row items-center" space="md">
           <Card className="grow">
             <Text size="xs">JOBS TOTAL</Text>
             <Text bold size="xl">
@@ -1149,7 +1152,7 @@ export default function Screen() {
               {formatAsCompactCurrency(bidsTotal)}
             </Text>
           </Card>
-        </View>
+        </HStack>
         <Divider className="w-[50%] mx-auto" />
         <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />

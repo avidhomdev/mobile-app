@@ -178,8 +178,8 @@ export default function Screen() {
       >
         <BackHeaderButton />
         <View>
-          <Heading>Profile</Heading>
-          <Text size="sm">Manage generic profile information</Text>
+          <Heading>Edit Customer</Heading>
+          <Text size="sm">Manage generic customer information</Text>
         </View>
         <View className="gap-y-2">
           <FormControl>
