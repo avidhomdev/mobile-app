@@ -13,7 +13,12 @@ import {
 } from "@/components/ui/actionsheet";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonGroup, ButtonText } from "@/components/ui/button";
+import {
+  Button,
+  ButtonGroup,
+  ButtonIcon,
+  ButtonText,
+} from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import {
@@ -62,8 +67,7 @@ import {
   Eye,
   EyeOff,
   Info,
-  Minus,
-  Plus,
+  Trash2,
   UploadCloud,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
@@ -91,43 +95,26 @@ function ProductItem({
   return (
     <Card className="gap-y-2 bg-white" variant="filled">
       <Text>{product.name}</Text>
-      <View className="flex-row justify-between items-center gap-x-4 ">
-        <Button action="negative" onPress={remove} size="xs">
-          <ButtonText>Remove</ButtonText>
+      <HStack className="items-center" space="md">
+        <Button action="negative" onPress={remove} size="xs" variant="outline">
+          <ButtonIcon as={Trash2} />
         </Button>
-        <View className="flex-row border border-gray-300 px-2 rounded-full items-center gap-x-1 shrink">
-          <Pressable
-            disabled={Number(product.units) <= 0}
-            onPress={() => updateProduct("units", Number(units) - 1)}
-          >
-            <Icon as={Minus} />
-          </Pressable>
-          <FormControl className="grow">
-            <Input
-              className="border-transparent"
-              size="sm"
-              variant="underlined"
-            >
-              <InputField
-                className="text-right"
-                keyboardType="numeric"
-                onChangeText={(text) => updateProduct("units", Number(text))}
-                placeholder="0"
-                value={Number(units).toString()}
-              />
-              <InputSlot className="pl-2 pr-1">
-                <Text size="xs">{product.unit}</Text>
-              </InputSlot>
-            </Input>
-          </FormControl>
-          <Pressable
-            onPress={() => updateProduct("units", Number(units) + 1)}
-            onLongPress={() => updateProduct("units", Number(units) + 100)}
-          >
-            <Icon as={Plus} />
-          </Pressable>
-        </View>
-      </View>
+
+        <FormControl className="bg-background-100 grow border rounded border-background-200">
+          <Input className="border-transparent" size="sm" variant="outline">
+            <InputField
+              className="text-right"
+              keyboardType="numeric"
+              onChangeText={(text) => updateProduct("units", Number(text))}
+              placeholder="0"
+              value={Number(units).toString()}
+            />
+            <InputSlot className="px-2">
+              <Text size="xs">{product.unit}</Text>
+            </InputSlot>
+          </Input>
+        </FormControl>
+      </HStack>
       <Divider />
       <View className="flex-row justify-between items-center">
         <Text size="sm">{`${formatAsCurrency(
@@ -223,7 +210,7 @@ function BidProducts() {
         <AddProductBottomSheet />
       </View>
       {selectedProducts.length > 0 ? (
-        <View className="gap-y-2">
+        <VStack space="xs">
           {selectedProducts.map((product, index) => (
             <ProductItem
               key={product.id}
@@ -247,7 +234,7 @@ function BidProducts() {
               }
             />
           ))}
-        </View>
+        </VStack>
       ) : (
         <Box className="bg-gray-200 p-6">
           <Text className="text-center" size="sm">
