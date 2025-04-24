@@ -193,10 +193,10 @@ function BidProducts() {
 
   return (
     <Fragment>
-      <View className="flex-row items-end justify-between">
-        <Text>Products*</Text>
+      <HStack className="items-center justify-between">
+        <Text className="text-typography-600">Products*</Text>
         <AddProductBottomSheet />
-      </View>
+      </HStack>
       {selectedProducts.length > 0 && (
         <VStack space="xs">
           {selectedProducts.map((product, index) => (
