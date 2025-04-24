@@ -28,22 +28,9 @@ import {
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { CloseIcon, Icon } from "@/components/ui/icon";
+import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
-import {
-  Select,
-  SelectBackdrop,
-  SelectContent,
-  SelectDragIndicator,
-  SelectDragIndicatorWrapper,
-  SelectIcon,
-  SelectInput,
-  SelectItem,
-  SelectPortal,
-  SelectSectionHeaderText,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
@@ -62,12 +49,13 @@ import { formatAsCurrency } from "@/utils/format-as-currency";
 import dayjs from "dayjs";
 import * as ImagePicker from "expo-image-picker";
 import {
-  ChevronDown,
+  Camera,
   Construction,
   Eye,
   EyeOff,
   Info,
   Trash2,
+  Upload,
   UploadCloud,
 } from "lucide-react-native";
 import { Fragment, useState } from "react";
@@ -209,7 +197,7 @@ function BidProducts() {
         <Text>Products*</Text>
         <AddProductBottomSheet />
       </View>
-      {selectedProducts.length > 0 ? (
+      {selectedProducts.length > 0 && (
         <VStack space="xs">
           {selectedProducts.map((product, index) => (
             <ProductItem
@@ -235,12 +223,6 @@ function BidProducts() {
             />
           ))}
         </VStack>
-      ) : (
-        <Box className="bg-gray-200 p-6">
-          <Text className="text-center" size="sm">
-            Start by adding products
-          </Text>
-        </Box>
       )}
     </Fragment>
   );
@@ -295,12 +277,17 @@ function BidMedia() {
   const { customer } = useCustomerContext();
   const { location } = useLocationContext();
   const { bottom } = useSafeAreaInsets();
-  const [showActionsheet, setShowActionsheet] = useState(false);
+  const [showActionsheet, setShowActionsheet] = useState<string>("");
   const [selected, setSelected] = useState<
-    { filePath: string; file: string; fileName: string }[]
+    {
+      filePath: string;
+      file: string;
+      fileName: string;
+      type: MEDIA_TYPES_KEYS;
+    }[]
   >([]);
   const [isUploading, setIsUploading] = useState(false);
-  const handleClose = () => setShowActionsheet(false);
+  const handleClose = () => setShowActionsheet("");
 
   const handleImagePicker = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -319,6 +306,7 @@ function BidMedia() {
                 filePath: `${fileRootPath}/${dayjs().unix()}_${asset.fileName}`,
                 file: asset.uri,
                 fileName: asset.fileName,
+                type: showActionsheet as MEDIA_TYPES_KEYS,
               }
             : []
         ),
@@ -346,7 +334,7 @@ function BidMedia() {
             type: FormReducerActionType.ADD_MEDIA,
             payload: {
               ...storageFile,
-              type: "GENERAL",
+              type: file.type,
             },
           });
         })
@@ -356,185 +344,152 @@ function BidMedia() {
     }
 
     setIsUploading(false);
-    setShowActionsheet(false);
+    setShowActionsheet("");
     setSelected([]);
   };
 
+  const mediaByTypeDictionary = media.reduce<{
+    [k: string]: {
+      id: string;
+      path: string;
+      type: MEDIA_TYPES_KEYS;
+    }[];
+  }>((dictionary, m) => {
+    dictionary[m.type] = (dictionary[m.type] ?? []).concat(m);
+    return dictionary;
+  }, {});
+
   return (
     <>
-      <View className="flex-row items-end justify-between">
-        <Text>Media*</Text>
-        <Button
-          action="secondary"
-          onPress={() => setShowActionsheet(true)}
-          size="xs"
-        >
-          <ButtonText>Add</ButtonText>
-        </Button>
-      </View>
-      {media.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="flex-row gap-2"
-        >
-          {media.map((m, i) => {
-            return (
-              <VStack
-                key={m.id}
-                className="overflow-hidden relative items-center"
-                space="sm"
-              >
-                <SupabaseSignedImage
-                  size="xl"
-                  path={m.path}
-                  cacheInSeconds={3600}
-                />
-                <Pressable
-                  className="absolute top-1 right-1 p-1 bg-background-200"
-                  onPress={() =>
-                    dispatch({
-                      type: FormReducerActionType.REMOVE_MEDIA,
-                      payload: m.id,
-                    })
-                  }
-                >
-                  <Icon as={CloseIcon} size="xl" />
-                </Pressable>
-                <Select
-                  defaultValue={m.type}
-                  initialLabel={MEDIA_TYPES[m.type as MEDIA_TYPES_KEYS].name}
-                  onValueChange={(newType) =>
-                    dispatch({
-                      type: FormReducerActionType.UPDATE_MEDIA,
-                      payload: media.map((item, idx) => {
-                        if (i !== idx) return item;
-                        return {
-                          ...item,
-                          type: newType as MEDIA_TYPES_KEYS,
-                        };
-                      }),
-                    })
-                  }
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectInput
-                      placeholder="Select option"
-                      className="flex-1"
-                    />
-                    <SelectIcon className="mr-3" as={ChevronDown} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent
-                      className="max-h-80"
-                      style={{ paddingBottom: bottom }}
-                    >
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      <SelectSectionHeaderText>
-                        Select a category
-                      </SelectSectionHeaderText>
-                      <ScrollView className="w-full">
-                        {Object.entries(MEDIA_TYPES).map(
-                          ([typeValue, type]) => (
-                            <SelectItem
-                              label={type.name}
-                              key={typeValue}
-                              value={typeValue}
-                            />
-                          )
-                        )}
-                      </ScrollView>
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-              </VStack>
-            );
-          })}
-        </ScrollView>
-      ) : (
-        <Box className="bg-gray-200 p-6">
-          <Text className="text-center" size="sm">
-            Start by adding photos for the bid
-          </Text>
-        </Box>
-      )}
-      <Actionsheet isOpen={showActionsheet} onClose={handleClose}>
-        <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-          </ActionsheetDragIndicatorWrapper>
-          <View className="flex-row justify-between w-full mt-3">
-            <View>
-              <Text className="font-semibold">
-                Upload your photos for the bid
-              </Text>
-              <Text size="sm">JPG, PDF, PNG supported</Text>
-            </View>
-            <Pressable onPress={handleClose}>
-              <Icon
-                as={UploadCloud}
-                size="lg"
-                className="stroke-background-500"
-              />
-            </Pressable>
-          </View>
-          {selected.length > 0 ? (
-            <ScrollView
-              contentContainerClassName="p-6 items-start flex-row gap-2 flex-wrap"
-              horizontal
-              showsHorizontalScrollIndicator={false}
-            >
-              {selected.map((file, index) => (
-                <Box key={index}>
-                  <Image
-                    alt={file.fileName}
-                    size="xl"
-                    source={{ uri: file.file }}
-                  />
-                  <Pressable
-                    onPress={() =>
-                      setSelected(selected.filter((i) => i.file !== file.file))
-                    }
-                    className="absolute top-3 right-3 rounded-full p-1 bg-background-50"
-                  >
-                    <Icon as={CloseIcon} size="xl" />
-                  </Pressable>
-                </Box>
-              ))}
-            </ScrollView>
-          ) : (
-            <View className="my-[18px] items-center justify-center rounded-xl bg-background-50 border border-dashed border-outline-300 h-[130px] w-full">
-              <Icon
-                as={UploadCloud}
-                className="h-[62px] w-[62px] stroke-background-200"
-              />
-              <Text size="sm">No files uploaded yet</Text>
-            </View>
-          )}
+      {Object.entries(MEDIA_TYPES).flatMap(([mediaTypeKey, mediatType]) => {
+        if (!mediatType.required) return [];
+        const mediaByType = mediaByTypeDictionary[mediaTypeKey] ?? [];
+        const hasMediaByType = mediaByType.length > 0;
 
-          <ButtonGroup className="w-full">
-            <Button
-              action="secondary"
-              variant="outline"
-              className="w-full"
-              onPress={handleImagePicker}
-            >
-              <ButtonText>Browse photos</ButtonText>
-            </Button>
-            <Button
-              className="w-full"
-              isDisabled={selected.length === 0 || isUploading}
-              onPress={handleUploadSelected}
-            >
-              <ButtonText>Upload</ButtonText>
-            </Button>
-          </ButtonGroup>
-        </ActionsheetContent>
-      </Actionsheet>
+        return (
+          <VStack key={mediaTypeKey} space="sm">
+            <HStack className="items-center justify-between">
+              <Text className="text-typography-600">{mediatType.name}*</Text>
+              <Button
+                action="secondary"
+                onPress={() => setShowActionsheet(mediaTypeKey)}
+                size="xs"
+              >
+                <ButtonText>Add</ButtonText>
+              </Button>
+            </HStack>
+            {hasMediaByType && (
+              <ScrollView
+                contentContainerClassName="gap-x-2"
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {mediaByType.map((m) => (
+                  <Box key={m.id}>
+                    <SupabaseSignedImage
+                      size="xl"
+                      path={m.path}
+                      cacheInSeconds={3600}
+                    />
+                    <Pressable
+                      className="absolute top-1 right-1 p-1 bg-red-200"
+                      onPress={() =>
+                        dispatch({
+                          type: FormReducerActionType.REMOVE_MEDIA,
+                          payload: m.id,
+                        })
+                      }
+                    >
+                      <Icon as={Trash2} size="lg" />
+                    </Pressable>
+                  </Box>
+                ))}
+              </ScrollView>
+            )}
+          </VStack>
+        );
+      })}
+      {Boolean(showActionsheet) && (
+        <Actionsheet isOpen onClose={handleClose}>
+          <ActionsheetBackdrop />
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+            </ActionsheetDragIndicatorWrapper>
+            <View className="flex-row justify-between w-full mt-3">
+              <View>
+                <Text className="font-semibold">
+                  {`Upload your photos for ${
+                    MEDIA_TYPES[showActionsheet as MEDIA_TYPES_KEYS].name
+                  }`}
+                </Text>
+                <Text size="sm">JPG, PDF, PNG supported</Text>
+              </View>
+              <Pressable onPress={handleClose}>
+                <Icon
+                  as={UploadCloud}
+                  size="lg"
+                  className="stroke-background-500"
+                />
+              </Pressable>
+            </View>
+            {selected.length > 0 ? (
+              <ScrollView
+                contentContainerClassName="p-6 items-start flex-row gap-2 flex-wrap"
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {selected.map((file, index) => (
+                  <Box key={index}>
+                    <Image
+                      alt={file.fileName}
+                      size="xl"
+                      source={{ uri: file.file }}
+                    />
+                    <Pressable
+                      onPress={() =>
+                        setSelected(
+                          selected.filter((i) => i.file !== file.file)
+                        )
+                      }
+                      className="absolute top-2 right-2 rounded-full p-1 bg-red-200"
+                    >
+                      <Icon as={Trash2} size="xl" />
+                    </Pressable>
+                  </Box>
+                ))}
+              </ScrollView>
+            ) : (
+              <View className="my-[18px] items-center justify-center rounded-xl bg-background-50 border border-dashed border-outline-300 h-[130px] w-full">
+                <Icon
+                  as={UploadCloud}
+                  className="h-[62px] w-[62px] stroke-background-200"
+                />
+                <Text size="sm">No files uploaded yet</Text>
+              </View>
+            )}
+
+            <ButtonGroup flexDirection="row">
+              <Button
+                action="secondary"
+                variant="outline"
+                onPress={handleImagePicker}
+              >
+                <ButtonIcon as={Camera} />
+                <ButtonText>Browse</ButtonText>
+              </Button>
+              <Button
+                className="grow"
+                isDisabled={selected.length === 0 || isUploading}
+                onPress={handleUploadSelected}
+              >
+                <ButtonIcon as={Upload} />
+                <ButtonText>Upload</ButtonText>
+              </Button>
+            </ButtonGroup>
+          </ActionsheetContent>
+        </Actionsheet>
+      )}
     </>
   );
 }
