@@ -65,7 +65,6 @@ import { getBidRequirementsForJob } from "@/utils/get-bid-requirements-for-job";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
-  AxeIcon,
   Calendar1,
   CalendarCheck,
   CheckCircle,
@@ -730,25 +729,36 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
       });
   }, [bid.id, customer.id, isStarting, refreshData, router, toast]);
 
+  const BidWithRequirementsIcon = bid.converted_to_job_id
+    ? HardHat
+    : CheckCircle;
+  const bidWithRequirementsIconColor = bid.converted_to_job_id
+    ? "text-typography-800"
+    : "text-success-600";
+
   return (
     <Card key={bid.id} className="border border-gray-200 gap-y-4 w-80">
-      <VStack space="sm">
+      <VStack space="md">
         <HStack className="justify-between items-center">
           <HStack className="items-center" space="xs">
             <Icon
               className={twMerge(
                 hasMetAllRequirementsForJob
-                  ? "text-success-600"
+                  ? bidWithRequirementsIconColor
                   : "text-typography-300"
               )}
-              as={hasMetAllRequirementsForJob ? CheckCircle : Circle}
+              as={
+                hasMetAllRequirementsForJob ? BidWithRequirementsIcon : Circle
+              }
               size="xl"
             />
             <Text className="shrink" size="lg">
               {bid.name}
             </Text>
           </HStack>
-          {location.is_closer && <CustomerBidMenu bid={bid} />}
+          {location.is_closer && !bid.converted_to_job_id && (
+            <CustomerBidMenu bid={bid} />
+          )}
         </HStack>
         {bid.media.length > 0 ? (
           <ScrollView
@@ -877,7 +887,7 @@ function CustomerAppointments() {
         </VStack>
       </HStack>
       {customer?.appointments?.length ? (
-        <VStack>
+        <VStack space="sm">
           {customer?.appointments
             .sort(
               (a, b) =>
@@ -885,28 +895,26 @@ function CustomerAppointments() {
                 new Date(a.start_datetime).getTime()
             )
             .map((appointment) => (
-              <View
-                key={appointment.id}
-                className="bg-gray-50 flex-row items-center gap-x-2 border border-gray-200"
-              >
-                <View className="aspect-square p-4 border-r border-gray-200">
+              <Card key={appointment.id} size="sm">
+                <HStack className="items-center" space="md">
                   <Icon as={Calendar1} />
-                </View>
-                <View className="p-2">
-                  <Text>
-                    {dayjs(appointment.start_datetime).format(
-                      FRIENDLY_DATE_FORMAT
-                    )}
-                  </Text>
-                  <Text size="xs">
-                    {`${dayjs(appointment.start_datetime).format(
-                      TIME_FORMAT
-                    )} - ${dayjs(appointment.end_datetime).format(
-                      TIME_FORMAT
-                    )}`}
-                  </Text>
-                </View>
-              </View>
+                  <Divider orientation="vertical" />
+                  <VStack>
+                    <Text>
+                      {dayjs(appointment.start_datetime).format(
+                        FRIENDLY_DATE_FORMAT
+                      )}
+                    </Text>
+                    <Text className="text-typography-500" size="xs">
+                      {`${dayjs(appointment.start_datetime).format(
+                        TIME_FORMAT
+                      )} - ${dayjs(appointment.end_datetime).format(
+                        TIME_FORMAT
+                      )}`}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </Card>
             ))}
         </VStack>
       ) : (
