@@ -1,9 +1,10 @@
 import { UserProvider } from "@/contexts/user-context";
 import { Redirect, Stack } from "expo-router";
-import { Text, View } from "react-native";
+import { Text, useColorScheme, View } from "react-native";
 import { useSession } from "../../contexts/auth-context";
 
 export default function AppLayout() {
+  const colorScheme = useColorScheme();
   const { session, isLoading } = useSession();
 
   if (isLoading) {
@@ -21,6 +22,9 @@ export default function AppLayout() {
     <UserProvider session={session}>
       <Stack
         screenOptions={{
+          contentStyle: {
+            backgroundColor: colorScheme === "dark" ? `#181719` : `#FBFBFB`,
+          },
           headerShown: false,
         }}
       >

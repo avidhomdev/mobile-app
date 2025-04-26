@@ -11,8 +11,7 @@ import {
   ActionsheetSectionHeaderText,
 } from "@/components/ui/actionsheet";
 import { Badge, BadgeText } from "@/components/ui/badge";
-import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Drawer,
@@ -135,12 +134,9 @@ function CustomersFilter() {
 
   return (
     <Fragment>
-      <TouchableOpacity
-        className="p-2.5 border-gray-300 border rounded"
-        onPress={() => setIsDrawerOpen(true)}
-      >
-        <Icon as={Settings2} className="text-typography-500" />
-      </TouchableOpacity>
+      <Button action="secondary" onPress={() => setIsDrawerOpen(true)}>
+        <ButtonIcon as={Settings2} />
+      </Button>
       <Drawer
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
@@ -187,13 +183,15 @@ export default function JobsScreen() {
 
   return (
     <ScrollView className="flex-1">
-      <Box className="bg-background-50 p-6">
-        <Heading size="xl">Jobs</Heading>
-        <Text size="sm" className="text-gray-400">
-          Manage your jobs created for the customers
-        </Text>
-        <View className="flex-row items-center gap-x-2 mt-4">
-          <Input className="grow">
+      <VStack className="bg-background-50 p-6" space="md">
+        <VStack>
+          <Heading size="xl">Jobs</Heading>
+          <Text size="sm" className="text-gray-400">
+            Manage your jobs created for the customers
+          </Text>
+        </VStack>
+        <HStack space="md">
+          <Input className="grow bg-background-light dark:bg-background-dark">
             <InputSlot className="pl-3">
               <InputIcon as={Search} />
             </InputSlot>
@@ -206,7 +204,7 @@ export default function JobsScreen() {
             />
           </Input>
           <CustomersFilter key={params.dispositionStatuses?.toString()} />
-        </View>
+        </HStack>
         {params.dispositionStatuses?.length ? (
           <View className="mt-4 gap-2">
             <Text className="uppercase" size="xs">
@@ -238,7 +236,7 @@ export default function JobsScreen() {
             </View>
           </View>
         ) : null}
-      </Box>
+      </VStack>
       <VStack className="px-6 pt-6" space="sm">
         {jobs
           .sort((a, b) => b.created_at.localeCompare(a.created_at))

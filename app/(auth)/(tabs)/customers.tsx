@@ -24,8 +24,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
-import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Checkbox,
@@ -48,9 +47,11 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import {
   DISPOSITION_STATUS_KEYS,
   DISPOSITION_STATUSES,
@@ -250,12 +251,9 @@ function CustomersFilter() {
     useState<DISPOSITION_STATUS_KEYS[]>(params.dispositionStatuses ?? []);
   return (
     <Fragment>
-      <TouchableOpacity
-        className="p-2.5 border-gray-300 border rounded"
-        onPress={() => setIsDrawerOpen(true)}
-      >
-        <Icon as={Settings2} className="text-typography-500" />
-      </TouchableOpacity>
+      <Button action="secondary" onPress={() => setIsDrawerOpen(true)}>
+        <ButtonIcon as={Settings2} />
+      </Button>
       <Drawer
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
@@ -348,13 +346,15 @@ export default function CustomersScreen() {
 
   return (
     <ScrollView>
-      <Box className="bg-background-50 p-6">
-        <Heading size="xl">Customers</Heading>
-        <Text size="sm" className="text-gray-400">
-          Manage customers you have created.
-        </Text>
-        <View className="flex-row items-center gap-x-2 mt-4">
-          <Input className="grow">
+      <VStack className="bg-background-50 p-6" space="md">
+        <VStack>
+          <Heading size="xl">Customers</Heading>
+          <Text size="sm" className="text-gray-400">
+            Manage customers you have created.
+          </Text>
+        </VStack>
+        <HStack space="md">
+          <Input className="grow bg-background-light dark:bg-background-dark">
             <InputSlot className="pl-3">
               <InputIcon as={Search} />
             </InputSlot>
@@ -367,7 +367,7 @@ export default function CustomersScreen() {
             />
           </Input>
           <CustomersFilter key={params.dispositionStatuses?.toString()} />
-        </View>
+        </HStack>
         {params.dispositionStatuses?.length ? (
           <View className="mt-4 gap-2">
             <Text className="uppercase" size="xs">
@@ -399,7 +399,7 @@ export default function CustomersScreen() {
             </View>
           </View>
         ) : null}
-      </Box>
+      </VStack>
       <View className="p-2 gap-y-2">
         {customerResults.map((customer) => (
           <CustomerCard customer={customer} key={customer.id} />

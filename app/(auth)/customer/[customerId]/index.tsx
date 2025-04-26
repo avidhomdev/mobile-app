@@ -132,7 +132,7 @@ function EmailButton() {
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button size="sm" onPress={handleConfirm}>
+            <Button className="grow" size="sm" onPress={handleConfirm}>
               <ButtonText>Compose message</ButtonText>
             </Button>
           </AlertDialogFooter>
@@ -188,7 +188,7 @@ function PhoneButton() {
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button size="sm" onPress={handleConfirm}>
+            <Button className="grow" size="sm" onPress={handleConfirm}>
               <ButtonText>Call Now</ButtonText>
             </Button>
           </AlertDialogFooter>
@@ -254,7 +254,7 @@ function MapPinButton() {
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button size="sm" onPress={handleConfirm}>
+            <Button className="grow" size="sm" onPress={handleConfirm}>
               <ButtonText>Start Directions</ButtonText>
             </Button>
           </AlertDialogFooter>
@@ -487,7 +487,7 @@ function ConvertBidToJobActionItem({
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button size="sm" onPress={handleStartBidToJob}>
+            <Button className="grow" size="sm" onPress={handleStartBidToJob}>
               <ButtonText>Start</ButtonText>
             </Button>
           </AlertDialogFooter>
@@ -579,7 +579,12 @@ function CustomerBidMenu({ bid }: { bid: ILocationCustomerBid }) {
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button action="negative" size="sm" onPress={handleConfirm}>
+            <Button
+              action="negative"
+              className="grow"
+              size="sm"
+              onPress={handleConfirm}
+            >
               <ButtonText>Delete</ButtonText>
             </Button>
           </AlertDialogFooter>

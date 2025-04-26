@@ -182,12 +182,12 @@ function ScreenContent() {
     });
   };
   return (
-    <VStack space="md">
+    <VStack space="lg">
       <FormControl isInvalid={state.submitted && !state.full_name} isRequired>
         <FormControlLabel>
           <FormControlLabelText>Full Name</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="md">
+        <Input className="bg-background-50" variant="outline" size="md">
           <InputField
             autoComplete="off"
             autoCapitalize="none"
@@ -209,7 +209,7 @@ function ScreenContent() {
         <FormControlLabel>
           <FormControlLabelText>Email</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="md">
+        <Input className="bg-background-50" variant="outline" size="md">
           <InputField
             autoComplete="off"
             autoCapitalize="none"
@@ -233,7 +233,7 @@ function ScreenContent() {
         <FormControlLabel>
           <FormControlLabelText>Phone</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="md">
+        <Input className="bg-background-50" variant="outline" size="md">
           <InputField
             autoComplete="off"
             autoCapitalize="none"
@@ -251,7 +251,7 @@ function ScreenContent() {
         <FormControlLabel>
           <FormControlLabelText>Address</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="md">
+        <Input className="bg-background-50" variant="outline" size="md">
           <InputField
             autoComplete="off"
             autoCapitalize="none"
@@ -273,7 +273,7 @@ function ScreenContent() {
         <FormControlLabel>
           <FormControlLabelText>City</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="md">
+        <Input className="bg-background-50" variant="outline" size="md">
           <InputField
             autoComplete="off"
             autoCapitalize="none"
@@ -308,7 +308,7 @@ function ScreenContent() {
               })
             }
           >
-            <SelectTrigger className="bg-white">
+            <SelectTrigger className="bg-background-50">
               <SelectInput placeholder="Select option" className="flex-1" />
               <SelectIcon className="mr-3" as={ChevronDown} />
             </SelectTrigger>
@@ -345,7 +345,7 @@ function ScreenContent() {
           <FormControlLabel>
             <FormControlLabelText>Postal Code</FormControlLabelText>
           </FormControlLabel>
-          <Input className="bg-white" variant="outline">
+          <Input className="bg-background-50" variant="outline">
             <InputField
               autoComplete="off"
               autoCapitalize="none"
@@ -370,7 +370,7 @@ function ScreenContent() {
         <FormControlLabel>
           <FormControlLabelText>Notes</FormControlLabelText>
         </FormControlLabel>
-        <Textarea className="bg-white" size="md">
+        <Textarea className="bg-background-50" size="md">
           <TextareaInput
             onChangeText={(text) =>
               dispatch({
@@ -383,8 +383,11 @@ function ScreenContent() {
         </Textarea>
       </FormControl>
       <Button disabled={state.isSubmitting} size="md" onPress={handleSubmit}>
-        <ButtonText>Get Started</ButtonText>
+        <ButtonText>
+          {state.isSubmitting ? "Creating..." : "Create Customer"}
+        </ButtonText>
       </Button>
+      <ScreenEnd />
     </VStack>
   );
 }
