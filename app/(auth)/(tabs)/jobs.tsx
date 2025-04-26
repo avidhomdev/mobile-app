@@ -106,7 +106,11 @@ function JobCard({ job }: JobCardPropType) {
           })
         }
       >
-        <Card size="sm" variant="elevated">
+        <Card
+          className="border border-background-100"
+          size="sm"
+          variant="elevated"
+        >
           <HStack className="items-center justify-between">
             <VStack>
               <Text bold>{`JOB-${job.id} - ${job.full_name}`}</Text>
@@ -182,8 +186,8 @@ export default function JobsScreen() {
   } = useUserContext();
 
   return (
-    <ScrollView>
-      <Box className="bg-white p-6">
+    <ScrollView className="flex-1">
+      <Box className="bg-background-50 p-6">
         <Heading size="xl">Jobs</Heading>
         <Text size="sm" className="text-gray-400">
           Manage your jobs created for the customers
@@ -235,13 +239,13 @@ export default function JobsScreen() {
           </View>
         ) : null}
       </Box>
-      <View className="p-2 gap-y-2">
+      <VStack className="px-6 pt-6" space="sm">
         {jobs
           .sort((a, b) => b.created_at.localeCompare(a.created_at))
           .map((job) => (
             <JobCard job={job as IJob} key={job.id} />
           ))}
-      </View>
+      </VStack>
       <ScreenEnd />
       <ScreenEnd />
     </ScrollView>

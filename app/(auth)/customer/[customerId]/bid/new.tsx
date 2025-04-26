@@ -81,7 +81,10 @@ function ProductItem({
   const calculatedProductTotal = Number(product.unit_price) * Number(units);
 
   return (
-    <Card className="gap-y-2 bg-white" variant="filled">
+    <Card
+      className="gap-y-2 bg-background-light dark:bg-background-dark"
+      variant="filled"
+    >
       <Text>{product.name}</Text>
       <HStack className="items-center" space="md">
         <Button action="negative" onPress={remove} size="xs" variant="outline">
@@ -392,7 +395,7 @@ function BidMedia() {
                       cacheInSeconds={3600}
                     />
                     <Pressable
-                      className="absolute top-1 right-1 p-1 bg-red-200"
+                      className="absolute top-1 right-1 p-1 bg-error-100"
                       onPress={() =>
                         dispatch({
                           type: FormReducerActionType.REMOVE_MEDIA,
@@ -452,7 +455,7 @@ function BidMedia() {
                           selected.filter((i) => i.file !== file.file)
                         )
                       }
-                      className="absolute top-2 right-2 rounded-full p-1 bg-red-200"
+                      className="absolute top-2 right-2 p-1 bg-error-100"
                     >
                       <Icon as={Trash2} size="xl" />
                     </Pressable>
@@ -500,7 +503,7 @@ function LeadSelector() {
     formState.fields.lead_type === opt ? "primary" : "secondary";
 
   return (
-    <HStack className="bg-white" space="xs">
+    <HStack className="bg-background-light dark:bg-background-dark" space="xs">
       <Button
         action={actionPropValue("setter")}
         className="grow"
@@ -562,7 +565,11 @@ function BidForm() {
         <FormControlLabel>
           <FormControlLabelText>Name</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="lg">
+        <Input
+          className="bg-background-light dark:bg-background-dark"
+          variant="outline"
+          size="lg"
+        >
           <InputField
             autoCapitalize="none"
             autoCorrect={false}
@@ -582,7 +589,10 @@ function BidForm() {
         <FormControlLabel>
           <FormControlLabelText>Notes</FormControlLabelText>
         </FormControlLabel>
-        <Textarea className="bg-white" size="md">
+        <Textarea
+          className="bg-background-light dark:bg-background-dark"
+          size="md"
+        >
           <TextareaInput
             defaultValue={formState.fields.notes}
             onChangeText={(text) =>
@@ -623,7 +633,11 @@ function BidForm() {
               <FormControlLabel>
                 <FormControlLabelText>Contact Name</FormControlLabelText>
               </FormControlLabel>
-              <Input className="bg-white" variant="outline" size="lg">
+              <Input
+                className="bg-background-light dark:bg-background-dark"
+                variant="outline"
+                size="lg"
+              >
                 <InputField
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -641,7 +655,11 @@ function BidForm() {
               <FormControlLabel>
                 <FormControlLabelText>Contact Email</FormControlLabelText>
               </FormControlLabel>
-              <Input className="bg-white" variant="outline" size="lg">
+              <Input
+                className="bg-background-light dark:bg-background-dark"
+                variant="outline"
+                size="lg"
+              >
                 <InputField
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -659,7 +677,11 @@ function BidForm() {
               <FormControlLabel>
                 <FormControlLabelText>Contact Phone</FormControlLabelText>
               </FormControlLabel>
-              <Input className="bg-white" variant="outline" size="lg">
+              <Input
+                className="bg-background-light dark:bg-background-dark"
+                variant="outline"
+                size="lg"
+              >
                 <InputField
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -704,7 +726,11 @@ function BidForm() {
             <FormControlLabel>
               <FormControlLabelText>Company</FormControlLabelText>
             </FormControlLabel>
-            <Input className="bg-white" variant="outline" size="lg">
+            <Input
+              className="bg-background-light dark:bg-background-dark"
+              variant="outline"
+              size="lg"
+            >
               <InputField
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -726,7 +752,10 @@ function BidForm() {
           <FormControlLabel>
             <FormControlLabelText>Commission</FormControlLabelText>
           </FormControlLabel>
-          <Input className="bg-white" size="lg">
+          <Input
+            className="bg-background-light dark:bg-background-dark"
+            size="lg"
+          >
             <InputField
               keyboardType="numeric"
               autoCorrect={false}
@@ -745,7 +774,10 @@ function BidForm() {
           <FormControlLabel>
             <FormControlLabelText>Discount</FormControlLabelText>
           </FormControlLabel>
-          <Input className="bg-white" size="lg">
+          <Input
+            className="bg-background-light dark:bg-background-dark"
+            size="lg"
+          >
             <InputField
               keyboardType="numeric"
               autoCorrect={false}

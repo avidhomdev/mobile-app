@@ -55,8 +55,8 @@ import {
   UserPlus2,
   Wallet,
 } from "lucide-react-native";
-import { Fragment, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { TouchableOpacity, useColorScheme, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
@@ -262,65 +262,67 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
 
 export default function TabLayout() {
   const { location } = useLocationContext();
+  const colorScheme = useColorScheme();
 
   return (
-    <Fragment>
-      <Tabs
-        screenOptions={{
-          header: () => <ScreenHeader />,
-        }}
-        tabBar={({ descriptors, insets, navigation, state }) => {
-          const { bottom } = insets;
+    <Tabs
+      screenOptions={{
+        sceneStyle: {
+          backgroundColor: colorScheme === "dark" ? `#181719` : `#FBFBFB`,
+        },
+        header: () => <ScreenHeader />,
+      }}
+      tabBar={({ descriptors, insets, navigation, state }) => {
+        const { bottom } = insets;
 
-          return (
-            <View className="px-4 absolute w-full" style={{ bottom }}>
-              <TabBar
-                paddingBlockEnd={bottom}
-                descriptors={descriptors}
-                navigation={navigation}
-                state={state}
-              />
-            </View>
-          );
+        return (
+          <View className="px-4 absolute w-full" style={{ bottom }}>
+            <TabBar
+              paddingBlockEnd={bottom}
+              descriptors={descriptors}
+              navigation={navigation}
+              state={state}
+            />
+          </View>
+        );
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Dashboard",
+          tabBarIcon: HomeIcon,
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Dashboard",
-            tabBarIcon: HomeIcon,
-          }}
-        />
-        <Tabs.Screen
-          name="jobs"
-          options={{
-            title: "Jobs",
-            tabBarIcon: HardHat,
-          }}
-        />
-        <Tabs.Screen
-          name="customers"
-          options={{
-            title: "Customers",
-            tabBarIcon: User2,
-          }}
-        />
-        <Tabs.Screen
-          redirect={!location?.is_closer}
-          name="schedule/index"
-          options={{
-            title: "Schedule",
-            tabBarIcon: Calendar1,
-          }}
-        />
-        <Tabs.Screen
-          name="chats"
-          options={{
-            title: "Chats",
-            tabBarIcon: MessagesSquare,
-          }}
-        />
-      </Tabs>
-    </Fragment>
+      />
+      <Tabs.Screen
+        name="jobs"
+        options={{
+          title: "Jobs",
+          tabBarIcon: HardHat,
+        }}
+      />
+      <Tabs.Screen
+        name="customers"
+        options={{
+          title: "Customers",
+          tabBarIcon: User2,
+        }}
+      />
+      <Tabs.Screen
+        redirect={!location?.is_closer}
+        name="schedule"
+        options={{
+          title: "Schedule",
+          tabBarIcon: Calendar1,
+        }}
+      />
+      <Tabs.Screen
+        name="chats"
+        options={{
+          title: "Chats",
+          tabBarIcon: MessagesSquare,
+        }}
+      />
+    </Tabs>
   );
 }

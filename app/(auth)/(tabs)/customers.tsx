@@ -348,7 +348,7 @@ export default function CustomersScreen() {
 
   return (
     <ScrollView>
-      <Box className="bg-white p-6">
+      <Box className="bg-background-50 p-6">
         <Heading size="xl">Customers</Heading>
         <Text size="sm" className="text-gray-400">
           Manage customers you have created.

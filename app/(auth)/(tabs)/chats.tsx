@@ -7,7 +7,10 @@ import { View } from "react-native";
 export default function ChatsScreen() {
   return (
     <View className="gap-6">
-      <HStack space="md" className="justify-between p-6 bg-white items-center">
+      <HStack
+        space="md"
+        className="justify-between p-6 bg-background-50 items-center"
+      >
         <Box>
           <Heading size="xl">Chats</Heading>
           <Text size="sm" className="text-gray-400">

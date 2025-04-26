@@ -278,7 +278,11 @@ function PlusButtonActionSheet() {
         placement="bottom right"
         style={{ marginBlockEnd: bottom }}
       >
-        <Icon as={Plus} className="text-white" size="2xl" />
+        <Icon
+          as={Plus}
+          className="text-typography-white dark:text-typography-black"
+          size="2xl"
+        />
       </Fab>
       <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
         <ActionsheetBackdrop />
@@ -706,7 +710,7 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
     : "text-success-600";
 
   return (
-    <Card key={bid.id} className="border border-gray-200 gap-y-4 w-80">
+    <Card key={bid.id} className="border border-background-100 w-80">
       <VStack space="md">
         <HStack className="justify-between items-center">
           <HStack className="items-center" space="xs">

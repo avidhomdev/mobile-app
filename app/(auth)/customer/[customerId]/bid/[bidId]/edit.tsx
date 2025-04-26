@@ -81,7 +81,7 @@ function ProductItem({
   const units = product.units ?? 0;
   const calculatedProductTotal = Number(product.unit_price) * Number(units);
   return (
-    <Card className="gap-y-2 bg-white" variant="filled">
+    <Card className="gap-y-2 bg-background-50" variant="filled">
       <Text>{product.name}</Text>
       <HStack className="items-center" space="md">
         <Button action="negative" onPress={remove} size="xs" variant="outline">
@@ -515,7 +515,7 @@ function LeadSelector() {
     formState.fields.lead_type === opt ? "primary" : "secondary";
 
   return (
-    <HStack className="bg-white" space="xs">
+    <HStack className="bg-background-50" space="xs">
       <Button
         action={actionPropValue("setter")}
         className="grow"
@@ -577,7 +577,7 @@ function BidForm() {
         <FormControlLabel>
           <FormControlLabelText>Name</FormControlLabelText>
         </FormControlLabel>
-        <Input className="bg-white" variant="outline" size="lg">
+        <Input className="bg-background-50" variant="outline" size="lg">
           <InputField
             autoCapitalize="none"
             autoCorrect={false}
@@ -597,7 +597,7 @@ function BidForm() {
         <FormControlLabel>
           <FormControlLabelText>Notes</FormControlLabelText>
         </FormControlLabel>
-        <Textarea className="bg-white" size="md">
+        <Textarea className="bg-background-50" size="md">
           <TextareaInput
             defaultValue={formState.fields.notes}
             onChangeText={(text) =>
@@ -638,7 +638,7 @@ function BidForm() {
               <FormControlLabel>
                 <FormControlLabelText>Contact Name</FormControlLabelText>
               </FormControlLabel>
-              <Input className="bg-white" variant="outline" size="lg">
+              <Input className="bg-background-50" variant="outline" size="lg">
                 <InputField
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -656,7 +656,7 @@ function BidForm() {
               <FormControlLabel>
                 <FormControlLabelText>Contact Email</FormControlLabelText>
               </FormControlLabel>
-              <Input className="bg-white" variant="outline" size="lg">
+              <Input className="bg-background-50" variant="outline" size="lg">
                 <InputField
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -674,7 +674,7 @@ function BidForm() {
               <FormControlLabel>
                 <FormControlLabelText>Contact Phone</FormControlLabelText>
               </FormControlLabel>
-              <Input className="bg-white" variant="outline" size="lg">
+              <Input className="bg-background-50" variant="outline" size="lg">
                 <InputField
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -719,7 +719,7 @@ function BidForm() {
             <FormControlLabel>
               <FormControlLabelText>Company</FormControlLabelText>
             </FormControlLabel>
-            <Input className="bg-white" variant="outline" size="lg">
+            <Input className="bg-background-50" variant="outline" size="lg">
               <InputField
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -741,7 +741,7 @@ function BidForm() {
           <FormControlLabel>
             <FormControlLabelText>Commission</FormControlLabelText>
           </FormControlLabel>
-          <Input className="bg-white" size="lg">
+          <Input className="bg-background-50" size="lg">
             <InputField
               keyboardType="numeric"
               autoCorrect={false}
@@ -760,7 +760,7 @@ function BidForm() {
           <FormControlLabel>
             <FormControlLabelText>Discount</FormControlLabelText>
           </FormControlLabel>
-          <Input className="bg-white" size="lg">
+          <Input className="bg-background-50" size="lg">
             <InputField
               keyboardType="numeric"
               autoCorrect={false}
@@ -776,8 +776,14 @@ function BidForm() {
         </FormControl>
       </HStack>
       <Totals />
-      <Button action="primary" onPress={handleSubmit}>
-        <ButtonText>Update Bid</ButtonText>
+      <Button
+        action="primary"
+        disabled={formState.isSubmitting}
+        onPress={handleSubmit}
+      >
+        <ButtonText>
+          {formState.isSubmitting ? "Updating..." : "Update Bid"}
+        </ButtonText>
       </Button>
     </Fragment>
   );

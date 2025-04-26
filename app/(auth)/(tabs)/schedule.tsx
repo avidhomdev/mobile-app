@@ -23,8 +23,10 @@ import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { TIME_FORMAT } from "@/constants/date-formats";
 import { DISPOSITION_STATUSES } from "@/constants/disposition-statuses";
 import {
@@ -153,7 +155,10 @@ function ScheduleRow({
           />
         </ActionsheetContent>
       </Actionsheet>
-      <View className="bg-white flex-row gap-x-2 border border-gray-200 rounded">
+      <HStack
+        className="bg-background-100 border border-background-200 rounded mx-6"
+        space="sm"
+      >
         <View
           className={twMerge(
             DISPOSITION_STATUSES[customer.disposition_status].bg,
@@ -197,7 +202,7 @@ function ScheduleRow({
             </View>
           </View>
         </View>
-      </View>
+      </HStack>
     </TouchableOpacity>
   );
 }
@@ -235,14 +240,14 @@ export default function ScheduleScreen() {
 
   return (
     <ScrollView contentContainerClassName="gap-y-2">
-      <Box className="p-6 bg-white">
+      <Box className="p-6 bg-background-50">
         <Heading size="xl">Schedule</Heading>
         <Text size="sm" className="text-gray-400">
           View upcoming schedule for your selected day.
         </Text>
       </Box>
-      <View>
-        <View className="flex-row items-center gap-x-2 px-6 justify-between">
+      <VStack>
+        <HStack className="px-6 justify-between" space="sm">
           <Text className="text-typography-800 font-semibold">
             {selectedDayjs.format("MMM YYYY")}
           </Text>
@@ -257,7 +262,7 @@ export default function ScheduleScreen() {
               <Text size="xs">Today</Text>
             </TouchableOpacity>
           )}
-        </View>
+        </HStack>
         <HorizontalDaySelector
           disableBeforeToday
           selectedDayJs={dayjs(params.selectedDate)}
@@ -265,36 +270,35 @@ export default function ScheduleScreen() {
             router.setParams({ selectedDate: day.toISOString() })
           }
         />
-      </View>
-      <View className="px-6 gap-y-2">
-        {filteredDayAppointments.length ? (
-          filteredDayAppointments
-            .sort((a, b) => {
-              if (
-                dayjs().isAfter(a.end_datetime) ||
-                dayjs().isAfter(b.end_datetime)
-              )
-                return -1;
-              return (
-                new Date(a.start_datetime).getTime() -
-                new Date(b.start_datetime).getTime()
-              );
-            })
-            .map((appointment) => {
-              const customer =
-                locationCustomerDictionary[Number(appointment.customer_id)];
-              return (
-                <ScheduleRow
-                  appointment={appointment}
-                  customer={customer}
-                  key={appointment.id}
-                />
-              );
-            })
-        ) : (
-          <Text className="text-center">No events scheduled on this date.</Text>
-        )}
-      </View>
+      </VStack>
+
+      {filteredDayAppointments.length ? (
+        filteredDayAppointments
+          .sort((a, b) => {
+            if (
+              dayjs().isAfter(a.end_datetime) ||
+              dayjs().isAfter(b.end_datetime)
+            )
+              return -1;
+            return (
+              new Date(a.start_datetime).getTime() -
+              new Date(b.start_datetime).getTime()
+            );
+          })
+          .map((appointment) => {
+            const customer =
+              locationCustomerDictionary[Number(appointment.customer_id)];
+            return (
+              <ScheduleRow
+                appointment={appointment}
+                customer={customer}
+                key={appointment.id}
+              />
+            );
+          })
+      ) : (
+        <Text className="text-center">No events scheduled on this date.</Text>
+      )}
       <ScreenEnd />
       <ScreenEnd />
     </ScrollView>

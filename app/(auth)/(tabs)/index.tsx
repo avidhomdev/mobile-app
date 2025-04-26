@@ -14,6 +14,8 @@ export default function Dashboard() {
 
   return (
     <ScrollView
+      className="bg-background-light dark:bg-background-dark"
+      contentContainerClassName=" flex-1"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl

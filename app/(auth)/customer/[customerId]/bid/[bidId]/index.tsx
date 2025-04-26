@@ -246,7 +246,7 @@ function BidMedia({ bid }: { bid: ILocationCustomerBid }) {
                 path={media.path}
                 size="2xl"
               />
-              <View className="p-2 bg-white">
+              <View className="p-2 bg-background-50">
                 <Text bold className="text-center" size="lg">
                   {MEDIA_TYPES[media.type as MEDIA_TYPES_KEYS].name}
                 </Text>

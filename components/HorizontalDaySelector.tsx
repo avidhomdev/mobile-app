@@ -77,7 +77,7 @@ export default function HorizontalDaySelector({
               bold
               className={twMerge(
                 isToday
-                  ? "bg-slate-900 text-typography-white"
+                  ? "bg-primary-50 text-primary-600"
                   : "text-typography-800",
                 "text-center p-1 px-2 rounded"
               )}

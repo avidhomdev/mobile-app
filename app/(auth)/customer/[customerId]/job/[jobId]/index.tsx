@@ -838,7 +838,11 @@ function FabPlusMenu({ job }: { job: ILocationJob }) {
         size="lg"
         style={{ marginBlockEnd: bottom }}
       >
-        <Icon as={Plus} className="text-white" size="2xl" />
+        <Icon
+          as={Plus}
+          className="text-typography-white dark:text-typography-black"
+          size="2xl"
+        />
       </Fab>
       <Actionsheet
         isOpen={isActionSheetVisible}
@@ -899,7 +903,7 @@ function ProductsMenu() {
   return (
     <Fragment>
       <TouchableOpacity
-        className="p-2 bg-gray-50 rounded"
+        className="p-2 bg-background-50 rounded"
         onPress={() => setActionSheetVisible(true)}
       >
         <Icon as={EllipsisVertical} size="lg" />
@@ -1032,7 +1036,7 @@ function TaskMenu({
   return (
     <Fragment>
       <TouchableOpacity
-        className="p-2 bg-gray-50 rounded"
+        className="p-2 bg-background-50 rounded"
         onPress={() => setActionSheetVisible(true)}
       >
         <Icon as={EllipsisVertical} size="lg" />
@@ -1231,7 +1235,7 @@ function Products({ job }: { job: ILocationJob }) {
       ) : (
         <VStack space="sm">
           {job.products.map((product) => (
-            <Card className="bg-white" key={product.id} size="sm">
+            <Card className="bg-background-50" key={product.id} size="sm">
               <HStack className="justify-between items-center">
                 <Text className="flex-1">{product.product.name}</Text>
                 <Text bold>{`${product.number_of_units.toLocaleString()} ${
@@ -1330,7 +1334,7 @@ function Header({ job }: { job: ILocationJob }) {
   return (
     <HStack
       space="sm"
-      className="p-4 bg-white items-center"
+      className="p-4 bg-background-50 items-center"
       style={{ paddingTop: top }}
     >
       <Box className="flex-1">

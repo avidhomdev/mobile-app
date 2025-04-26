@@ -1,8 +1,7 @@
 import { Text } from "@/components/ui/text";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
-
+import { ScrollView, TouchableOpacity } from "react-native";
 import BackHeaderButton from "@/components/BackHeaderButton";
 import HorizontalDaySelector from "@/components/HorizontalDaySelector";
 import ScreenEnd from "@/components/ScreenEnd";
@@ -17,6 +16,7 @@ import {
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   FormControl,
   FormControlHelper,
@@ -25,6 +25,7 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import {
   Select,
   SelectBackdrop,
@@ -39,6 +40,13 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import {
   FRIENDLY_DATE_FORMAT,
   SERVER_DATE_TIME_FORMAT,
 } from "@/constants/date-formats";
@@ -47,20 +55,11 @@ import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
+import { homApiFetch } from "@/utils/hom-api-fetch";
 import { useRouter } from "expo-router";
 import { ChevronDownIcon } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/components/ui/toast";
-import { homApiFetch } from "@/utils/hom-api-fetch";
-import { HStack } from "@/components/ui/hstack";
-import { Card } from "@/components/ui/card";
-import { VStack } from "@/components/ui/vstack";
 
 function TimeSlotRow({
   disabled = false,
@@ -160,7 +159,9 @@ function TimeSlotRow({
   return (
     <TouchableOpacity
       className={twMerge(
-        disabled ? "bg-gray-300" : "bg-white shadow-sm shadow-gray-200",
+        disabled
+          ? "bg-background-50"
+          : "bg-background-200 shadow-sm shadow-background-300",
         "p-4 rounded-full flex-row items-center"
       )}
       disabled={disabled}
@@ -210,7 +211,7 @@ function TimeSlotRow({
                       </FormControlLabelText>
                     </FormControlLabel>
                     <Select
-                      className="bg-white"
+                      className="bg-background-100"
                       defaultValue={duration.toString()}
                       isDisabled={isSubmitting}
                       onValueChange={(payload) => setDuration(Number(payload))}
@@ -331,8 +332,8 @@ export default function Screen() {
   );
 
   return (
-    <View className="flex-1" style={{ paddingTop: top }}>
-      <View className="px-6">
+    <VStack className="flex-1">
+      <VStack className="px-6 bg-background-50" style={{ paddingTop: top }}>
         <BackHeaderButton />
         <Heading className="text-typography-800" size="xl">
           Appointment
@@ -340,8 +341,8 @@ export default function Screen() {
         <Text className="text-typography-400">
           {`Schedule appointment for ${customer?.full_name}`}
         </Text>
-      </View>
-      <Box className="border-b border-gray-200 pt-6">
+      </VStack>
+      <Box className="border-b border-background-200 bg-background-50 pt-6">
         <Heading className="text-center" size="sm">
           {selectedDayJs.format("MMM YYYY")}
         </Heading>
@@ -353,7 +354,7 @@ export default function Screen() {
       </Box>
 
       <ScrollView
-        contentContainerClassName="p-6 gap-y-2 bg-gray-100"
+        contentContainerClassName="p-6 gap-y-2"
         key={selectedDayJs.date()}
         showsVerticalScrollIndicator={false}
       >
@@ -379,6 +380,6 @@ export default function Screen() {
         })}
         <ScreenEnd />
       </ScrollView>
-    </View>
+    </VStack>
   );
 }
