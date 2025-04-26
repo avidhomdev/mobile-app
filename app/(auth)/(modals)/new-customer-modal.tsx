@@ -142,7 +142,7 @@ export default function ModalScreen() {
           await refreshData();
           router.back();
           router.push({
-            pathname: "/customer/[customerId]/schedule-closing",
+            pathname: "/customer/[customerId]/new-appointment",
             params: { customerId: customer.id },
           });
         });

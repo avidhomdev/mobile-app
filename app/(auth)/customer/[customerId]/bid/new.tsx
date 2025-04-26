@@ -761,8 +761,14 @@ function BidForm() {
         </FormControl>
       </HStack>
       <Totals />
-      <Button action="primary" onPress={handleSubmit}>
-        <ButtonText>Submit Bid</ButtonText>
+      <Button
+        action="primary"
+        disabled={formState.isSubmitting}
+        onPress={handleSubmit}
+      >
+        <ButtonText>
+          {formState.isSubmitting ? "Saving..." : "Save bid"}
+        </ButtonText>
       </Button>
     </Fragment>
   );
@@ -835,11 +841,15 @@ function ScreenHeaderActions() {
 }
 
 export default function Screen() {
+  const { bottom } = useSafeAreaInsets();
   return (
     <CustomerBidFormContextProvider>
       <ScreenHeaderActions />
       <KeyboardAvoidingView behavior="padding">
-        <ScrollView contentContainerClassName="gap-y-6 p-6 pt-0">
+        <ScrollView
+          contentContainerClassName="gap-y-6 p-6 pt-0"
+          contentContainerStyle={{ paddingBlockEnd: bottom }}
+        >
           <ScreenHeader />
           <ScreenContent />
           <ScreenEnd />

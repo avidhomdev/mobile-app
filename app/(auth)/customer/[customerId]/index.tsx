@@ -62,11 +62,11 @@ import { supabase } from "@/lib/supabase";
 import { formatAsCompactCurrency } from "@/utils/format-as-compact-currency";
 import { formatAsCurrency } from "@/utils/format-as-currency";
 import { getBidRequirementsForJob } from "@/utils/get-bid-requirements-for-job";
+import { homApiFetch } from "@/utils/hom-api-fetch";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import {
   Calendar1,
-  CalendarCheck,
   CheckCircle,
   Circle,
   Construction,
@@ -398,41 +398,13 @@ function ConvertBidToJobActionItem({
   const [isVisible, setIsVisible] = useState(false);
   const handleCloseDialog = () => setIsVisible(false);
   const toast = useToast();
-  const handleStartBidToJob = async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-
-    if (!session || error) {
-      return toast.show({
-        id: "new-job-error",
-        placement: "bottom",
-        duration: 3000,
-        render: () => {
-          return (
-            <Toast action="error">
-              <ToastTitle>Process failed.</ToastTitle>
-              <ToastDescription>
-                {error?.message || "No session found."}
-              </ToastDescription>
-            </Toast>
-          );
-        },
-      });
-    }
-
-    return fetch(
-      `${process.env.EXPO_PUBLIC_HOM_API_URL}/bid/${bid.id}/convert-to-job`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
+  const handleStartBidToJob = async () =>
+    homApiFetch({
+      endpoint: `bid/${bid.id}/convert-to-job`,
+      options: {
         method: "POST",
-      }
-    )
-      .then((res) => res.json())
+      },
+    })
       .then(async (res) => {
         if (!res.job) return;
         handleCloseDialog();
@@ -442,6 +414,19 @@ function ConvertBidToJobActionItem({
           params: {
             customerId: customer.id,
             jobId: res.job.id,
+          },
+        });
+        return toast.show({
+          id: "new-job-success",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="success">
+                <ToastTitle>Job created.</ToastTitle>
+                <ToastDescription>Successfully created job.</ToastDescription>
+              </Toast>
+            );
           },
         });
       })
@@ -460,7 +445,6 @@ function ConvertBidToJobActionItem({
           },
         })
       );
-  };
 
   const bidRequirementsForJob = getBidRequirementsForJob(bid);
   const hasMetAllRequirementsForJob = Object.values(
@@ -664,48 +648,33 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
   const handleStartJob = useCallback(async () => {
     if (isStarting) return;
     setIsStarting(true);
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
 
-    if (!session || error) {
-      return toast.show({
-        id: "new-job-error",
-        placement: "bottom",
-        duration: 3000,
-        render: () => {
-          return (
-            <Toast action="error">
-              <ToastTitle>Process failed.</ToastTitle>
-              <ToastDescription>
-                {error?.message || "No session found."}
-              </ToastDescription>
-            </Toast>
-          );
-        },
-      });
-    }
-
-    return fetch(
-      `${process.env.EXPO_PUBLIC_HOM_API_URL}/bid/${bid.id}/convert-to-job`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
+    return homApiFetch({
+      endpoint: `/bid/${bid.id}/convert-to-job`,
+      options: {
         method: "POST",
-      }
-    )
-      .then((res) => res.json())
+      },
+    })
       .then(async (res) => {
-        if (res.error) throw new Error(res.error);
         await refreshData();
         router.push({
           pathname: "/customer/[customerId]/job/[jobId]",
           params: {
             customerId: customer.id,
             jobId: res.job.id,
+          },
+        });
+        return toast.show({
+          id: "new-job-success",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="success">
+                <ToastTitle>Job created.</ToastTitle>
+                <ToastDescription>Successfully created job.</ToastDescription>
+              </Toast>
+            );
           },
         });
       })
@@ -872,8 +841,15 @@ function CustomerBids() {
 }
 
 function CustomerAppointments() {
+  const [visibleNumberOfAppointments, setVisibleNumberOfAppointments] =
+    useState(5);
   const { customer } = useCustomerContext();
   const router = useRouter();
+
+  const { appointments } = customer;
+  const slicedAppointments = appointments.slice(0, visibleNumberOfAppointments);
+  const hasAppointments = appointments.length > 0;
+
   return (
     <VStack className="px-6" space="xl">
       <HStack className="items-center" space="sm">
@@ -886,9 +862,9 @@ function CustomerAppointments() {
           </Text>
         </VStack>
       </HStack>
-      {customer?.appointments?.length ? (
+      {hasAppointments ? (
         <VStack space="sm">
-          {customer?.appointments
+          {slicedAppointments
             .sort(
               (a, b) =>
                 new Date(b.start_datetime).getTime() -
@@ -916,6 +892,18 @@ function CustomerAppointments() {
                 </HStack>
               </Card>
             ))}
+
+          {slicedAppointments.length < appointments.length && (
+            <Button
+              action="secondary"
+              className="self-center mt-2"
+              onPress={() =>
+                setVisibleNumberOfAppointments((prevState) => prevState + 5)
+              }
+            >
+              <ButtonText>Load More</ButtonText>
+            </Button>
+          )}
         </VStack>
       ) : (
         <Card variant="filled">
@@ -925,25 +913,12 @@ function CustomerAppointments() {
               <Button
                 action="secondary"
                 onPress={() =>
-                  router.push({
-                    pathname: "/customer/[customerId]/schedule-closing",
-                    params: { customerId: customer.id },
-                  })
-                }
-                size="sm"
-              >
-                <ButtonIcon as={CalendarCheck} />
-                <ButtonText>Closing</ButtonText>
-              </Button>
-              <Button
-                action="secondary"
-                onPress={() =>
                   router.push("/customer/[customerId]/new-appointment")
                 }
                 size="sm"
               >
                 <ButtonIcon as={Calendar1} />
-                <ButtonText>Appointment</ButtonText>
+                <ButtonText>Add Appointment</ButtonText>
               </Button>
             </ButtonGroup>
           </VStack>

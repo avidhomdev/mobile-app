@@ -51,6 +51,16 @@ import { useRouter } from "expo-router";
 import { ChevronDownIcon } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { homApiFetch } from "@/utils/hom-api-fetch";
+import { HStack } from "@/components/ui/hstack";
+import { Card } from "@/components/ui/card";
+import { VStack } from "@/components/ui/vstack";
 
 function TimeSlotRow({
   disabled = false,
@@ -59,6 +69,8 @@ function TimeSlotRow({
   disabled?: boolean;
   time: dayjs.Dayjs;
 }) {
+  const toast = useToast();
+  const { bottom } = useSafeAreaInsets();
   const { customer } = useCustomerContext();
   const router = useRouter();
   const { profile, refreshData } = useUserContext();
@@ -78,43 +90,62 @@ function TimeSlotRow({
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const appointmentInsert = {
-      business_id: location.business_id,
-      customer_id: customer?.id,
-      duration: duration,
-      end_datetime: time
-        .add(duration, "minute")
-        ?.format(SERVER_DATE_TIME_FORMAT),
-      location_id: location.id,
-      name: "Customer Meeting",
-      start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
-    };
-
-    return supabase
-      .from("business_appointments")
-      .insert(appointmentInsert)
-      .select("id")
-      .single()
-      .then(({ data, error }) => {
-        if (error) throw error.message;
-        return supabase.from("business_appointment_profiles").insert({
-          appointment_id: data.id,
-          business_id: location.business_id,
-          profile_id: profile.id,
-        });
+    return homApiFetch({
+      endpoint: `customers/${customer.id}/schedule-appointment`,
+      options: {
+        method: "POST",
+        body: JSON.stringify({
+          appointment: {
+            business_id: location.business_id,
+            customer_id: customer?.id,
+            duration: duration,
+            end_datetime: time
+              .add(duration, "minute")
+              ?.format(SERVER_DATE_TIME_FORMAT),
+            location_id: location.id,
+            name: "Customer Meeting",
+            start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
+          },
+          profiles: [
+            { business_id: location.business_id, profile_id: profile.id },
+          ],
+        }),
+      },
+    })
+      .then(({ success, error }) => {
+        if (error) throw error;
+        if (!success) throw new Error("Failed to fetch.");
+        if (success) return refreshData();
       })
-      .then(refreshData)
       .then(() =>
         router.push({
-          pathname: "/(auth)/customer/[customerId]",
+          pathname: "/customer/[customerId]",
           params: {
-            customerId: customer?.id ?? "",
+            customerId: customer.id,
           },
         })
       )
-      .then(handleCloseTimeSlotActionSheet);
+      .then(handleCloseTimeSlotActionSheet)
+      .then(() =>
+        toast.show({
+          id: "new-appointment-success",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="success">
+                <ToastTitle>Appointment created.</ToastTitle>
+                <ToastDescription>
+                  Check your email for confirmation.
+                </ToastDescription>
+              </Toast>
+            );
+          },
+        })
+      )
+      .finally(() => setIsSubmitting(false));
   }, [
-    customer?.id,
+    customer.id,
     duration,
     isSubmitting,
     location.business_id,
@@ -123,6 +154,7 @@ function TimeSlotRow({
     refreshData,
     router,
     time,
+    toast,
   ]);
 
   return (
@@ -160,72 +192,88 @@ function TimeSlotRow({
             <ActionsheetDragIndicatorWrapper>
               <ActionsheetDragIndicator />
               <ActionsheetSectionHeaderText>
-                Schedule Appointment
+                {time.format(FRIENDLY_DATE_FORMAT)}
               </ActionsheetSectionHeaderText>
             </ActionsheetDragIndicatorWrapper>
-            <View className="w-full pb-6 gap-y-4">
-              <Heading>{time.format(FRIENDLY_DATE_FORMAT)}</Heading>
-              <Text>{`Starting at ${time.format("hh:mm a")}`}</Text>
-
-              <FormControl isRequired>
-                <FormControlLabel>
-                  <FormControlLabelText size="md">
-                    Duration:
-                  </FormControlLabelText>
-                </FormControlLabel>
-                <Select
-                  defaultValue={duration.toString()}
-                  onValueChange={(payload) => setDuration(Number(payload))}
-                >
-                  <SelectTrigger>
-                    <SelectInput
-                      placeholder="Select option"
-                      className="flex-1"
-                    />
-                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent style={{ paddingBottom: 10 }}>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      <SelectSectionHeaderText>
-                        Select the appointment duration
-                      </SelectSectionHeaderText>
-                      {Array.from({ length: 8 }, (_, num) => (
-                        <SelectItem
-                          key={num}
-                          label={`${(num + 1) * 30} minutes`}
-                          value={((num + 1) * 30).toString()}
+            <VStack
+              className={twMerge(isSubmitting ? "opacity-75" : "", "w-full")}
+              space="md"
+              style={{ paddingBlockEnd: bottom }}
+            >
+              <Card variant="filled">
+                <VStack space="sm">
+                  <Text>{`Starting at ${time.format("hh:mm a")}`}</Text>
+                  <FormControl isRequired>
+                    <FormControlLabel>
+                      <FormControlLabelText size="md">
+                        Duration:
+                      </FormControlLabelText>
+                    </FormControlLabel>
+                    <Select
+                      className="bg-white"
+                      defaultValue={duration.toString()}
+                      isDisabled={isSubmitting}
+                      onValueChange={(payload) => setDuration(Number(payload))}
+                    >
+                      <SelectTrigger>
+                        <SelectInput
+                          placeholder="Select option"
+                          className="flex-1"
                         />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                <FormControlHelper>
-                  <FormControlHelperText>
-                    Select the appointment duration
-                  </FormControlHelperText>
-                </FormControlHelper>
-              </FormControl>
-              <Text>{`Ending at ${time
-                .add(duration, "minutes")
-                .format("hh:mm a")}`}</Text>
-              <View className="flex-row w-full gap-x-2">
+                        <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                      </SelectTrigger>
+                      <SelectPortal>
+                        <SelectBackdrop />
+                        <SelectContent style={{ paddingBottom: 10 }}>
+                          <SelectDragIndicatorWrapper>
+                            <SelectDragIndicator />
+                          </SelectDragIndicatorWrapper>
+                          <SelectSectionHeaderText>
+                            Select the appointment duration
+                          </SelectSectionHeaderText>
+                          {Array.from({ length: 8 }, (_, num) => (
+                            <SelectItem
+                              key={num}
+                              label={`${(num + 1) * 30} minutes`}
+                              value={((num + 1) * 30).toString()}
+                            />
+                          ))}
+                        </SelectContent>
+                      </SelectPortal>
+                    </Select>
+                    <FormControlHelper>
+                      <FormControlHelperText>
+                        Select the appointment duration
+                      </FormControlHelperText>
+                    </FormControlHelper>
+                  </FormControl>
+                  <Text>{`Ending at ${time
+                    .add(duration, "minutes")
+                    .format("hh:mm a")}`}</Text>
+                </VStack>
+              </Card>
+              <HStack space="md">
                 <Button
                   className="ml-auto"
+                  disabled={isSubmitting}
                   size="lg"
                   action="secondary"
                   onPress={handleCloseTimeSlotActionSheet}
                 >
                   <ButtonText>Cancel</ButtonText>
                 </Button>
-                <Button onPress={handleSubmitTimeSlot} size="lg">
-                  <ButtonText>Submit</ButtonText>
+                <Button
+                  className="grow"
+                  disabled={isSubmitting}
+                  onPress={handleSubmitTimeSlot}
+                  size="lg"
+                >
+                  <ButtonText>
+                    {isSubmitting ? "Submitting..." : "Submit"}
+                  </ButtonText>
                 </Button>
-              </View>
-            </View>
+              </HStack>
+            </VStack>
           </ActionsheetContent>
         </Actionsheet>
       )}
