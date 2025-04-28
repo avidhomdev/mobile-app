@@ -1,6 +1,7 @@
 import BackHeaderButton from "@/components/BackHeaderButton";
 import { BidRequirementsList } from "@/components/BidRequirementsList";
 import ScreenEnd from "@/components/ScreenEnd";
+import { ScreenSectionHeading } from "@/components/ScreenSectionHeading";
 import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
   AlertDialog,
@@ -18,7 +19,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { MEDIA_TYPES, MEDIA_TYPES_KEYS } from "@/constants/media-types";
+import { MEDIA_TYPES } from "@/constants/media-types";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { ILocationCustomerBid, useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
@@ -27,9 +28,11 @@ import { getBidRequirementsForJob } from "@/utils/get-bid-requirements-for-job";
 import { toggleState } from "@/utils/toggle-state";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
+  Blocks,
   Construction,
   Eye,
   EyeOff,
+  Image,
   Settings,
   Trash,
 } from "lucide-react-native";
@@ -179,87 +182,112 @@ function BidProducts({
   const bidTotal = calculatedTotal + commission - discount;
 
   return (
-    <Card>
-      <VStack space="md">
-        <Heading size="sm">Products</Heading>
-        {bid.products.map((product) => {
-          const units = product.units ?? 0;
+    <VStack space="md">
+      <ScreenSectionHeading
+        icon={Blocks}
+        heading="Products"
+        subHeading="Products included in the bid"
+      />
+      <Card>
+        <VStack space="md">
+          <Heading size="sm">Products</Heading>
+          {bid.products.map((product) => {
+            const units = product.units ?? 0;
 
-          return (
-            <HStack
-              className="items-center justify-between"
-              key={product.product_id}
-              space="md"
-            >
-              <Text className="flex-1">{product.product.name}</Text>
-              <Text>{`${units.toLocaleString()} ${product.product.unit}`}</Text>
-            </HStack>
-          );
-        })}
+            return (
+              <HStack
+                className="items-center justify-between"
+                key={product.product_id}
+                space="md"
+              >
+                <Text className="flex-1">{product.product.name}</Text>
+                <Text>{`${units.toLocaleString()} ${
+                  product.product.unit
+                }`}</Text>
+              </HStack>
+            );
+          })}
 
-        <Divider />
+          <Divider />
 
-        {!isPreviewing && (
-          <>
-            <View className="flex-row items-center justify-between">
-              <Text>Products Total</Text>
-              <Text>{formatAsCurrency(calculatedTotal)}</Text>
-            </View>
-            <View className="flex-row items-center justify-between">
-              <Text>Commission</Text>
-              <Text>{formatAsCurrency(commission)}</Text>
-            </View>
-          </>
-        )}
-        <View className="flex-row items-center justify-between">
-          <Text>Discount</Text>
-          <Text>
-            {`${discount > 0 ? "-" : ""} ${formatAsCurrency(discount)}`}
-          </Text>
-        </View>
+          {!isPreviewing && (
+            <>
+              <View className="flex-row items-center justify-between">
+                <Text>Products Total</Text>
+                <Text>{formatAsCurrency(calculatedTotal)}</Text>
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text>Commission</Text>
+                <Text>{formatAsCurrency(commission)}</Text>
+              </View>
+            </>
+          )}
+          <View className="flex-row items-center justify-between">
+            <Text>Discount</Text>
+            <Text>
+              {`${discount > 0 ? "-" : ""} ${formatAsCurrency(discount)}`}
+            </Text>
+          </View>
 
-        <Divider />
+          <Divider />
 
-        <View className="flex-row items-center justify-between bord">
-          <Text bold>Total</Text>
-          <Text bold>{formatAsCurrency(bidTotal)}</Text>
-        </View>
-      </VStack>
-    </Card>
+          <View className="flex-row items-center justify-between bord">
+            <Text bold>Total</Text>
+            <Text bold>{formatAsCurrency(bidTotal)}</Text>
+          </View>
+        </VStack>
+      </Card>
+    </VStack>
   );
 }
 
 function BidMedia({ bid }: { bid: ILocationCustomerBid }) {
+  const { media } = bid;
+  const mediaByTypeDictionary = media.reduce<{
+    [k: string]: typeof media;
+  }>((dictionary, m) => {
+    dictionary[m.type] = (dictionary[m.type] ?? []).concat(m);
+    return dictionary;
+  }, {});
+
   return (
-    <VStack space="md">
-      <Heading size="sm">Media</Heading>
-      {bid.media.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="flex-row gap-x-2"
-        >
-          {bid!.media.map((media) => (
-            <VStack key={media.id}>
-              <SupabaseSignedImage
-                key={media.id}
-                path={media.path}
-                size="2xl"
-              />
-              <View className="p-2 bg-background-50">
-                <Text bold className="text-center" size="lg">
-                  {MEDIA_TYPES[media.type as MEDIA_TYPES_KEYS].name}
-                </Text>
-              </View>
-            </VStack>
-          ))}
-        </ScrollView>
-      ) : (
-        <View className="bg-warning-50 aspect-video justify-center items-center">
-          <Text>No media found</Text>
-        </View>
-      )}
-    </VStack>
+    <Fragment>
+      {Object.entries(MEDIA_TYPES).flatMap(([mediaTypeKey, mediaType]) => {
+        if (!mediaType.required) return [];
+        const mediaByType = mediaByTypeDictionary[mediaTypeKey] ?? [];
+        const hasMediaByType = mediaByType.length > 0;
+
+        return (
+          <VStack key={mediaTypeKey} space="md">
+            <ScreenSectionHeading
+              icon={Image}
+              heading={mediaType.name}
+              subHeading={`View photos of the ${mediaType.name}`}
+            />
+            {hasMediaByType ? (
+              <ScrollView
+                contentContainerClassName="gap-x-2"
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {mediaByType.map((m) => (
+                  <SupabaseSignedImage
+                    cacheInSeconds={3600}
+                    path={m.path}
+                    size="xl"
+                    key={m.id}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <Card variant="filled">
+                <Text>No media found.</Text>
+              </Card>
+            )}
+          </VStack>
+        );
+      })}
+    </Fragment>
   );
 }
 

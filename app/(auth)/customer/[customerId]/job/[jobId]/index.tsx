@@ -1,6 +1,7 @@
 import ActionSheetUpload from "@/components/ActionSheetUpload";
 import BackHeaderButton from "@/components/BackHeaderButton";
 import ScreenEnd from "@/components/ScreenEnd";
+import { ScreenSectionHeading } from "@/components/ScreenSectionHeading";
 import SupabaseSignedImage from "@/components/SupabaseSignedImage";
 import {
   ActionsheetBackdrop,
@@ -66,6 +67,7 @@ import {
   FRIENDLY_DATE_FORMAT,
   SERVER_DATE_FORMAT,
 } from "@/constants/date-formats";
+import { MEDIA_TYPES } from "@/constants/media-types";
 import { useCustomerContext } from "@/contexts/customer-context";
 import {
   ILocationCustomer,
@@ -1156,19 +1158,18 @@ function Tasks({ job }: { job: ILocationJob }) {
 
   return (
     <Fragment>
-      <View className="flex-row items-center gap-x-2">
-        <Icon as={CircleCheck} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View className="grow">
-          <Heading size="md">Tasks</Heading>
-          <Text size="xs">Stay on top of your job tasks</Text>
-        </View>
+      <ScreenSectionHeading
+        icon={CircleCheck}
+        heading="Tasks"
+        subHeading="Stay on top of your job tasks"
+      >
         <TaskMenu
           job={job}
           isHidingCompleted={isHidingCompleted}
           toggleCompleted={toggleCompleted}
         />
-      </View>
+      </ScreenSectionHeading>
+
       <VStack space="sm">
         {filteredTasks.length === 0 && (
           <Card variant="outline">
@@ -1219,15 +1220,14 @@ function Tiles({ job }: { job: ILocationJob }) {
 function Products({ job }: { job: ILocationJob }) {
   return (
     <Fragment>
-      <View className="flex-row items-center gap-x-2">
-        <Icon as={Blocks} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View className="grow">
-          <Heading size="md">Products</Heading>
-          <Text size="xs">Manage the products for this job.</Text>
-        </View>
+      <ScreenSectionHeading
+        icon={Blocks}
+        heading="Products"
+        subHeading="A list of products to install on the job"
+      >
         <ProductsMenu />
-      </View>
+      </ScreenSectionHeading>
+
       {job.products.length === 0 ? (
         <Card variant="outline">
           <Text>No products found.</Text>
@@ -1251,35 +1251,47 @@ function Products({ job }: { job: ILocationJob }) {
 }
 
 function Media({ job }: { job: ILocationJob }) {
+  const { media } = job;
+  const mediaByTypeDictionary = media.reduce<{
+    [k: string]: typeof media;
+  }>((dictionary, m) => {
+    dictionary[m.type] = (dictionary[m.type] ?? []).concat(m);
+    return dictionary;
+  }, {});
+
   return (
     <Fragment>
-      <View className="flex-row items-center gap-x-2">
-        <Icon as={Image} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View>
-          <Heading size="md">Media</Heading>
-          <Text size="xs">Photos and videos of the job</Text>
-        </View>
-      </View>
-      {job.media.length === 0 ? (
-        <Card variant="outline">
-          <Text>No media found.</Text>
-        </Card>
-      ) : (
-        <ScrollView
-          contentContainerClassName="gap-x-2"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          <HStack space="md">
-            {job?.media.map((media, index) => (
-              <Box key={index}>
-                <SupabaseSignedImage path={media.path} size="xl" />
-              </Box>
-            ))}
-          </HStack>
-        </ScrollView>
-      )}
+      {Object.entries(MEDIA_TYPES).flatMap(([mediaTypeKey, mediaType]) => {
+        if (!mediaType.required) return [];
+        const mediaByType = mediaByTypeDictionary[mediaTypeKey] ?? [];
+        const hasMediaByType = mediaByType.length > 0;
+
+        return (
+          <VStack key={mediaTypeKey} space="sm">
+            <ScreenSectionHeading
+              icon={Image}
+              heading={mediaType.name}
+              subHeading={`View photos of the ${mediaType.name}`}
+            />
+            {hasMediaByType && (
+              <ScrollView
+                contentContainerClassName="gap-x-2"
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {mediaByType.map((m) => (
+                  <SupabaseSignedImage
+                    cacheInSeconds={3600}
+                    path={m.path}
+                    size="xl"
+                    key={m.id}
+                  />
+                ))}
+              </ScrollView>
+            )}
+          </VStack>
+        );
+      })}
     </Fragment>
   );
 }
@@ -1287,14 +1299,11 @@ function Media({ job }: { job: ILocationJob }) {
 function Notes({ job }: { job: ILocationJob }) {
   return (
     <Fragment>
-      <View className="flex-row items-center gap-x-2">
-        <Icon as={MessageCircle} className="text-typography-500" size="lg" />
-        <View className="w-0.5 h-full bg-typography-100" />
-        <View>
-          <Heading size="md">Notes</Heading>
-          <Text size="xs">Notes on the job</Text>
-        </View>
-      </View>
+      <ScreenSectionHeading
+        icon={MessageCircle}
+        heading="Notes"
+        subHeading="Notes on the job"
+      />
       <VStack space="sm">
         {job.messages.length === 0 && (
           <Card variant="outline">
