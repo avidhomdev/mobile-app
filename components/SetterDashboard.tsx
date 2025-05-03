@@ -1,39 +1,46 @@
 import { FRIENDLY_DATE_FORMAT } from "@/constants/date-formats";
 import { DISPOSITION_STATUSES } from "@/constants/disposition-statuses";
 import { useLocationContext } from "@/contexts/location-context";
-import { formatAsCurrency } from "@/utils/format-as-currency";
+import { ILocationCustomer, useUserContext } from "@/contexts/user-context";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
-import { Banknote, Calendar1, EllipsisVertical } from "lucide-react-native";
+import { Calendar1, EllipsisVertical, TrophyIcon } from "lucide-react-native";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { twMerge } from "tailwind-merge";
-import { Avatar, AvatarFallbackText, AvatarGroup } from "./ui/avatar";
+import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Badge, BadgeText } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
+import { HStack } from "./ui/hstack";
 import { Icon } from "./ui/icon";
-import {
-  Table,
-  TableBody,
-  TableData,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
 import { Text } from "./ui/text";
+import { VStack } from "./ui/vstack";
+import { Divider } from "./ui/divider";
 
-const avatars = [
-  {
-    src: "https://example.com.jpg",
-    alt: "Sandeep Srivastva",
-    color: "bg-emerald-600",
-  },
-];
+type SetterCustomerDictionary = {
+  [k: string]: ILocationCustomer[];
+};
 
 export function SetterDashboard() {
+  const { profile } = useUserContext();
   const { location } = useLocationContext();
   const router = useRouter();
+  const sortedCustomers = [...(location?.customers ?? [])].sort((a, b) => {
+    return a.created_at.localeCompare(b.created_at);
+  });
+  const { profiles } = location;
+  const setters = profiles?.flatMap((profile) =>
+    profile.is_setter ? profile.profile : []
+  );
+
+  const setterCustomerDictionary =
+    sortedCustomers.reduce<SetterCustomerDictionary>((dictionary, customer) => {
+      dictionary[customer.creator_id] = (
+        dictionary[customer.creator_id] ?? []
+      ).concat(customer);
+      return dictionary;
+    }, {});
+
   return (
     <View className="gap-y-6 p-6">
       {location.customers && (
@@ -42,7 +49,7 @@ export function SetterDashboard() {
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          {location.customers?.map((customer) => {
+          {sortedCustomers.map((customer) => {
             const dispositionStatus =
               DISPOSITION_STATUSES[customer.disposition_status] ||
               DISPOSITION_STATUSES.NEW;
@@ -68,23 +75,6 @@ export function SetterDashboard() {
                   </Heading>
 
                   <View className="flex-row justify-between items-center">
-                    <AvatarGroup className="ml-2">
-                      {avatars.slice(0, 3).map((avatar, index) => {
-                        return (
-                          <Avatar
-                            key={index}
-                            size="xs"
-                            className={
-                              "border-2 border-outline-0 " + avatar.color
-                            }
-                          >
-                            <AvatarFallbackText className="text-white">
-                              {avatar.alt}
-                            </AvatarFallbackText>
-                          </Avatar>
-                        );
-                      })}
-                    </AvatarGroup>
                     <View className="flex-row gap-x-1 items-center">
                       <Icon as={Calendar1} size="xs" />
                       <Text size="xs">
@@ -100,62 +90,56 @@ export function SetterDashboard() {
           })}
         </ScrollView>
       )}
-      <View className="gap-x-2 flex-row">
-        <Card className="basis-1/2">
-          <Icon as={Calendar1} />
-          <Text bold className="uppercase text-typography-400" size="xs">
-            Scheduled
-          </Text>
-          <Text size="lg">0</Text>
-        </Card>
-
-        <Card className="basis-1/2">
-          <Icon as={Banknote} />
-          <Text bold className="uppercase text-typography-400" size="xs">
-            Commission
-          </Text>
-          <Text bold className="text-success-300" size="lg">
-            {formatAsCurrency(90_000)}
-          </Text>
-        </Card>
-      </View>
-
-      <Table className="w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Setter</TableHead>
-            <TableHead className="text-right">Sets</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow>
-            <TableData>Rajesh Kumar</TableData>
-            <TableData className="text-right">10</TableData>
-          </TableRow>
-          <TableRow>
-            <TableData>Priya Sharma</TableData>
-            <TableData className="text-right">12</TableData>
-          </TableRow>
-          <TableRow>
-            <TableData>Ravi Patel</TableData>
-            <TableData className="text-right">6</TableData>
-          </TableRow>
-          <TableRow>
-            <TableData>Ananya Gupta</TableData>
-            <TableData className="text-right">18</TableData>
-          </TableRow>
-          <TableRow>
-            <TableData>Arjun Singh</TableData>
-            <TableData className="text-right">2</TableData>
-          </TableRow>
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableHead>Total</TableHead>
-            <TableHead className="text-right">48</TableHead>
-          </TableRow>
-        </TableFooter>
-      </Table>
+      <VStack space="sm">
+        <HStack className="items-center" space="sm">
+          <Icon as={TrophyIcon} className="text-typography-500" size="lg" />
+          <Divider orientation="vertical" />
+          <VStack>
+            <Heading size="md">Setter Leaderboard</Heading>
+            <Text size="xs" className="text-typography-500">
+              Setters ranked by the number of new customers
+            </Text>
+          </VStack>
+        </HStack>
+        <VStack space="sm">
+          {[...(setters ?? [])]
+            .sort(
+              (a, b) =>
+                Number(setterCustomerDictionary[b.id] ?? 0) -
+                Number(setterCustomerDictionary[a.id] ?? 0)
+            )
+            .map((setter) => (
+              <Card
+                className={twMerge(
+                  setter.id === profile.id ? "bg-info-50" : ""
+                )}
+                key={setter.id}
+                size="sm"
+              >
+                <HStack className="justify-between">
+                  <HStack className="items-center" space="sm">
+                    <Avatar size="xs">
+                      <AvatarFallbackText>
+                        {setter.full_name}
+                      </AvatarFallbackText>
+                      <AvatarImage
+                        source={{
+                          uri: setter.avatar_url ?? undefined,
+                        }}
+                      />
+                    </Avatar>
+                    <Text>{setter.full_name}</Text>
+                  </HStack>
+                  <Badge action="success">
+                    <BadgeText>
+                      {setterCustomerDictionary[setter.id]?.length ?? 0}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
+              </Card>
+            ))}
+        </VStack>
+      </VStack>
     </View>
   );
 }

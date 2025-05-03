@@ -489,7 +489,7 @@ export type Database = {
           city: string
           closer_id: string | null
           created_at: string
-          creator_id: string | null
+          creator_id: string
           disposition_status: string | null
           email: string
           full_name: string
@@ -508,7 +508,7 @@ export type Database = {
           city: string
           closer_id?: string | null
           created_at?: string
-          creator_id?: string | null
+          creator_id: string
           disposition_status?: string | null
           email: string
           full_name: string
@@ -527,7 +527,7 @@ export type Database = {
           city?: string
           closer_id?: string | null
           created_at?: string
-          creator_id?: string | null
+          creator_id?: string
           disposition_status?: string | null
           email?: string
           full_name?: string
@@ -1318,6 +1318,7 @@ export type Database = {
           commission_rate: number | null
           created_at: string
           is_closer: boolean
+          is_installer: boolean
           is_setter: boolean
           location_id: number
           profile_id: string
@@ -1330,6 +1331,7 @@ export type Database = {
           commission_rate?: number | null
           created_at?: string
           is_closer?: boolean
+          is_installer?: boolean
           is_setter?: boolean
           location_id: number
           profile_id: string
@@ -1342,6 +1344,7 @@ export type Database = {
           commission_rate?: number | null
           created_at?: string
           is_closer?: boolean
+          is_installer?: boolean
           is_setter?: boolean
           location_id?: number
           profile_id?: string

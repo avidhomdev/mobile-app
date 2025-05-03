@@ -69,6 +69,7 @@ import {
 } from "@/constants/date-formats";
 import { MEDIA_TYPES } from "@/constants/media-types";
 import { useCustomerContext } from "@/contexts/customer-context";
+import { useLocationContext } from "@/contexts/location-context";
 import {
   ILocationCustomer,
   ILocationJob,
@@ -186,6 +187,7 @@ function HeaderMenu() {
   const { refreshData } = useUserContext();
   const router = useRouter();
   const { customerId, jobId } = useGlobalSearchParams();
+  const { location } = useLocationContext();
   return (
     <Fragment>
       <Pressable onPress={() => setIsDrawerVisible(true)}>
@@ -285,14 +287,16 @@ function HeaderMenu() {
               <Text>Schedule</Text>
             </Pressable>
           </DrawerBody>
-          <DrawerFooter>
-            <DeleteConfirmation
-              handleClose={() => {
-                setIsDrawerVisible(false);
-                refreshData();
-              }}
-            />
-          </DrawerFooter>
+          {location.is_closer && (
+            <DrawerFooter>
+              <DeleteConfirmation
+                handleClose={() => {
+                  setIsDrawerVisible(false);
+                  refreshData();
+                }}
+              />
+            </DrawerFooter>
+          )}
         </DrawerContent>
       </Drawer>
     </Fragment>
@@ -1218,6 +1222,7 @@ function Tiles({ job }: { job: ILocationJob }) {
 }
 
 function Products({ job }: { job: ILocationJob }) {
+  const { location } = useLocationContext();
   return (
     <Fragment>
       <ScreenSectionHeading
@@ -1225,7 +1230,7 @@ function Products({ job }: { job: ILocationJob }) {
         heading="Products"
         subHeading="A list of products to install on the job"
       >
-        <ProductsMenu />
+        {location.is_closer && <ProductsMenu />}
       </ScreenSectionHeading>
 
       {job.products.length === 0 ? (
@@ -1357,6 +1362,7 @@ function Header({ job }: { job: ILocationJob }) {
 
 export default function Screen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { location } = useLocationContext();
   const { refreshData } = useUserContext();
   const { jobId } = useLocalSearchParams();
   const { customer } = useCustomerContext();
@@ -1368,7 +1374,7 @@ export default function Screen() {
     <View className="flex-1">
       <Header job={job} />
       <Divider />
-      <FabPlusMenu job={job} />
+      {location.is_closer && <FabPlusMenu job={job} />}
       <ScrollView
         contentContainerClassName="gap-y-6 p-6"
         refreshControl={
@@ -1382,7 +1388,7 @@ export default function Screen() {
           />
         }
       >
-        <Tasks job={job} />
+        {location.is_closer && <Tasks job={job} />}
         <Products job={job} />
         <Tiles job={job} />
         <Media job={job} />

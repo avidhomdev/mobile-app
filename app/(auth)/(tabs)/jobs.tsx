@@ -31,6 +31,7 @@ import {
   DISPOSITION_STATUS_KEYS,
   DISPOSITION_STATUSES,
 } from "@/constants/disposition-statuses";
+import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { Tables } from "@/supabase";
 import { debounce } from "@/utils/debounce";
@@ -50,6 +51,7 @@ type JobCardPropType = {
 };
 
 function JobCard({ job }: JobCardPropType) {
+  const { location } = useLocationContext();
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
@@ -117,9 +119,11 @@ function JobCard({ job }: JobCardPropType) {
                 {`${job.address}, ${job.city} ${job.state} ${job.postal_code}`}
               </Text>
             </VStack>
-            <Badge action="info" variant="outline" size="lg">
-              <BadgeText>{`${completed}/${total}`}</BadgeText>
-            </Badge>
+            {location.is_closer && (
+              <Badge action="info" variant="outline" size="lg">
+                <BadgeText>{`${completed}/${total}`}</BadgeText>
+              </Badge>
+            )}
           </HStack>
         </Card>
       </TouchableOpacity>

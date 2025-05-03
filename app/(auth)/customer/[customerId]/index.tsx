@@ -337,6 +337,7 @@ function PlusButtonActionSheet() {
 }
 
 function CustomerDisposition() {
+  const { location } = useLocationContext();
   const { bottom: paddingBlockEnd } = useSafeAreaInsets();
   const { refreshData } = useUserContext();
   const { customer, updateCustomer } = useCustomerContext();
@@ -354,6 +355,7 @@ function CustomerDisposition() {
     <Fragment>
       <Pressable
         className="ml-auto"
+        disabled={!location.is_closer}
         onPress={() => setIsActionSheetVisible(true)}
       >
         <Badge
@@ -945,6 +947,7 @@ function caculateJobTotal(job: ILocationJob) {
 }
 
 function JobCard({ job }: { job: ILocationJob }) {
+  const { location } = useLocationContext();
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
@@ -1011,9 +1014,11 @@ function JobCard({ job }: { job: ILocationJob }) {
                 {`${job.address}, ${job.city} ${job.state} ${job.postal_code}`}
               </Text>
             </VStack>
-            <Badge action="info" variant="outline" size="lg">
-              <BadgeText>{`${completed}/${total}`}</BadgeText>
-            </Badge>
+            {location.is_closer && (
+              <Badge action="info" variant="outline" size="lg">
+                <BadgeText>{`${completed}/${total}`}</BadgeText>
+              </Badge>
+            )}
           </HStack>
         </Card>
       </TouchableOpacity>
@@ -1023,6 +1028,7 @@ function JobCard({ job }: { job: ILocationJob }) {
 
 function CustomerJobs() {
   const [visibleNumberOfJobs, setVisibleNumberOfJobs] = useState(5);
+  const { location } = useLocationContext();
   const { customer } = useCustomerContext();
   const { jobs } = customer;
 
@@ -1065,7 +1071,9 @@ function CustomerJobs() {
       ) : (
         <Card variant="filled">
           <Text className="text-center">
-            No jobs found. Start with a bid to begin a job
+            {`No jobs found.${
+              location.is_closer ? ` Start with a bid to begin a job` : ""
+            }`}
           </Text>
         </Card>
       )}
@@ -1077,6 +1085,7 @@ export default function Screen() {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
   const { customer } = useCustomerContext();
+  const { location } = useLocationContext();
   const bidsTotal =
     customer?.bids.reduce((acc, bid) => {
       const bidTotal = bid.products.reduce((acc, product) => {
@@ -1141,11 +1150,15 @@ export default function Screen() {
         <CustomerAppointments />
         <Divider className="w-[50%] mx-auto" />
         <CustomerJobs />
-        <Divider className="w-[50%] mx-auto" />
-        <CustomerBids />
+        {location.is_closer && (
+          <>
+            <Divider className="w-[50%] mx-auto" />
+            <CustomerBids />
+          </>
+        )}
         <ScreenEnd />
       </ScrollView>
-      <PlusButtonActionSheet />
+      {location.is_closer && <PlusButtonActionSheet />}
     </Fragment>
   );
 }

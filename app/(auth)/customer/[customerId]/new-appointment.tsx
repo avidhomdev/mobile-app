@@ -135,7 +135,7 @@ function TimeSlotRow({
               <Toast action="success">
                 <ToastTitle>Appointment created.</ToastTitle>
                 <ToastDescription>
-                  Check your email for confirmation.
+                  Email confirmations have been sent.
                 </ToastDescription>
               </Toast>
             );
