@@ -238,32 +238,52 @@ export type Database = {
       }
       business_location_channel_messages: {
         Row: {
+          business_id: string
           channel_id: number
           created_at: string
           id: number
+          location_id: number
           message: string
           profile_id: string
         }
         Insert: {
+          business_id: string
           channel_id: number
           created_at?: string
           id?: number
+          location_id: number
           message: string
           profile_id: string
         }
         Update: {
+          business_id?: string
           channel_id?: number
           created_at?: string
           id?: number
+          location_id?: number
           message?: string
           profile_id?: string
         }
         Relationships: [
           {
+            foreignKeyName: "business_location_channel_messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "business_location_channel_messages_channel_id_fkey"
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "business_location_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_location_channel_messages_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "business_locations"
             referencedColumns: ["id"]
           },
           {
