@@ -71,9 +71,24 @@ export interface IAppointments extends Tables<"business_appointments"> {
   profiles: Tables<"business_appointment_profiles">[];
 }
 
+export interface ILocationChannelMessage
+  extends Tables<"business_location_channel_messages"> {
+  profile: Tables<"profiles">;
+}
+
+export interface ILocationChannelProfiles
+  extends Tables<"business_location_channel_profiles"> {
+  profile: Tables<"profiles">;
+}
+
+export interface ILocationChannel extends Tables<"business_location_channels"> {
+  messages: ILocationChannelMessage[];
+  profiles: ILocationChannelProfiles[];
+}
 export interface ILocation extends Partial<Tables<"business_locations">> {
   appointments: IAppointments[];
   jobs: ILocationJob[];
+  channels: ILocationChannel[];
   customers: ILocationCustomer[];
   profiles: ILocationProfile[];
 }
@@ -92,7 +107,13 @@ const defaultContext = {
   closers: null,
   customer: null,
   jobs: [],
-  location: { appointments: [], jobs: [], customers: [], profiles: [] },
+  location: {
+    channels: [],
+    appointments: [],
+    jobs: [],
+    customers: [],
+    profiles: [],
+  },
   locations: [],
   profile: {
     avatar_url: null,
@@ -189,6 +210,11 @@ const fetchUserContextData = async (
         profiles: business_location_profiles(
           *,
           profile: profile_id(*)
+        ),
+        channels: business_location_channels(
+          *,
+          messages: business_location_channel_messages(*, profile: profile_id(*)),
+          profiles: business_location_channel_profiles(*, profile: profile_id(*))
         )
       `),
   ]);

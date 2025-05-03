@@ -36,24 +36,19 @@ import {
   ParamListBase,
   TabNavigationState,
 } from "@react-navigation/native";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, usePathname, useRouter } from "expo-router";
 import {
   Calendar1,
   ChevronDown,
   HardHat,
-  Home,
   HomeIcon,
   LogOut,
   MapPin,
+  MessageSquareText,
   MessagesSquare,
-  PhoneIcon,
   PlusIcon,
-  ShoppingCart,
-  StarIcon,
-  User,
   User2,
   UserPlus2,
-  Wallet,
 } from "lucide-react-native";
 import { useState } from "react";
 import { TouchableOpacity, useColorScheme, View } from "react-native";
@@ -203,10 +198,38 @@ type TTabBar = {
   state: TabNavigationState<ParamListBase>;
 };
 
+function ChannelsTabActionsheetItems({
+  handleClose,
+}: {
+  handleClose: () => void;
+}) {
+  const router = useRouter();
+  return (
+    <>
+      <ActionsheetItem
+        onPress={() => {
+          router.push(`/new-channel`);
+          handleClose();
+        }}
+      >
+        <ActionsheetIcon
+          as={MessageSquareText}
+          className="text-typography-500"
+        />
+        <ActionsheetItemText className="text-typography-700">
+          New Channel
+        </ActionsheetItemText>
+      </ActionsheetItem>
+    </>
+  );
+}
+
 function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const handleClose = () => setIsActionSheetVisible(false);
   const router = useRouter();
+  const pathname = usePathname();
+
   return (
     <View className="flex-row justify-between">
       <View className="bg-black rounded-full p-2 px-4 flex-row gap-x-2">
@@ -243,17 +266,21 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          <ActionsheetItem
-            onPress={() => {
-              router.push(`/new-customer`);
-              handleClose();
-            }}
-          >
-            <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
-            <ActionsheetItemText className="text-typography-700">
-              New Customer
-            </ActionsheetItemText>
-          </ActionsheetItem>
+          {pathname === "/channels" ? (
+            <ChannelsTabActionsheetItems handleClose={handleClose} />
+          ) : (
+            <ActionsheetItem
+              onPress={() => {
+                router.push(`/new-customer`);
+                handleClose();
+              }}
+            >
+              <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
+              <ActionsheetItemText className="text-typography-700">
+                New Customer
+              </ActionsheetItemText>
+            </ActionsheetItem>
+          )}
         </ActionsheetContent>
       </Actionsheet>
     </View>
@@ -317,9 +344,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chats"
+        name="channels"
         options={{
-          title: "Chats",
+          title: "Channels",
           tabBarIcon: MessagesSquare,
         }}
       />

@@ -1,6 +1,7 @@
 import BackHeaderButton from "@/components/BackHeaderButton";
 import ScreenEnd from "@/components/ScreenEnd";
 import { Button, ButtonText } from "@/components/ui/button";
+import { Divider } from "@/components/ui/divider";
 import {
   FormControl,
   FormControlError,
@@ -10,6 +11,7 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import {
@@ -97,14 +99,14 @@ function formReducer(
 
 function ScreenHeader() {
   return (
-    <View className="flex-row items-center gap-x-2">
+    <HStack className="items-center" space="sm">
       <Icon as={Construction} className="text-typography-500" size="md" />
-      <View className="w-0.5 h-full bg-typography-100" />
-      <View>
+      <Divider orientation="vertical" />
+      <VStack>
         <Heading size="md">New Customer</Heading>
         <Text size="xs">Tell us more about the customer to continue</Text>
-      </View>
-    </View>
+      </VStack>
+    </HStack>
   );
 }
 
