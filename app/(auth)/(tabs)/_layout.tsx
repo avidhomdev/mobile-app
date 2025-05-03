@@ -149,7 +149,7 @@ function ScreenHeader() {
           </DrawerHeader>
           <Divider className="my-4" />
           <DrawerBody contentContainerClassName="gap-2">
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
+            {/* <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
               <Icon as={User} size="lg" className="text-typography-600" />
               <Text>My Profile</Text>
             </TouchableOpacity>
@@ -176,7 +176,7 @@ function ScreenHeader() {
             <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
               <Icon as={PhoneIcon} size="lg" className="text-typography-600" />
               <Text>Contact Us</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </DrawerBody>
           <DrawerFooter>
             <Button
