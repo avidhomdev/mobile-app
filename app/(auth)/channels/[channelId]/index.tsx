@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/avatar";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Divider } from "@/components/ui/divider";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -26,7 +27,7 @@ import { useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useGlobalSearchParams } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { Plus, Send, Settings } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, ScrollView } from "react-native";
@@ -142,6 +143,7 @@ function NewMessageActionsheet() {
 }
 
 export default function ChannelScreen() {
+  const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const { refreshData } = useUserContext();
   const {
@@ -184,18 +186,20 @@ export default function ChannelScreen() {
       className="bg-background-light dark:bg-background-dark flex-1"
       style={{ paddingBlockStart: top }}
     >
-      <VStack className="border-b border-background-200 pb-2" space="md">
-        <HStack className="justify-between items-center px-6">
-          <BackHeaderButton />
+      <VStack className="border-b border-background-200 px-6 pb-2" space="md">
+        <HStack className="justify-between items-center">
+          <BackHeaderButton
+            onPress={() => router.push({ pathname: "/(auth)/(tabs)/channels" })}
+          />
           <Icon as={Settings} className="text-typography-500" size="lg" />
         </HStack>
-        <HStack className="justify-between px-6">
+        <VStack>
           <ScreenSectionHeading
             heading={channel.name}
             subHeading={channel.description ?? ""}
           />
           <AvatarGroup>
-            {channel.profiles.slice(0, 3).map((profile) => (
+            {channel.profiles.slice(0, 10).map((profile) => (
               <Avatar key={profile.profile_id} size="xs">
                 <AvatarFallbackText>
                   {profile.profile.full_name}
@@ -203,7 +207,7 @@ export default function ChannelScreen() {
               </Avatar>
             ))}
           </AvatarGroup>
-        </HStack>
+        </VStack>
       </VStack>
       <ScrollView
         ref={scrollViewRef}
@@ -216,18 +220,19 @@ export default function ChannelScreen() {
             <Card key={message.id}>
               <VStack space="md">
                 <Text>{message.message}</Text>
+                <Divider />
                 <HStack className="items-center" space="sm">
                   <Avatar size="xs">
                     <AvatarFallbackText>
                       {message.profile.full_name}
                     </AvatarFallbackText>
                   </Avatar>
-                  <Text className="text-typography-700">
-                    {message.profile.full_name}
-                  </Text>
-                  <Text className="ml-auto">
-                    {dayjs(message.created_at).fromNow()}
-                  </Text>
+                  <VStack>
+                    <Text className="text-typography-700">
+                      {message.profile.full_name}
+                    </Text>
+                    <Text size="xs">{dayjs(message.created_at).fromNow()}</Text>
+                  </VStack>
                 </HStack>
               </VStack>
             </Card>
