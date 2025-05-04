@@ -44,8 +44,8 @@ export function SetterLeaderboard() {
         {[...(setters ?? [])]
           .sort(
             (a, b) =>
-              Number(setterCustomerDictionary[b.id] ?? 0) -
-              Number(setterCustomerDictionary[a.id] ?? 0)
+              (setterCustomerDictionary[b.id]?.length ?? 0) -
+              (setterCustomerDictionary[a.id]?.length ?? 0)
           )
           .map((setter) => (
             <Card
