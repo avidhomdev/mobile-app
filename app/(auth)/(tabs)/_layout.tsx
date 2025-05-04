@@ -47,6 +47,7 @@ import {
   MessageSquareText,
   MessagesSquare,
   PlusIcon,
+  User,
   User2,
   UserPlus2,
 } from "lucide-react-native";
@@ -144,34 +145,10 @@ function ScreenHeader() {
           </DrawerHeader>
           <Divider className="my-4" />
           <DrawerBody contentContainerClassName="gap-2">
-            {/* <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
+            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
               <Icon as={User} size="lg" className="text-typography-600" />
               <Text>My Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
-              <Icon as={Home} size="lg" className="text-typography-600" />
-              <Text>Saved Address</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
-              <Icon
-                as={ShoppingCart}
-                size="lg"
-                className="text-typography-600"
-              />
-              <Text>Orders</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
-              <Icon as={Wallet} size="lg" className="text-typography-600" />
-              <Text>Saved Cards</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
-              <Icon as={StarIcon} size="lg" className="text-typography-600" />
-              <Text>Review App</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
-              <Icon as={PhoneIcon} size="lg" className="text-typography-600" />
-              <Text>Contact Us</Text>
-            </TouchableOpacity> */}
           </DrawerBody>
           <DrawerFooter>
             <Button
@@ -255,47 +232,42 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
           );
         })}
       </View>
-      {location.is_closer ||
-        (location.is_setter && (
-          <>
-            <TouchableOpacity
-              className="rounded-full bg-black aspect-square items-center justify-center"
-              onPress={() => setIsActionSheetVisible(true)}
-            >
-              <Icon
-                as={PlusIcon}
-                className="text-typography-white"
-                size="2xl"
-              />
-            </TouchableOpacity>
-            <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
-              <ActionsheetBackdrop />
-              <ActionsheetContent style={{ paddingBlockEnd }}>
-                <ActionsheetDragIndicatorWrapper>
-                  <ActionsheetDragIndicator />
-                </ActionsheetDragIndicatorWrapper>
-                {pathname === "/channels" ? (
-                  <ChannelsTabActionsheetItems handleClose={handleClose} />
-                ) : (
-                  <ActionsheetItem
-                    onPress={() => {
-                      router.push(`/new-customer`);
-                      handleClose();
-                    }}
-                  >
-                    <ActionsheetIcon
-                      as={UserPlus2}
-                      className="text-typography-500"
-                    />
-                    <ActionsheetItemText className="text-typography-700">
-                      New Customer
-                    </ActionsheetItemText>
-                  </ActionsheetItem>
-                )}
-              </ActionsheetContent>
-            </Actionsheet>
-          </>
-        ))}
+      {(location.is_closer || location.is_setter) && (
+        <>
+          <TouchableOpacity
+            className="rounded-full bg-black aspect-square items-center justify-center"
+            onPress={() => setIsActionSheetVisible(true)}
+          >
+            <Icon as={PlusIcon} className="text-typography-white" size="2xl" />
+          </TouchableOpacity>
+          <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+            <ActionsheetBackdrop />
+            <ActionsheetContent style={{ paddingBlockEnd }}>
+              <ActionsheetDragIndicatorWrapper>
+                <ActionsheetDragIndicator />
+              </ActionsheetDragIndicatorWrapper>
+              {pathname === "/channels" ? (
+                <ChannelsTabActionsheetItems handleClose={handleClose} />
+              ) : (
+                <ActionsheetItem
+                  onPress={() => {
+                    router.push(`/new-customer`);
+                    handleClose();
+                  }}
+                >
+                  <ActionsheetIcon
+                    as={UserPlus2}
+                    className="text-typography-500"
+                  />
+                  <ActionsheetItemText className="text-typography-700">
+                    New Customer
+                  </ActionsheetItemText>
+                </ActionsheetItem>
+              )}
+            </ActionsheetContent>
+          </Actionsheet>
+        </>
+      )}
     </View>
   );
 }
