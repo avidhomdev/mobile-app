@@ -321,7 +321,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        redirect={!location?.is_closer}
+        redirect={!location?.is_closer && !location?.is_installer}
         name="schedule"
         options={{
           title: "Schedule",
