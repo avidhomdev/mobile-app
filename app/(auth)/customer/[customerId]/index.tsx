@@ -924,12 +924,32 @@ function CustomerAppointments() {
               <Button
                 action="secondary"
                 onPress={() =>
-                  router.push("/customer/[customerId]/new-appointment")
+                  router.push({
+                    pathname: "/customer/[customerId]/schedule-closing",
+                    params: {
+                      customerId: customer.id,
+                    },
+                  })
                 }
                 size="sm"
               >
                 <ButtonIcon as={Calendar1} />
-                <ButtonText>Add Appointment</ButtonText>
+                <ButtonText>Close</ButtonText>
+              </Button>
+              <Button
+                action="secondary"
+                onPress={() =>
+                  router.push({
+                    pathname: "/customer/[customerId]/new-appointment",
+                    params: {
+                      customerId: customer.id,
+                    },
+                  })
+                }
+                size="sm"
+              >
+                <ButtonIcon as={Calendar1} />
+                <ButtonText>Meet</ButtonText>
               </Button>
             </ButtonGroup>
           </VStack>

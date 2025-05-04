@@ -172,7 +172,7 @@ function ScreenContent() {
           await refreshData();
           router.back();
           router.push({
-            pathname: "/customer/[customerId]/new-appointment",
+            pathname: "/customer/[customerId]/schedule-closing",
             params: { customerId: customer.id },
           });
         });

@@ -2,6 +2,7 @@ import { Text } from "@/components/ui/text";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity } from "react-native";
+
 import BackHeaderButton from "@/components/BackHeaderButton";
 import HorizontalDaySelector from "@/components/HorizontalDaySelector";
 import ScreenEnd from "@/components/ScreenEnd";
@@ -52,7 +53,7 @@ import {
 } from "@/constants/date-formats";
 import { useCustomerContext } from "@/contexts/customer-context";
 import { useLocationContext } from "@/contexts/location-context";
-import { useUserContext } from "@/contexts/user-context";
+import { IProfile, useUserContext } from "@/contexts/user-context";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/supabase";
 import { homApiFetch } from "@/utils/hom-api-fetch";
@@ -62,9 +63,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
 function TimeSlotRow({
+  closer,
   disabled = false,
   time,
 }: {
+  closer:
+    | IProfile
+    | {
+        avatar_url: string | null;
+        created_at: string;
+        full_name: string | null;
+        id: string;
+        updated_at: string | null;
+        username: string | null;
+        website: string | null;
+      };
   disabled?: boolean;
   time: dayjs.Dayjs;
 }) {
@@ -72,9 +85,9 @@ function TimeSlotRow({
   const { bottom } = useSafeAreaInsets();
   const { customer } = useCustomerContext();
   const router = useRouter();
-  const { profile, refreshData } = useUserContext();
+  const { refreshData } = useUserContext();
   const { location } = useLocationContext();
-  const [duration, setDuration] = useState(30);
+  const [duration, setDuration] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [
     isConfirmTimeSlotActionSheetVisible,
@@ -106,7 +119,7 @@ function TimeSlotRow({
             start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
           },
           profiles: [
-            { business_id: location.business_id, profile_id: profile.id },
+            { business_id: location.business_id, profile_id: closer.id },
           ],
         }),
       },
@@ -149,7 +162,7 @@ function TimeSlotRow({
     isSubmitting,
     location.business_id,
     location.id,
-    profile.id,
+    closer?.id,
     refreshData,
     router,
     time,
@@ -179,7 +192,7 @@ function TimeSlotRow({
       </Text>
       {!disabled && (
         <Avatar className="absolute right-2" size="sm">
-          <AvatarFallbackText>{profile.full_name}</AvatarFallbackText>
+          <AvatarFallbackText>{closer.full_name}</AvatarFallbackText>
         </Avatar>
       )}
 
@@ -290,11 +303,11 @@ interface IAppointment extends Tables<"business_appointments"> {
   profiles: IAppointmentProfile[];
 }
 
-export default function Screen() {
-  const { customer } = useCustomerContext();
+export default function ScheduleClosingScreen() {
   const { top } = useSafeAreaInsets();
+  const { customer } = useCustomerContext();
   const { location } = useLocationContext();
-  const { profile } = useUserContext();
+  const { closers, profile } = useUserContext();
   const [appointments, setAppointments] = useState<IAppointment[]>([]);
   const [selectedDayJs, setSelectedDayJs] = useState(dayjs());
 
@@ -305,10 +318,7 @@ export default function Screen() {
         .select(
           "*, profiles: business_appointment_profiles(*, profile: profile_id(*))"
         )
-        .match({
-          location_id: location.id,
-          "business_appointment_profiles.profile_id": profile.id,
-        })
+        .eq("location_id", location.id)
         .gte(
           "start_datetime",
           selectedDayJs.startOf("day").format(SERVER_DATE_TIME_FORMAT)
@@ -322,7 +332,7 @@ export default function Screen() {
           if (data) setAppointments(data);
         });
     fetchTodaysAppointments();
-  }, [location.id, profile.id, selectedDayJs]);
+  }, [location.id, selectedDayJs]);
 
   const timeArr = Array.from({ length: 25 }, (_, num) =>
     selectedDayJs
@@ -336,7 +346,7 @@ export default function Screen() {
       <VStack className="px-6 bg-background-50" style={{ paddingTop: top }}>
         <BackHeaderButton />
         <Heading className="text-typography-800" size="xl">
-          Appointment
+          Planning Appointment
         </Heading>
         <Text className="text-typography-400">
           {`Schedule appointment for ${customer?.full_name}`}
@@ -370,10 +380,18 @@ export default function Screen() {
             return noTimeDiff || overlap;
           });
 
+          const filteredClosers = closers?.filter((c) => {
+            if (location.is_closer && c.id !== profile.id) return false;
+            return !hasOverlap;
+          });
+
+          const [closer] = filteredClosers ?? [];
+
           return (
             <TimeSlotRow
-              disabled={hasOverlap || time.isBefore(dayjs())}
-              key={`${time.hour()}_${time.minute()}`}
+              disabled={!closer || time.isBefore(dayjs())}
+              closer={closer}
+              key={`${time.toISOString()}_${closer?.id}`}
               time={time}
             />
           );
