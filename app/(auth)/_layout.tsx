@@ -23,7 +23,7 @@ export default function AppLayout() {
       <Stack
         screenOptions={{
           contentStyle: {
-            backgroundColor: colorScheme === "dark" ? `#181719` : `#FBFBFB`,
+            backgroundColor: colorScheme === "dark" ? `#181719` : `#f2f1f1`,
           },
           headerShown: false,
         }}

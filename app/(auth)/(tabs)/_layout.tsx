@@ -229,6 +229,7 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
   const handleClose = () => setIsActionSheetVisible(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { location } = useLocationContext();
 
   return (
     <View className="flex-row justify-between">
@@ -254,35 +255,47 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
           );
         })}
       </View>
-      <TouchableOpacity
-        className="rounded-full bg-black aspect-square items-center justify-center"
-        onPress={() => setIsActionSheetVisible(true)}
-      >
-        <Icon as={PlusIcon} className="text-typography-white" size="2xl" />
-      </TouchableOpacity>
-      <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
-        <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-          </ActionsheetDragIndicatorWrapper>
-          {pathname === "/channels" ? (
-            <ChannelsTabActionsheetItems handleClose={handleClose} />
-          ) : (
-            <ActionsheetItem
-              onPress={() => {
-                router.push(`/new-customer`);
-                handleClose();
-              }}
+      {location.is_closer ||
+        (location.is_setter && (
+          <>
+            <TouchableOpacity
+              className="rounded-full bg-black aspect-square items-center justify-center"
+              onPress={() => setIsActionSheetVisible(true)}
             >
-              <ActionsheetIcon as={UserPlus2} className="text-typography-500" />
-              <ActionsheetItemText className="text-typography-700">
-                New Customer
-              </ActionsheetItemText>
-            </ActionsheetItem>
-          )}
-        </ActionsheetContent>
-      </Actionsheet>
+              <Icon
+                as={PlusIcon}
+                className="text-typography-white"
+                size="2xl"
+              />
+            </TouchableOpacity>
+            <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
+              <ActionsheetBackdrop />
+              <ActionsheetContent style={{ paddingBlockEnd }}>
+                <ActionsheetDragIndicatorWrapper>
+                  <ActionsheetDragIndicator />
+                </ActionsheetDragIndicatorWrapper>
+                {pathname === "/channels" ? (
+                  <ChannelsTabActionsheetItems handleClose={handleClose} />
+                ) : (
+                  <ActionsheetItem
+                    onPress={() => {
+                      router.push(`/new-customer`);
+                      handleClose();
+                    }}
+                  >
+                    <ActionsheetIcon
+                      as={UserPlus2}
+                      className="text-typography-500"
+                    />
+                    <ActionsheetItemText className="text-typography-700">
+                      New Customer
+                    </ActionsheetItemText>
+                  </ActionsheetItem>
+                )}
+              </ActionsheetContent>
+            </Actionsheet>
+          </>
+        ))}
     </View>
   );
 }
@@ -295,7 +308,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         sceneStyle: {
-          backgroundColor: colorScheme === "dark" ? `#181719` : `#FBFBFB`,
+          backgroundColor: colorScheme === "dark" ? `#181719` : `#f2f1f1`,
         },
         header: () => <ScreenHeader />,
       }}

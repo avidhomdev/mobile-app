@@ -18,7 +18,7 @@ export default function Layout() {
         initialRouteName="index"
         screenOptions={{
           contentStyle: {
-            backgroundColor: colorScheme === "dark" ? `#181719` : `#FBFBFB`,
+            backgroundColor: colorScheme === "dark" ? `#181719` : `#f2f1f1`,
           },
           headerShown: false,
         }}
