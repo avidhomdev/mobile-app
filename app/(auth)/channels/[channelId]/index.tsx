@@ -10,6 +10,14 @@ import {
   ActionsheetItemText,
 } from "@/components/ui/actionsheet";
 import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
+import {
   Avatar,
   AvatarFallbackText,
   AvatarGroup,
@@ -17,6 +25,7 @@ import {
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
+import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -28,10 +37,11 @@ import { supabase } from "@/lib/supabase";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useGlobalSearchParams, useRouter } from "expo-router";
-import { Plus, Send, Settings } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { Plus, Send, Settings, Trash2 } from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 
 dayjs.extend(relativeTime);
 
@@ -111,6 +121,7 @@ function NewMessageActionsheet() {
               <HStack className="justify-end">
                 <Button
                   action={message.length ? "primary" : "secondary"}
+                  className={twMerge(message.length ? "" : "opacity-20")}
                   disabled={!message.length}
                   onPress={() =>
                     supabase
@@ -124,6 +135,7 @@ function NewMessageActionsheet() {
                       })
                       .then(({ error }) => {
                         if (!error) {
+                          setMessage("");
                           handleClose();
                           refreshData();
                         }
@@ -142,10 +154,68 @@ function NewMessageActionsheet() {
   );
 }
 
+function ConfirmDeleteChannelMessage({ id }: { id: number }) {
+  const { refreshData } = useUserContext();
+  const [isAlertVisible, setIsAlertVisible] = useState(false);
+  const handleClose = () => setIsAlertVisible(false);
+
+  const handleDelete = useCallback(
+    () =>
+      supabase
+        .from("business_location_channel_messages")
+        .delete()
+        .eq("id", id)
+        .then(refreshData)
+        .then(handleClose),
+    [id, refreshData]
+  );
+
+  return (
+    <>
+      <AlertDialog isOpen={isAlertVisible} onClose={handleClose} size="md">
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading className="text-typography-950 font-semibold" size="md">
+              Are you sure you want to delete this message?
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text size="sm">
+              Deleting the message will remove it permanently and cannot be
+              undone. Please confirm if you want to proceed.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="">
+            <Button
+              variant="outline"
+              action="secondary"
+              onPress={handleClose}
+              size="sm"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button size="sm" onPress={handleDelete}>
+              <ButtonText>Delete</ButtonText>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Button
+        action="negative"
+        onPress={() => setIsAlertVisible(true)}
+        size="xs"
+      >
+        <ButtonIcon as={Trash2} />
+      </Button>
+    </>
+  );
+}
+
 export default function ChannelScreen() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
-  const { refreshData } = useUserContext();
+  const { profile, refreshData } = useUserContext();
   const {
     location: { channels },
   } = useLocationContext();
@@ -233,6 +303,11 @@ export default function ChannelScreen() {
                     </Text>
                     <Text size="xs">{dayjs(message.created_at).fromNow()}</Text>
                   </VStack>
+                  {message.profile_id === profile.id && (
+                    <HStack className="ml-auto">
+                      <ConfirmDeleteChannelMessage id={message.id} />
+                    </HStack>
+                  )}
                 </HStack>
               </VStack>
             </Card>
