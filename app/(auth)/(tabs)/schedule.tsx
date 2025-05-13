@@ -156,7 +156,7 @@ function ScheduleRow({
         </ActionsheetContent>
       </Actionsheet>
       <HStack
-        className="bg-background-100 border border-background-200 rounded mx-6"
+        className="bg-background-light dark:bg-background-dark border border-background-200 rounded mx-6"
         space="sm"
       >
         <View
