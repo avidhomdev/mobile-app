@@ -4,7 +4,7 @@ import nativewind from "nativewind/preset";
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: "media",
-  content: ["app/**/*.{tsx,jsx,ts,js}", "components/**/*.{tsx,jsx,ts,js}"],
+  content: ["src/**/*.{tsx,jsx,ts,js}"],
   presets: [nativewind],
   theme: {
     extend: {
