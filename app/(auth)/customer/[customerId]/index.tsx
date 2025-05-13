@@ -661,7 +661,7 @@ function CustomerBid({ bid }: { bid: ILocationCustomerBid }) {
     setIsStarting(true);
 
     return homApiFetch({
-      endpoint: `/bid/${bid.id}/convert-to-job`,
+      endpoint: `bid/${bid.id}/convert-to-job`,
       options: {
         method: "POST",
       },
