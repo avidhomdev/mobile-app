@@ -30,7 +30,6 @@ export default function AppLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="customer/[customerId]" />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen
           name="(modals)/new-customer-modal"
           options={{ presentation: "modal" }}
