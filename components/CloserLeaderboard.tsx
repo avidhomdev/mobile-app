@@ -2,13 +2,11 @@ import { useLocationContext } from "@/contexts/location-context";
 import { useUserContext } from "@/contexts/user-context";
 import { TrophyIcon } from "lucide-react-native";
 import { twMerge } from "tailwind-merge";
+import { ScreenSectionHeading } from "./ScreenSectionHeading";
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Badge, BadgeText } from "./ui/badge";
 import { Card } from "./ui/card";
-import { Divider } from "./ui/divider";
-import { Heading } from "./ui/heading";
 import { HStack } from "./ui/hstack";
-import { Icon } from "./ui/icon";
 import { Text } from "./ui/text";
 import { VStack } from "./ui/vstack";
 
@@ -30,16 +28,12 @@ export function CloserLeaderboard() {
 
   return (
     <VStack space="sm">
-      <HStack className="items-center" space="sm">
-        <Icon as={TrophyIcon} className="text-typography-500" size="lg" />
-        <Divider orientation="vertical" />
-        <VStack>
-          <Heading size="md">Closer Leaderboard</Heading>
-          <Text size="xs" className="text-typography-500">
-            Closers ranked by the number of jobs
-          </Text>
-        </VStack>
-      </HStack>
+      <ScreenSectionHeading
+        icon={TrophyIcon}
+        heading="Closer Leaderboard"
+        subHeading="Closers ranked by the number of jobs"
+      />
+
       <VStack space="sm">
         {[...(closers ?? [])]
           .sort(
