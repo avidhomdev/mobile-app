@@ -187,9 +187,12 @@ function ScheduleRow({
               </Badge>
             )}
             <View>
-              <Text size="xs">{`${dayjs(appointment.start_datetime).format(
-                "hh:mm a"
-              )} - ${dayjs(appointment.end_datetime).format("hh:mm a")}`}</Text>
+              <Text size="xs">
+                {dayjs(appointment.start_datetime).format("MM/DD hh:mm a")}
+              </Text>
+              <Text size="xs">
+                {dayjs(appointment.end_datetime).format("MM/DD hh:mm a")}
+              </Text>
             </View>
           </View>
           <View>
@@ -216,8 +219,19 @@ export default function ScheduleScreen() {
 
   const selectedDayjs = dayjs(params.selectedDate);
 
-  const selectedDayAppointments = location.appointments.filter((appointment) =>
-    dayjs(appointment.start_datetime).isSame(dayjs(selectedDayjs), "date")
+  const selectedDayAppointments = location.appointments.filter(
+    (appointment) => {
+      const startDayjs = dayjs(appointment.start_datetime);
+      const endDayjs = dayjs(appointment.end_datetime);
+      const isStartDate = startDayjs.isSame(selectedDayjs, "date");
+      const isEndDate = endDayjs.isSame(selectedDayjs, "date");
+      if (isStartDate || isEndDate) return true;
+
+      const startsBeforeToday = startDayjs.isBefore(selectedDayjs, "date");
+      const endsAfterToday = endDayjs.isAfter(selectedDayjs, "date");
+
+      return startsBeforeToday && endsAfterToday;
+    }
   );
 
   const locationCustomerDictionary = location.customers.reduce<{
