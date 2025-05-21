@@ -1375,12 +1375,13 @@ export type Database = {
           hoa_contact_name: string | null
           hoa_contact_phone: string | null
           id: number
+          job_status: Database["public"]["Enums"]["job_status"]
           lead_type: string
           payment_type: Database["public"]["Enums"]["job_payment_types"]
           phone: string | null
           postal_code: string | null
           state: string | null
-          status: Database["public"]["Enums"]["location_job_status"]
+          status: Database["public"]["Enums"]["row_status"]
           water_rebate_company: string | null
         }
         Insert: {
@@ -1405,12 +1406,13 @@ export type Database = {
           hoa_contact_name?: string | null
           hoa_contact_phone?: string | null
           id?: number
+          job_status?: Database["public"]["Enums"]["job_status"]
           lead_type?: string
           payment_type?: Database["public"]["Enums"]["job_payment_types"]
           phone?: string | null
           postal_code?: string | null
           state?: string | null
-          status?: Database["public"]["Enums"]["location_job_status"]
+          status?: Database["public"]["Enums"]["row_status"]
           water_rebate_company?: string | null
         }
         Update: {
@@ -1435,12 +1437,13 @@ export type Database = {
           hoa_contact_name?: string | null
           hoa_contact_phone?: string | null
           id?: number
+          job_status?: Database["public"]["Enums"]["job_status"]
           lead_type?: string
           payment_type?: Database["public"]["Enums"]["job_payment_types"]
           phone?: string | null
           postal_code?: string | null
           state?: string | null
-          status?: Database["public"]["Enums"]["location_job_status"]
+          status?: Database["public"]["Enums"]["row_status"]
           water_rebate_company?: string | null
         }
         Relationships: [
@@ -1488,6 +1491,7 @@ export type Database = {
           commission_rate: number | null
           created_at: string
           is_closer: boolean
+          is_contractor: boolean
           is_installer: boolean
           is_setter: boolean
           location_id: number
@@ -1501,6 +1505,7 @@ export type Database = {
           commission_rate?: number | null
           created_at?: string
           is_closer?: boolean
+          is_contractor?: boolean
           is_installer?: boolean
           is_setter?: boolean
           location_id: number
@@ -1514,6 +1519,7 @@ export type Database = {
           commission_rate?: number | null
           created_at?: string
           is_closer?: boolean
+          is_contractor?: boolean
           is_installer?: boolean
           is_setter?: boolean
           location_id?: number
@@ -1911,6 +1917,13 @@ export type Database = {
         Args: { locationid: number }
         Returns: boolean
       }
+      location_installers_available: {
+        Args: { lid: number; start_timestamp: string; end_timestamp: string }
+        Returns: {
+          profile_id: string
+          full_name: string
+        }[]
+      }
       location_profile_has_role: {
         Args: { lid: number; r: string }
         Returns: boolean
@@ -1947,14 +1960,15 @@ export type Database = {
         | "closer"
         | "project_manager"
         | "crew_lead"
-      location_job_status:
-        | "new"
+      job_status:
+        | "packet_pending"
+        | "packet_complete"
         | "scheduled"
-        | "pending"
-        | "approved"
-        | "billed"
-        | "canceled"
+        | "install_complete"
         | "complete"
+        | "cancelled"
+        | "billed"
+        | "commissioned"
       location_profile_roles: "admin" | "manager" | "base"
       row_status: "inactive" | "active" | "draft"
     }
@@ -2502,14 +2516,15 @@ export const Constants = {
         "project_manager",
         "crew_lead",
       ],
-      location_job_status: [
-        "new",
+      job_status: [
+        "packet_pending",
+        "packet_complete",
         "scheduled",
-        "pending",
-        "approved",
-        "billed",
-        "canceled",
+        "install_complete",
         "complete",
+        "cancelled",
+        "billed",
+        "commissioned",
       ],
       location_profile_roles: ["admin", "manager", "base"],
       row_status: ["inactive", "active", "draft"],

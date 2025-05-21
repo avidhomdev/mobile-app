@@ -11,11 +11,15 @@ type JobRecord = Record<string, ILocationJob>;
 
 type InstallerRecord = Record<string, JobRecord>;
 
-const IN_PROGRESS_JOB_STATUSES = ["new", "scheduled", "pending", "approved"];
+const IN_PROGRESS_JOB_STATUSES = [
+  "packet_pending",
+  "scheduled",
+  "packet_complete",
+];
 
 const generateInstallerJobDictionary = (jobs: ILocationJob[]) => {
   return jobs.reduce<InstallerRecord>((dictionary, job) => {
-    if (!IN_PROGRESS_JOB_STATUSES.includes(job.status)) return dictionary;
+    if (!IN_PROGRESS_JOB_STATUSES.includes(job.job_status)) return dictionary;
     const jobInstallerProfiles = job.profiles.filter(
       (profile) => profile.role === "installer"
     );
