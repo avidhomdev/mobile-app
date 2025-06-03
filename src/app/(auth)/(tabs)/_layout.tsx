@@ -39,6 +39,7 @@ import {
 import { Tabs, usePathname, useRouter } from "expo-router";
 import {
   Calendar1,
+  CalendarClock,
   ChevronDown,
   HardHat,
   HomeIcon,
@@ -249,20 +250,36 @@ function TabBar({ descriptors, navigation, paddingBlockEnd, state }: TTabBar) {
               {pathname === "/channels" ? (
                 <ChannelsTabActionsheetItems handleClose={handleClose} />
               ) : (
-                <ActionsheetItem
-                  onPress={() => {
-                    router.push(`/new-customer`);
-                    handleClose();
-                  }}
-                >
-                  <ActionsheetIcon
-                    as={UserPlus2}
-                    className="text-typography-500"
-                  />
-                  <ActionsheetItemText className="text-typography-700">
-                    New Customer
-                  </ActionsheetItemText>
-                </ActionsheetItem>
+                <>
+                  <ActionsheetItem
+                    onPress={() => {
+                      router.push(`/new-closing`);
+                      handleClose();
+                    }}
+                  >
+                    <ActionsheetIcon
+                      as={CalendarClock}
+                      className="text-typography-500"
+                    />
+                    <ActionsheetItemText className="text-typography-700">
+                      Schedule Closing
+                    </ActionsheetItemText>
+                  </ActionsheetItem>
+                  <ActionsheetItem
+                    onPress={() => {
+                      router.push(`/new-customer`);
+                      handleClose();
+                    }}
+                  >
+                    <ActionsheetIcon
+                      as={UserPlus2}
+                      className="text-typography-500"
+                    />
+                    <ActionsheetItemText className="text-typography-700">
+                      New Customer
+                    </ActionsheetItemText>
+                  </ActionsheetItem>
+                </>
               )}
             </ActionsheetContent>
           </Actionsheet>

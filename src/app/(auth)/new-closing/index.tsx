@@ -1,9 +1,8 @@
 import { Text } from "@/src/components/ui/text";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity } from "react-native";
 
-import BackHeaderButton from "@/src/components/BackHeaderButton";
 import HorizontalDaySelector from "@/src/components/HorizontalDaySelector";
 import ScreenEnd from "@/src/components/ScreenEnd";
 import {
@@ -40,23 +39,15 @@ import {
   SelectSectionHeaderText,
   SelectTrigger,
 } from "@/src/components/ui/select";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/src/components/ui/toast";
 import { VStack } from "@/src/components/ui/vstack";
 import {
   FRIENDLY_DATE_FORMAT,
   SERVER_DATE_TIME_FORMAT,
 } from "@/src/constants/date-formats";
-import { useCustomerContext } from "@/src/contexts/customer-context";
 import { useLocationContext } from "@/src/contexts/location-context";
 import { IProfile, useUserContext } from "@/src/contexts/user-context";
 import { supabase } from "@/src/lib/supabase";
 import { Tables } from "@/supabase";
-import { homApiFetch } from "@/src/utils/hom-api-fetch";
 import { useRouter } from "expo-router";
 import { ChevronDownIcon } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -81,12 +72,8 @@ function TimeSlotRow({
   disabled?: boolean;
   time: dayjs.Dayjs;
 }) {
-  const toast = useToast();
   const { bottom } = useSafeAreaInsets();
-  const { customer } = useCustomerContext();
   const router = useRouter();
-  const { refreshData } = useUserContext();
-  const { location } = useLocationContext();
   const [duration, setDuration] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [
@@ -98,76 +85,20 @@ function TimeSlotRow({
     setIsConfirmTimeSlotActionSheetVisible(false);
   };
 
-  const handleSubmitTimeSlot = useCallback(async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
-    return homApiFetch({
-      endpoint: `customers/${customer.id}/schedule-appointment`,
-      options: {
-        method: "POST",
-        body: JSON.stringify({
-          appointment: {
-            business_id: location.business_id,
-            customer_id: customer?.id,
-            duration: duration,
-            end_datetime: time
-              .add(duration, "minute")
-              ?.format(SERVER_DATE_TIME_FORMAT),
-            location_id: location.id,
-            name: "Customer Meeting",
-            start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
-          },
-          profiles: [
-            { business_id: location.business_id, profile_id: closer.id },
-          ],
-        }),
+  async function handleSubmitTimeSlot() {
+    handleCloseTimeSlotActionSheet();
+    router.push({
+      pathname: "/new-closing/customer-form",
+      params: {
+        closer_id: closer.id,
+        duration,
+        start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
+        end_datetime: time
+          .add(duration, "minute")
+          ?.format(SERVER_DATE_TIME_FORMAT),
       },
-    })
-      .then(({ success, error }) => {
-        if (error) throw error;
-        if (!success) throw new Error("Failed to fetch.");
-        if (success) return refreshData();
-      })
-      .then(() =>
-        router.push({
-          pathname: "/customer/[customerId]",
-          params: {
-            customerId: customer.id,
-          },
-        })
-      )
-      .then(handleCloseTimeSlotActionSheet)
-      .then(() =>
-        toast.show({
-          id: "new-appointment-success",
-          placement: "bottom",
-          duration: 3000,
-          render: () => {
-            return (
-              <Toast action="success">
-                <ToastTitle>Appointment created.</ToastTitle>
-                <ToastDescription>
-                  Email confirmations have been sent.
-                </ToastDescription>
-              </Toast>
-            );
-          },
-        })
-      )
-      .finally(() => setIsSubmitting(false));
-  }, [
-    customer.id,
-    duration,
-    isSubmitting,
-    location.business_id,
-    location.id,
-    closer?.id,
-    refreshData,
-    router,
-    time,
-    toast,
-  ]);
+    });
+  }
 
   return (
     <TouchableOpacity
@@ -303,21 +234,19 @@ interface IAppointment extends Tables<"business_appointments"> {
   profiles: IAppointmentProfile[];
 }
 
-export default function ScheduleClosingScreen() {
-  const { top } = useSafeAreaInsets();
-  const { customer } = useCustomerContext();
+export default function NewClosingScreen() {
   const { location } = useLocationContext();
   const { closers } = useUserContext();
+  const closerIds = (closers ?? [])?.map((c) => c.id);
   const [appointments, setAppointments] = useState<IAppointment[]>([]);
   const [selectedDayJs, setSelectedDayJs] = useState(dayjs());
-  const closerIds = (closers ?? [])?.map((c) => c.id);
 
   useEffect(() => {
     const fetchTodaysAppointments = async () =>
       supabase
         .from("business_appointments")
         .select(
-          "*, profiles: business_appointment_profiles(*, profile: profile_id(*))"
+          "*, profiles: business_appointment_profiles!inner(*, profile: profile_id(*))"
         )
         .in(
           "business_appointment_profiles.profile_id",
@@ -347,16 +276,7 @@ export default function ScheduleClosingScreen() {
   );
 
   return (
-    <VStack className="flex-1">
-      <VStack className="px-6 bg-background-50" style={{ paddingTop: top }}>
-        <BackHeaderButton />
-        <Heading className="text-typography-800" size="xl">
-          Planning Appointment
-        </Heading>
-        <Text className="text-typography-400">
-          {`Schedule appointment for ${customer?.full_name}`}
-        </Text>
-      </VStack>
+    <>
       <Box className="border-b border-background-200 bg-background-50 pt-6">
         <Heading className="text-center" size="sm">
           {selectedDayJs.format("MMM YYYY")}
@@ -404,6 +324,6 @@ export default function ScheduleClosingScreen() {
         })}
         <ScreenEnd />
       </ScrollView>
-    </VStack>
+    </>
   );
 }

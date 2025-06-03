@@ -1,7 +1,5 @@
-import BackHeaderButton from "@/src/components/BackHeaderButton";
 import ScreenEnd from "@/src/components/ScreenEnd";
 import { Button, ButtonText } from "@/src/components/ui/button";
-import { Divider } from "@/src/components/ui/divider";
 import {
   FormControl,
   FormControlError,
@@ -10,9 +8,6 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/src/components/ui/form-control";
-import { Heading } from "@/src/components/ui/heading";
-import { HStack } from "@/src/components/ui/hstack";
-import { Icon } from "@/src/components/ui/icon";
 import { Input, InputField } from "@/src/components/ui/input";
 import {
   Select,
@@ -27,19 +22,21 @@ import {
   SelectSectionHeaderText,
   SelectTrigger,
 } from "@/src/components/ui/select";
-import { Text } from "@/src/components/ui/text";
 import { Textarea, TextareaInput } from "@/src/components/ui/textarea";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/src/components/ui/toast";
 import { VStack } from "@/src/components/ui/vstack";
 import { US_STATES } from "@/src/constants/us-states";
 import { useUserContext } from "@/src/contexts/user-context";
 import { supabase } from "@/src/lib/supabase";
+import { homApiFetch } from "@/src/utils/hom-api-fetch";
 import { Tables } from "@/supabase";
-import { useRouter } from "expo-router";
-import {
-  AlertCircleIcon,
-  ChevronDown,
-  Construction,
-} from "lucide-react-native";
+import { useGlobalSearchParams, useRouter } from "expo-router";
+import { AlertCircleIcon, ChevronDown } from "lucide-react-native";
 import { Fragment, useReducer } from "react";
 import { KeyboardAvoidingView, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -97,22 +94,11 @@ function formReducer(
   }
 }
 
-function ScreenHeader() {
-  return (
-    <HStack className="items-center" space="sm">
-      <Icon as={Construction} className="text-typography-500" size="md" />
-      <Divider orientation="vertical" />
-      <VStack>
-        <Heading size="md">New Customer</Heading>
-        <Text size="xs">Tell us more about the customer to continue</Text>
-      </VStack>
-    </HStack>
-  );
-}
-
 function ScreenContent() {
+  const params = useGlobalSearchParams();
   const { bottom } = useSafeAreaInsets();
   const { location, refreshData, profile } = useUserContext();
+  const toast = useToast();
   const router = useRouter();
   const requiredFields: (keyof IFormReducerState)[] = [
     "full_name",
@@ -169,19 +155,69 @@ function ScreenContent() {
             });
           }
 
-          await refreshData();
-          router.back();
-          router.push({
-            pathname: "/customer/[customerId]",
-            params: { customerId: customer.id },
-          });
+          const scheduleAppointmentBody = {
+            appointment: {
+              business_id: location.business_id,
+              customer_id: customer.id,
+              duration: params.duration,
+              end_datetime: params.end_datetime,
+              location_id: location.id,
+              name: "Customer Meeting",
+              start_datetime: params.start_datetime,
+            },
+            profiles: [
+              {
+                business_id: location.business_id,
+                profile_id: params.closer_id,
+              },
+            ],
+          };
+
+          return homApiFetch({
+            endpoint: `customers/${customer.id}/schedule-appointment`,
+            options: {
+              method: "POST",
+              body: JSON.stringify(scheduleAppointmentBody),
+            },
+          })
+            .then(({ success, error }) => {
+              if (error) throw error;
+              if (!success) throw new Error("Failed to fetch.");
+              if (success) return refreshData();
+            })
+            .then(() =>
+              router.push({
+                pathname: "/customer/[customerId]",
+                params: {
+                  customerId: customer.id,
+                },
+              })
+            )
+            .then(() =>
+              toast.show({
+                id: "new-appointment-success",
+                placement: "bottom",
+                duration: 3000,
+                render: () => {
+                  return (
+                    <Toast action="success">
+                      <ToastTitle>Appointment created.</ToastTitle>
+                      <ToastDescription>
+                        Email confirmations have been sent.
+                      </ToastDescription>
+                    </Toast>
+                  );
+                },
+              })
+            )
+            .finally(() =>
+              dispatch({
+                type: FormReducerActionTypes.SET_IS_SUBMITTING,
+                payload: false,
+              })
+            );
         });
     }
-
-    dispatch({
-      type: FormReducerActionTypes.SET_IS_SUBMITTING,
-      payload: false,
-    });
   };
   return (
     <VStack space="lg">
@@ -389,30 +425,15 @@ function ScreenContent() {
           {state.isSubmitting ? "Creating..." : "Create Customer"}
         </ButtonText>
       </Button>
-      <ScreenEnd />
     </VStack>
-  );
-}
-
-function ScreenHeaderActions() {
-  const { top } = useSafeAreaInsets();
-
-  return (
-    <View className="p-4" style={{ paddingBlockStart: top }}>
-      <View className="flex-row items-center gap-x-4 justify-between">
-        <BackHeaderButton />
-      </View>
-    </View>
   );
 }
 
 export default function Screen() {
   return (
     <Fragment>
-      <ScreenHeaderActions />
       <KeyboardAvoidingView behavior="padding">
-        <ScrollView contentContainerClassName="gap-y-6 px-6">
-          <ScreenHeader />
+        <ScrollView contentContainerClassName="gap-y-6 p-6">
           <ScreenContent />
           <ScreenEnd />
         </ScrollView>
