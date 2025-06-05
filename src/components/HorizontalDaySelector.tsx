@@ -26,7 +26,7 @@ export default function HorizontalDaySelector({
       .set("hour", 0)
       .set("minute", 0)
       .set("second", 0)
-      .subtract(30, "days")
+      .subtract(disableBeforeToday ? 4 : 30, "days")
       .add(index + 1, "days")
   );
 
@@ -55,7 +55,7 @@ export default function HorizontalDaySelector({
               const layout = event.nativeEvent.layout;
               if (isToday && horizontalDaysScrollViewRef.current) {
                 const halfOfWindowScreen = dimensions.width * 0.5;
-                const horizontalPadding = 32;
+                const horizontalPadding = 48;
                 horizontalDaysScrollViewRef.current.scrollTo({
                   x: layout.x - (halfOfWindowScreen - horizontalPadding),
                   animated: true,
@@ -83,6 +83,15 @@ export default function HorizontalDaySelector({
               )}
             >
               {day.format("DD")}
+            </Text>
+            <Text
+              className={twMerge(
+                isToday ? "text-typography-900" : "text-typography-500",
+                "bg-background-200 text-center uppercase tracking-tighter font-semibold p-1 rounded-full"
+              )}
+              size="2xs"
+            >
+              {day.format("MMM")}
             </Text>
           </TouchableOpacity>
         );
