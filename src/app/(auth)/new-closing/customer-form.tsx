@@ -183,7 +183,7 @@ function ScreenContent() {
           })
             .then(refreshData)
             .then(() =>
-              router.push({
+              router.replace({
                 pathname: "/customer/[customerId]",
                 params: {
                   customerId: customer.id,
