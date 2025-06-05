@@ -211,6 +211,21 @@ function ScreenContent() {
                 },
               })
             )
+            .catch((error) =>
+              toast.show({
+                id: "new-appointment-success",
+                placement: "bottom",
+                duration: 3000,
+                render: () => {
+                  return (
+                    <Toast action="error">
+                      <ToastTitle>Did not create appointment.</ToastTitle>
+                      <ToastDescription>{error.message}</ToastDescription>
+                    </Toast>
+                  );
+                },
+              })
+            )
             .finally(() =>
               dispatch({
                 type: FormReducerActionTypes.SET_IS_SUBMITTING,
@@ -438,7 +453,9 @@ function ScreenContent() {
           size="lg"
           onPress={handleSubmit}
         >
-          <ButtonText>{state.isSubmitting ? "Submit..." : "Submit"}</ButtonText>
+          <ButtonText>
+            {state.isSubmitting ? "Submitting..." : "Submit"}
+          </ButtonText>
         </Button>
       </HStack>
     </VStack>
