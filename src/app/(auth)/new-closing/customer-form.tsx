@@ -181,11 +181,7 @@ function ScreenContent() {
               body: JSON.stringify(scheduleAppointmentBody),
             },
           })
-            .then(({ success, error }) => {
-              if (error) throw error;
-              if (!success) throw new Error("Failed to fetch.");
-              if (success) return refreshData();
-            })
+            .then(refreshData)
             .then(() =>
               router.push({
                 pathname: "/customer/[customerId]",
