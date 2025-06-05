@@ -8,6 +8,7 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/src/components/ui/form-control";
+import { HStack } from "@/src/components/ui/hstack";
 import { Input, InputField } from "@/src/components/ui/input";
 import {
   Select,
@@ -422,11 +423,24 @@ function ScreenContent() {
           />
         </Textarea>
       </FormControl>
-      <Button disabled={state.isSubmitting} size="md" onPress={handleSubmit}>
-        <ButtonText>
-          {state.isSubmitting ? "Creating..." : "Create Customer"}
-        </ButtonText>
-      </Button>
+      <HStack space="md">
+        <Button
+          className="ml-auto"
+          size="lg"
+          action="secondary"
+          onPress={router.back}
+        >
+          <ButtonText>Cancel</ButtonText>
+        </Button>
+        <Button
+          disabled={state.isSubmitting}
+          className="grow"
+          size="lg"
+          onPress={handleSubmit}
+        >
+          <ButtonText>{state.isSubmitting ? "Submit..." : "Submit"}</ButtonText>
+        </Button>
+      </HStack>
     </VStack>
   );
 }
