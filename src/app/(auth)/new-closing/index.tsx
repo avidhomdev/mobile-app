@@ -9,36 +9,14 @@ import {
   Actionsheet,
   ActionsheetBackdrop,
   ActionsheetContent,
-  ActionsheetDragIndicator,
-  ActionsheetDragIndicatorWrapper,
-  ActionsheetSectionHeaderText,
 } from "@/src/components/ui/actionsheet";
 import { Avatar, AvatarFallbackText } from "@/src/components/ui/avatar";
 import { Box } from "@/src/components/ui/box";
 import { Button, ButtonText } from "@/src/components/ui/button";
 import { Card } from "@/src/components/ui/card";
-import {
-  FormControl,
-  FormControlHelper,
-  FormControlHelperText,
-  FormControlLabel,
-  FormControlLabelText,
-} from "@/src/components/ui/form-control";
 import { Heading } from "@/src/components/ui/heading";
 import { HStack } from "@/src/components/ui/hstack";
-import {
-  Select,
-  SelectBackdrop,
-  SelectContent,
-  SelectDragIndicator,
-  SelectDragIndicatorWrapper,
-  SelectIcon,
-  SelectInput,
-  SelectItem,
-  SelectPortal,
-  SelectSectionHeaderText,
-  SelectTrigger,
-} from "@/src/components/ui/select";
+import { Icon } from "@/src/components/ui/icon";
 import { VStack } from "@/src/components/ui/vstack";
 import {
   FRIENDLY_DATE_FORMAT,
@@ -49,9 +27,11 @@ import { IProfile, useUserContext } from "@/src/contexts/user-context";
 import { supabase } from "@/src/lib/supabase";
 import { Tables } from "@/supabase";
 import { useRouter } from "expo-router";
-import { ChevronDownIcon } from "lucide-react-native";
+import { Calendar, Clock, User2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
+
+const CLOSING_DURATION = 60;
 
 function TimeSlotRow({
   closer,
@@ -74,14 +54,11 @@ function TimeSlotRow({
 }) {
   const { bottom } = useSafeAreaInsets();
   const router = useRouter();
-  const [duration, setDuration] = useState(60);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [
     isConfirmTimeSlotActionSheetVisible,
     setIsConfirmTimeSlotActionSheetVisible,
   ] = useState(false);
   const handleCloseTimeSlotActionSheet = () => {
-    setIsSubmitting(false);
     setIsConfirmTimeSlotActionSheetVisible(false);
   };
 
@@ -91,10 +68,10 @@ function TimeSlotRow({
       pathname: "/new-closing/customer-form",
       params: {
         closer_id: closer.id,
-        duration,
+        duration: CLOSING_DURATION,
         start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
         end_datetime: time
-          .add(duration, "minute")
+          .add(CLOSING_DURATION, "minute")
           ?.format(SERVER_DATE_TIME_FORMAT),
       },
     });
@@ -133,74 +110,65 @@ function TimeSlotRow({
           onClose={handleCloseTimeSlotActionSheet}
         >
           <ActionsheetBackdrop />
-          <ActionsheetContent>
-            <ActionsheetDragIndicatorWrapper>
-              <ActionsheetDragIndicator />
-              <ActionsheetSectionHeaderText>
-                {time.format(FRIENDLY_DATE_FORMAT)}
-              </ActionsheetSectionHeaderText>
-            </ActionsheetDragIndicatorWrapper>
-            <VStack
-              className={twMerge(isSubmitting ? "opacity-75" : "", "w-full")}
-              space="md"
-              style={{ paddingBlockEnd: bottom }}
-            >
-              <Card variant="filled">
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <VStack className="w-full mt-4" space="lg">
+              <VStack>
+                <Heading size="md">Confirm Appointment</Heading>
+                <Text size="sm">
+                  You&apos;re about to schedule a planning appointment for the
+                  customer. Please confirm the details below are correct.
+                </Text>
+              </VStack>
+              <Card size="sm" variant="filled">
                 <VStack space="sm">
-                  <Text>{`Starting at ${time.format("hh:mm a")}`}</Text>
-                  <FormControl isRequired>
-                    <FormControlLabel>
-                      <FormControlLabelText size="md">
-                        Duration:
-                      </FormControlLabelText>
-                    </FormControlLabel>
-                    <Select
-                      className="bg-background-100"
-                      defaultValue={duration.toString()}
-                      isDisabled={isSubmitting}
-                      onValueChange={(payload) => setDuration(Number(payload))}
-                    >
-                      <SelectTrigger>
-                        <SelectInput
-                          placeholder="Select option"
-                          className="flex-1"
-                        />
-                        <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                      </SelectTrigger>
-                      <SelectPortal>
-                        <SelectBackdrop />
-                        <SelectContent style={{ paddingBottom: 10 }}>
-                          <SelectDragIndicatorWrapper>
-                            <SelectDragIndicator />
-                          </SelectDragIndicatorWrapper>
-                          <SelectSectionHeaderText>
-                            Select the appointment duration
-                          </SelectSectionHeaderText>
-                          {Array.from({ length: 8 }, (_, num) => (
-                            <SelectItem
-                              key={num}
-                              label={`${(num + 1) * 30} minutes`}
-                              value={((num + 1) * 30).toString()}
-                            />
-                          ))}
-                        </SelectContent>
-                      </SelectPortal>
-                    </Select>
-                    <FormControlHelper>
-                      <FormControlHelperText>
-                        Select the appointment duration
-                      </FormControlHelperText>
-                    </FormControlHelper>
-                  </FormControl>
-                  <Text>{`Ending at ${time
-                    .add(duration, "minutes")
-                    .format("hh:mm a")}`}</Text>
+                  <VStack>
+                    <HStack className="items-center" space="xs">
+                      <Icon
+                        className="text-typography-500"
+                        as={User2}
+                        size="sm"
+                      />
+                      <Text className="text-typography-500">Closer</Text>
+                    </HStack>
+                    <Text size="lg" className="text-typography-800">
+                      {closer.full_name}
+                    </Text>
+                  </VStack>
+                  <VStack>
+                    <HStack className="items-center" space="xs">
+                      <Icon
+                        className="text-typography-500"
+                        as={Calendar}
+                        size="sm"
+                      />
+                      <Text className="text-typography-500">Date</Text>
+                    </HStack>
+                    <Text size="lg" className="text-typography-800">
+                      {time.format(FRIENDLY_DATE_FORMAT)}
+                    </Text>
+                  </VStack>
+                  <VStack>
+                    <HStack className="items-center" space="xs">
+                      <Icon
+                        className="text-typography-500"
+                        as={Clock}
+                        size="sm"
+                      />
+                      <Text className="text-typography-500">Time</Text>
+                    </HStack>
+                    <Text
+                      size="lg"
+                      className="text-typography-800"
+                    >{`${time.format("hh:mm a")} - ${time
+                      .add(CLOSING_DURATION, "minutes")
+                      .format("hh:mm a")}`}</Text>
+                  </VStack>
                 </VStack>
               </Card>
+
               <HStack space="md">
                 <Button
                   className="ml-auto"
-                  disabled={isSubmitting}
                   size="lg"
                   action="secondary"
                   onPress={handleCloseTimeSlotActionSheet}
@@ -209,13 +177,10 @@ function TimeSlotRow({
                 </Button>
                 <Button
                   className="grow"
-                  disabled={isSubmitting}
                   onPress={handleSubmitTimeSlot}
                   size="lg"
                 >
-                  <ButtonText>
-                    {isSubmitting ? "Submitting..." : "Submit"}
-                  </ButtonText>
+                  <ButtonText>Confirm</ButtonText>
                 </Button>
               </HStack>
             </VStack>
@@ -277,10 +242,10 @@ export default function NewClosingScreen() {
 
   return (
     <>
-      <Box className="border-b border-background-200 bg-background-50 pt-6">
-        <Heading className="text-center" size="sm">
-          {selectedDayJs.format("MMM YYYY")}
-        </Heading>
+      <Heading className="px-6 text-typography-800" size="xl">
+        Planning Appointment
+      </Heading>
+      <Box className="border-b border-background-200 px-6">
         <HorizontalDaySelector
           disableBeforeToday
           selectedDayJs={selectedDayJs}

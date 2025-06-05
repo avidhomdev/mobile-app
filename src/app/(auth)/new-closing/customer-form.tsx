@@ -118,7 +118,7 @@ function ScreenContent() {
     lead_source: "setter",
     notes: "",
     postal_code: "",
-    state: "",
+    state: location.state || "",
     submitted: false,
   });
 
@@ -339,6 +339,7 @@ function ScreenContent() {
             <FormControlLabelText>State</FormControlLabelText>
           </FormControlLabel>
           <Select
+            defaultValue={state.state}
             onValueChange={(payload) =>
               dispatch({
                 type: FormReducerActionTypes.SET_INPUT_VALUE,
@@ -387,6 +388,7 @@ function ScreenContent() {
             <InputField
               autoComplete="off"
               autoCapitalize="none"
+              defaultValue={state.postal_code}
               onChangeText={(text) =>
                 dispatch({
                   type: FormReducerActionTypes.SET_INPUT_VALUE,
