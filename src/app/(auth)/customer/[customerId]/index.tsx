@@ -340,7 +340,6 @@ function PlusButtonActionSheet() {
 }
 
 function CustomerDisposition() {
-  const { location } = useLocationContext();
   const { bottom: paddingBlockEnd } = useSafeAreaInsets();
   const { refreshData } = useUserContext();
   const { customer, updateCustomer } = useCustomerContext();
@@ -358,7 +357,6 @@ function CustomerDisposition() {
     <Fragment>
       <Pressable
         className="ml-auto"
-        disabled={!location.is_closer}
         onPress={() => setIsActionSheetVisible(true)}
       >
         <Badge
