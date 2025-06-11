@@ -77,6 +77,7 @@ import {
 } from "@/src/contexts/user-context";
 import { supabase } from "@/src/lib/supabase";
 import { formatAsCurrency } from "@/src/utils/format-as-currency";
+import { homApiFetch } from "@/src/utils/hom-api-fetch";
 import dayjs from "dayjs";
 import {
   useGlobalSearchParams,
@@ -98,7 +99,7 @@ import {
   MessageCircle,
   PanelRightOpen,
   Plus,
-  Timer,
+  Signature,
   Trash,
 } from "lucide-react-native";
 import { Fragment, useCallback, useReducer, useState } from "react";
@@ -237,38 +238,6 @@ function HeaderMenu() {
             >
               <Icon as={File} size="lg" className="text-typography-600" />
               <Text>Documents</Text>
-            </Pressable>
-            <Pressable
-              className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
-              onPress={() => {
-                setIsDrawerVisible(false);
-                router.push({
-                  pathname: "/customer/[customerId]/job/[jobId]/timesheet",
-                  params: {
-                    customerId: customerId as string,
-                    jobId: jobId as string,
-                  },
-                });
-              }}
-            >
-              <Icon as={Timer} size="lg" className="text-typography-600" />
-              <Text>Timesheet</Text>
-            </Pressable>
-            <Pressable
-              className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
-              onPress={() => {
-                setIsDrawerVisible(false);
-                router.push({
-                  pathname: "/customer/[customerId]/job/[jobId]/change-orders",
-                  params: {
-                    customerId: customerId as string,
-                    jobId: jobId as string,
-                  },
-                });
-              }}
-            >
-              <Icon as={HardHat} size="lg" className="text-typography-600" />
-              <Text>Change Orders</Text>
             </Pressable>
             <Pressable
               className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
@@ -829,6 +798,94 @@ function FabPlusActionSheetPaymentItem({
   );
 }
 
+function FabPlusActionSheetContractItem({
+  onSubmitCallback,
+  job,
+}: {
+  onSubmitCallback: () => void;
+  job: ILocationJob;
+}) {
+  const { bottom } = useSafeAreaInsets();
+
+  const [isActionSheetVisible, setActionSheetVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState();
+  const handleCloseActionSheet = () => setActionSheetVisible(false);
+  const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+
+    return homApiFetch({
+      endpoint: `job/${job.id}/docusign-contract/send`,
+      options: {
+        method: "POST",
+      },
+    })
+      .then(onSubmitCallback)
+      .catch((err) => setError(err.message))
+      .finally(() => setIsSubmitting(false));
+  }, [job, onSubmitCallback]);
+
+  return (
+    <Fragment>
+      <ActionsheetItem
+        onPress={() => {
+          setActionSheetVisible(true);
+        }}
+      >
+        <ActionsheetIcon
+          as={Signature}
+          className="text-typography-500"
+          size="lg"
+        />
+        <Box>
+          <ActionsheetItemText className="text-typography-700">
+            Contract
+          </ActionsheetItemText>
+          <Text className="text-typography-500" sub>
+            Send contract for signing
+          </Text>
+        </Box>
+      </ActionsheetItem>
+      <Actionsheet
+        isOpen={isActionSheetVisible}
+        onClose={handleCloseActionSheet}
+      >
+        <ActionsheetBackdrop />
+        <KeyboardAvoidingView behavior="padding">
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+              <ActionsheetSectionHeaderText>
+                Confirm
+              </ActionsheetSectionHeaderText>
+            </ActionsheetDragIndicatorWrapper>
+            <VStack className="w-full" space="lg">
+              <VStack space="sm">
+                <VStack>
+                  <Text>
+                    We will pre populate the fields we can with job, customer
+                    and creator info.
+                  </Text>
+                </VStack>
+              </VStack>
+
+              {error && (
+                <Alert action="error">
+                  <AlertIcon as={Info} />
+                  <AlertText>{error}</AlertText>
+                </Alert>
+              )}
+              <Button disabled={isSubmitting} onPress={handleSubmit}>
+                <ButtonText>{isSubmitting ? "Sending..." : "Send"}</ButtonText>
+              </Button>
+            </VStack>
+          </ActionsheetContent>
+        </KeyboardAvoidingView>
+      </Actionsheet>
+    </Fragment>
+  );
+}
+
 function FabPlusMenu({ job }: { job: ILocationJob }) {
   const { bottom } = useSafeAreaInsets();
   const [isActionSheetVisible, setActionSheetVisible] = useState(false);
@@ -850,54 +907,63 @@ function FabPlusMenu({ job }: { job: ILocationJob }) {
           size="2xl"
         />
       </Fab>
-      <Actionsheet
-        isOpen={isActionSheetVisible}
-        onClose={handleCloseActionSheet}
-      >
-        <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-          </ActionsheetDragIndicatorWrapper>
-          <FabPlusActionSheetMediaItem
-            closeFabPlusMenu={handleCloseActionSheet}
-            customer={customer}
-            jobId={job.id}
-            refreshData={refreshData}
-          />
-          <AddTaskMenuItem
-            job={job}
-            onSubmit={() => {
-              refreshData();
-              handleCloseActionSheet();
-            }}
-          />
-          <FabPlusActionSheetNoteItem
-            closeFabPlusMenu={handleCloseActionSheet}
-            handleSubmitNoteToJob={async (note) => {
-              await supabase
-                .from("business_location_job_messages")
-                .insert({
-                  author_id: profile.id,
-                  business_id: customer.business_id,
-                  location_id: customer.location_id,
-                  job_id: job.id,
-                  message: note,
-                })
-                .then(refreshData)
-                .then(handleCloseActionSheet);
-            }}
-          />
-          <FabPlusActionSheetPaymentItem
-            customer={customer}
-            job={job}
-            onSubmitCallback={() => {
-              refreshData();
-              handleCloseActionSheet();
-            }}
-          />
-        </ActionsheetContent>
-      </Actionsheet>
+      {isActionSheetVisible && (
+        <Actionsheet
+          isOpen={isActionSheetVisible}
+          onClose={handleCloseActionSheet}
+        >
+          <ActionsheetBackdrop />
+          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+            <ActionsheetDragIndicatorWrapper>
+              <ActionsheetDragIndicator />
+            </ActionsheetDragIndicatorWrapper>
+            <FabPlusActionSheetMediaItem
+              closeFabPlusMenu={handleCloseActionSheet}
+              customer={customer}
+              jobId={job.id}
+              refreshData={refreshData}
+            />
+            <AddTaskMenuItem
+              job={job}
+              onSubmit={() => {
+                refreshData();
+                handleCloseActionSheet();
+              }}
+            />
+            <FabPlusActionSheetNoteItem
+              closeFabPlusMenu={handleCloseActionSheet}
+              handleSubmitNoteToJob={async (note) => {
+                await supabase
+                  .from("business_location_job_messages")
+                  .insert({
+                    author_id: profile.id,
+                    business_id: customer.business_id,
+                    location_id: customer.location_id,
+                    job_id: job.id,
+                    message: note,
+                  })
+                  .then(refreshData)
+                  .then(handleCloseActionSheet);
+              }}
+            />
+            <FabPlusActionSheetPaymentItem
+              customer={customer}
+              job={job}
+              onSubmitCallback={() => {
+                refreshData();
+                handleCloseActionSheet();
+              }}
+            />
+            <FabPlusActionSheetContractItem
+              job={job}
+              onSubmitCallback={() => {
+                refreshData();
+                handleCloseActionSheet();
+              }}
+            />
+          </ActionsheetContent>
+        </Actionsheet>
+      )}
     </Fragment>
   );
 }

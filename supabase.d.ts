@@ -191,6 +191,7 @@ export type Database = {
           business_id: string
           created_at: string
           expires_at: number | null
+          metadata: Json
           refresh_token: string | null
           resource: string
           revoked_on_date: string | null
@@ -205,6 +206,7 @@ export type Database = {
           business_id: string
           created_at?: string
           expires_at?: number | null
+          metadata?: Json
           refresh_token?: string | null
           resource: string
           revoked_on_date?: string | null
@@ -219,6 +221,7 @@ export type Database = {
           business_id?: string
           created_at?: string
           expires_at?: number | null
+          metadata?: Json
           refresh_token?: string | null
           resource?: string
           revoked_on_date?: string | null
