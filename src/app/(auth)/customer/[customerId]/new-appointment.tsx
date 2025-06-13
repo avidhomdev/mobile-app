@@ -89,64 +89,60 @@ function TimeSlotRow({
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    return (
-      homApiFetch({
-        endpoint: `customers/${customer.id}/schedule-appointment`,
-        options: {
-          method: "POST",
-          body: JSON.stringify({
-            appointment: {
-              business_id: location.business_id,
-              customer_id: customer?.id,
-              duration: duration,
-              end_datetime: time
-                .add(duration, "minute")
-                ?.format(SERVER_DATE_TIME_FORMAT),
-              location_id: location.id,
-              name: "Customer Meeting",
-              start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
-            },
-            profiles: [
-              { business_id: location.business_id, profile_id: profile.id },
-            ],
-          }),
-        },
+    return homApiFetch({
+      endpoint: `customers/${customer.id}/schedule-appointment`,
+      options: {
+        method: "POST",
+        body: JSON.stringify({
+          appointment: {
+            business_id: location.business_id,
+            customer_id: customer?.id,
+            duration: duration,
+            end_datetime: time
+              .add(duration, "minute")
+              ?.format(SERVER_DATE_TIME_FORMAT),
+            location_id: location.id,
+            name: "Customer Meeting",
+            start_datetime: time?.format(SERVER_DATE_TIME_FORMAT),
+          },
+          profiles: [
+            { business_id: location.business_id, profile_id: profile.id },
+          ],
+        }),
+      },
+    })
+      .then(({ success, error }) => {
+        if (error) throw error;
+        if (!success) throw new Error("Failed to fetch.");
+        if (success) return refreshData();
       })
-        .then(({ success, error }) => {
-          if (error) throw error;
-          if (!success) throw new Error("Failed to fetch.");
-          if (success) return refreshData();
+      .then(() =>
+        router.push({
+          pathname: "/customer/[customerId]",
+          params: {
+            customerId: customer.id,
+          },
         })
-        .then(() =>
-          router.push({
-            pathname: "/customer/[customerId]",
-            params: {
-              customerId: customer.id,
-            },
-          })
-        )
-        .then(handleCloseTimeSlotActionSheet)
-        .then(() =>
-          toast.show({
-            id: "new-appointment-success",
-            placement: "bottom",
-            duration: 3000,
-            render: () => {
-              return (
-                <Toast action="success">
-                  <ToastTitle>Appointment created.</ToastTitle>
-                  <ToastDescription>
-                    Email confirmations have been sent.
-                  </ToastDescription>
-                </Toast>
-              );
-            },
-          })
-        )
-        // eslint-disable-next-line no-console
-        .catch(console.error)
-        .finally(() => setIsSubmitting(false))
-    );
+      )
+      .then(handleCloseTimeSlotActionSheet)
+      .then(() =>
+        toast.show({
+          id: "new-appointment-success",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="success">
+                <ToastTitle>Appointment created.</ToastTitle>
+                <ToastDescription>
+                  Email confirmations have been sent.
+                </ToastDescription>
+              </Toast>
+            );
+          },
+        })
+      )
+      .finally(() => setIsSubmitting(false));
   }, [
     customer.id,
     duration,
