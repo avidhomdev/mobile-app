@@ -1,4 +1,5 @@
 import BackHeaderButton from "@/src/components/BackHeaderButton";
+import { ResultsWithLoader } from "@/src/components/ResultsWithLoader";
 import ScreenEnd from "@/src/components/ScreenEnd";
 import { Badge, BadgeText } from "@/src/components/ui/badge";
 import { Card } from "@/src/components/ui/card";
@@ -6,11 +7,12 @@ import { Heading } from "@/src/components/ui/heading";
 import { Text } from "@/src/components/ui/text";
 import { VStack } from "@/src/components/ui/vstack";
 import { FRIENDLY_DATE_FORMAT } from "@/src/constants/date-formats";
+import { useFetchStatus } from "@/src/hooks/useFetchStatus";
 import { homApiFetch } from "@/src/utils/hom-api-fetch";
 import { Tables } from "@/supabase";
 import dayjs from "dayjs";
 import { useLocalSearchParams } from "expo-router";
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -64,20 +66,22 @@ type DocusignDocument = Tables<"business_location_job_docusign_envelopes"> & {
 function useDocusignEnvelopeDocuments() {
   const { jobId } = useLocalSearchParams();
   const [documents, setDocuments] = useState<DocusignDocument[]>([]);
-  const [isLoading, startLoading] = useTransition();
+  const { startFetching, isFetching, setHasFetched } = useFetchStatus();
 
   useEffect(() => {
-    startLoading(() => {
+    startFetching(() => {
       homApiFetch({
         endpoint: `job/${jobId}/docusign-envelope-documents`,
         options: {
           method: "GET",
         },
-      }).then(({ data }) => setDocuments(data?.documents || []));
+      })
+        .then(({ data }) => setDocuments(data?.documents || []))
+        .then(() => setHasFetched(true));
     });
-  }, [jobId]);
+  }, [jobId, startFetching, setHasFetched]);
 
-  return { documents, isLoading };
+  return { documents, isFetching };
 }
 
 function DocumentListItem({ document }: { document: DocusignDocument }) {
@@ -103,17 +107,18 @@ function DocumentListItem({ document }: { document: DocusignDocument }) {
 }
 
 function DocumentsList() {
-  const { documents } = useDocusignEnvelopeDocuments();
+  const { documents, isFetching } = useDocusignEnvelopeDocuments();
 
   return (
     <VStack className="px-6" space="md">
-      {documents.length ? (
-        documents.map((doc) => (
+      <ResultsWithLoader
+        isFetching={isFetching}
+        hasResults={Boolean(documents?.length)}
+      >
+        {documents.map((doc) => (
           <DocumentListItem key={doc.envelope_id} document={doc} />
-        ))
-      ) : (
-        <Text className="text-typography-600">No documents found</Text>
-      )}
+        ))}
+      </ResultsWithLoader>
     </VStack>
   );
 }
