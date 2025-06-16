@@ -52,6 +52,7 @@ interface ILocationJobTask extends Tables<"business_location_job_tasks"> {
   profile: Tables<"profiles">;
 }
 export interface ILocationJob extends Tables<"business_location_jobs"> {
+  documents: Tables<"business_location_job_docusign_envelopes">[];
   media: Tables<"business_location_job_media">[];
   messages: ILocationJobMessage[];
   products: IJobProduct[];
@@ -184,6 +185,7 @@ const fetchUserContextData = async (
                 product: product_id(*)
               )
             ),
+            documents: business_location_job_docusign_envelopes(*),
             media: business_location_job_media(*),
             messages: business_location_job_messages(*,
               profile: author_id(*)

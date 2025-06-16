@@ -825,7 +825,7 @@ function FabPlusActionSheetContractItem({
       .finally(() => setIsSubmitting(false));
   }, [job, onSubmitCallback]);
 
-  return (
+  return job.documents.length ? null : (
     <Fragment>
       <ActionsheetItem
         onPress={() => {
