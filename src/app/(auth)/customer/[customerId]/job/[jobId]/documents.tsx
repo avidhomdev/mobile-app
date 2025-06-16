@@ -77,7 +77,7 @@ function useDocusignEnvelopeDocuments() {
         },
       })
         .then(({ data }) => setDocuments(data?.documents || []))
-        .then(() => setHasFetched(true));
+        .finally(() => setHasFetched(true));
     });
   }, [jobId, startFetching, setHasFetched]);
 
@@ -115,9 +115,13 @@ function DocumentsList() {
         isFetching={isFetching}
         hasResults={Boolean(documents?.length)}
       >
-        {documents.map((doc) => (
-          <DocumentListItem key={doc.envelope_id} document={doc} />
-        ))}
+        {documents.flatMap((doc) =>
+          doc.envelope ? (
+            <DocumentListItem key={doc.envelope_id} document={doc} />
+          ) : (
+            []
+          )
+        )}
       </ResultsWithLoader>
     </VStack>
   );
