@@ -17,6 +17,12 @@ import { Heading } from "@/src/components/ui/heading";
 import { HStack } from "@/src/components/ui/hstack";
 import { Icon } from "@/src/components/ui/icon";
 import { Text } from "@/src/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/src/components/ui/toast";
 import { VStack } from "@/src/components/ui/vstack";
 import { useFetchStatus } from "@/src/hooks/useFetchStatus";
 import { supabase } from "@/src/lib/supabase";
@@ -49,6 +55,7 @@ function useJobPayments() {
   const { jobId } = useLocalSearchParams();
   const [data, setData] = useState<JobPayment[]>([]);
   const { startFetching, setHasFetched, isFetching } = useFetchStatus();
+  const { show } = useToast();
 
   useEffect(() => {
     async function getJobPayments(jobId: number) {
@@ -57,6 +64,20 @@ function useJobPayments() {
         options: {
           method: "GET",
         },
+      }).catch((err) => {
+        show({
+          id: "get-payments-error",
+          placement: "bottom",
+          duration: 3000,
+          render: () => {
+            return (
+              <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>{err.message}</ToastDescription>
+              </Toast>
+            );
+          },
+        });
       });
 
       return data || [];
@@ -67,7 +88,7 @@ function useJobPayments() {
         .then(setData)
         .finally(() => setHasFetched(true));
     });
-  }, [jobId, setHasFetched, startFetching]);
+  }, [jobId, setHasFetched, startFetching, show]);
 
   return {
     data,
