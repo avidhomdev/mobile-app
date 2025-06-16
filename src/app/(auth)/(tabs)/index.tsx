@@ -11,8 +11,8 @@ import { VStack } from "@/src/components/ui/vstack";
 import { DISPOSITION_STATUSES } from "@/src/constants/disposition-statuses";
 import { useLocationContext } from "@/src/contexts/location-context";
 import { useUserContext } from "@/src/contexts/user-context";
-import { useRouter } from "expo-router";
-import { UserIcon } from "lucide-react-native";
+import { Link, useRouter } from "expo-router";
+import { HardHat, UserIcon } from "lucide-react-native";
 import { useState } from "react";
 import { RefreshControl, ScrollView, TouchableOpacity } from "react-native";
 import { twMerge } from "tailwind-merge";
@@ -86,6 +86,43 @@ function RecentCustomerCarousel() {
   );
 }
 
+function JobsDashboardCard() {
+  const {
+    location: { jobs },
+  } = useLocationContext();
+  return (
+    <VStack space="sm">
+      <ScreenSectionHeading
+        icon={HardHat}
+        heading="Jobs"
+        subHeading="List of recent jobs"
+      />
+      <VStack space="sm">
+        {jobs?.slice(0, 4).map((job) => (
+          <Card key={job.id}>
+            <Link
+              href={{
+                pathname: "/customer/[customerId]/job/[jobId]",
+                params: {
+                  customerId: job.customer_id,
+                  jobId: job.id,
+                },
+              }}
+            >
+              <VStack>
+                <Text bold underline>{`JOB-${job.id} - ${job.full_name}`}</Text>
+                <Text isTruncated size="xs">
+                  {`${job.address}, ${job.city} ${job.state} ${job.postal_code}`}
+                </Text>
+              </VStack>
+            </Link>
+          </Card>
+        ))}
+      </VStack>
+    </VStack>
+  );
+}
+
 export default function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { refreshData } = useUserContext();
@@ -111,6 +148,7 @@ export default function Dashboard() {
         {location.is_installer && <InstallerDashboard />}
         {location.is_closer && <CloserLeaderboard />}
         {location.is_setter && <SetterLeaderboard />}
+        <JobsDashboardCard />
       </VStack>
       <ScreenEnd />
     </ScrollView>
