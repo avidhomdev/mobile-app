@@ -65,7 +65,7 @@ function useJobPayments() {
     startFetching(() => {
       getJobPayments(Number(jobId))
         .then(setData)
-        .then(() => setHasFetched(true));
+        .finally(() => setHasFetched(true));
     });
   }, [jobId, setHasFetched, startFetching]);
 
