@@ -33,11 +33,32 @@ import {
 import { Card } from "@/src/components/ui/card";
 import { Divider } from "@/src/components/ui/divider";
 import { Fab } from "@/src/components/ui/fab";
+import {
+  FormControl,
+  FormControlHelper,
+  FormControlHelperText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/src/components/ui/form-control";
 import { Heading } from "@/src/components/ui/heading";
 import { HStack } from "@/src/components/ui/hstack";
 import { Icon } from "@/src/components/ui/icon";
 import { Image } from "@/src/components/ui/image";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectSectionHeaderText,
+  SelectTrigger,
+} from "@/src/components/ui/select";
 import { Text } from "@/src/components/ui/text";
+import { Textarea, TextareaInput } from "@/src/components/ui/textarea";
 import {
   Toast,
   ToastDescription,
@@ -52,6 +73,7 @@ import {
 import {
   DISPOSITION_STATUS_KEYS,
   DISPOSITION_STATUSES,
+  getDispositionStatus,
 } from "@/src/constants/disposition-statuses";
 import { useCustomerContext } from "@/src/contexts/customer-context";
 import { useLocationContext } from "@/src/contexts/location-context";
@@ -71,6 +93,7 @@ import { useRouter } from "expo-router";
 import {
   Calendar1,
   CheckCircle,
+  ChevronDownIcon,
   Circle,
   Construction,
   Ellipsis,
@@ -86,9 +109,10 @@ import {
   Trash,
   UserSearch,
 } from "lucide-react-native";
-import { Fragment, useCallback, useState } from "react";
+import { Fragment, useCallback, useState, useTransition } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Linking,
   Pressable,
   ScrollView,
@@ -340,19 +364,41 @@ function PlusButtonActionSheet() {
 }
 
 function CustomerDisposition() {
+  const [isEditing, setIsEditing] = useState(false);
   const { bottom: paddingBlockEnd } = useSafeAreaInsets();
-  const { refreshData } = useUserContext();
   const { customer, updateCustomer } = useCustomerContext();
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
-  const handleClose = () => setIsActionSheetVisible(false);
-  const handleUpdate = (disposition_status: DISPOSITION_STATUS_KEYS) => () =>
-    updateCustomer(Number(customer?.id), { disposition_status })
-      .then(refreshData)
-      .then(handleClose);
+  const handleClose = () => {
+    setIsEditing(false);
+    setIsActionSheetVisible(false);
+  };
+
   const customerDisposition = customer?.disposition_status
     ? DISPOSITION_STATUSES[customer.disposition_status]
     : DISPOSITION_STATUSES.NEW;
+  const { refreshData } = useUserContext();
+  const [status, setStatus] = useState<DISPOSITION_STATUS_KEYS>(
+    customer.disposition_status
+  );
+  const [notes, setNotes] = useState<string | null>(null);
+  const [isSaving, startSaving] = useTransition();
+  const handleUpdate = (
+    disposition_status: DISPOSITION_STATUS_KEYS | null,
+    disposition_status_notes: string | null
+  ) => {
+    if (!disposition_status) return null;
 
+    return () =>
+      startSaving(() => {
+        updateCustomer(Number(customer?.id), {
+          disposition_status,
+          disposition_status_notes,
+        })
+          .then(refreshData)
+          .then(handleClose);
+      });
+  };
+  const dispositionStatus = getDispositionStatus(customer.disposition_status);
   return (
     <Fragment>
       <Pressable
@@ -371,22 +417,127 @@ function CustomerDisposition() {
 
       <Actionsheet isOpen={isActionSheetVisible} onClose={handleClose}>
         <ActionsheetBackdrop />
-        <ActionsheetContent style={{ paddingBlockEnd }}>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
-            <ActionsheetSectionHeaderText>
-              Select a status
-            </ActionsheetSectionHeaderText>
-          </ActionsheetDragIndicatorWrapper>
-          {Object.entries(DISPOSITION_STATUSES).map(([key, status]) => (
-            <ActionsheetItem
-              key={key}
-              onPress={handleUpdate(key as DISPOSITION_STATUS_KEYS)}
-            >
-              <ActionsheetItemText>{status.label}</ActionsheetItemText>
-            </ActionsheetItem>
-          ))}
-        </ActionsheetContent>
+        <KeyboardAvoidingView behavior="padding">
+          <ActionsheetContent
+            style={{ paddingBlockEnd: paddingBlockEnd * 1.5 }}
+          >
+            {isEditing ? (
+              <>
+                <ActionsheetDragIndicatorWrapper>
+                  <ActionsheetDragIndicator />
+                  <ActionsheetSectionHeaderText>
+                    Change Status
+                  </ActionsheetSectionHeaderText>
+                </ActionsheetDragIndicatorWrapper>
+                <VStack className="w-full" space="lg">
+                  <FormControl isRequired>
+                    <FormControlLabel>
+                      <FormControlLabelText size="md">
+                        Duration:
+                      </FormControlLabelText>
+                    </FormControlLabel>
+                    <Select
+                      defaultValue={status}
+                      initialLabel={dispositionStatus.label}
+                      isDisabled={isSaving}
+                      onValueChange={(value) =>
+                        setStatus(value as DISPOSITION_STATUS_KEYS)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectInput
+                          placeholder="Select option"
+                          className="flex-1"
+                        />
+                        <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                      </SelectTrigger>
+                      <SelectPortal>
+                        <SelectBackdrop />
+                        <SelectContent style={{ paddingBlockEnd }}>
+                          <SelectDragIndicatorWrapper>
+                            <SelectDragIndicator />
+                          </SelectDragIndicatorWrapper>
+                          <SelectSectionHeaderText>
+                            Status
+                          </SelectSectionHeaderText>
+                          {Object.entries(DISPOSITION_STATUSES).map(
+                            ([key, status]) => (
+                              <SelectItem
+                                key={key}
+                                label={status.label}
+                                value={key}
+                              />
+                            )
+                          )}
+                        </SelectContent>
+                      </SelectPortal>
+                    </Select>
+                    <FormControlHelper>
+                      <FormControlHelperText>
+                        Select the new customer disposition status
+                      </FormControlHelperText>
+                    </FormControlHelper>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormControlLabel>
+                      <FormControlLabelText>Notes</FormControlLabelText>
+                    </FormControlLabel>
+                    <Textarea size="lg">
+                      <TextareaInput onChangeText={setNotes} />
+                    </Textarea>
+                  </FormControl>
+                  <ButtonGroup flexDirection="row">
+                    <Button
+                      action="secondary"
+                      disabled={isSaving}
+                      onPress={() => setIsEditing(false)}
+                    >
+                      <ButtonText>Cancel</ButtonText>
+                    </Button>
+                    <Button
+                      disabled={isSaving}
+                      className="grow"
+                      onPress={handleUpdate(status, notes)}
+                    >
+                      <ButtonText>{isSaving ? "Saving..." : "Save"}</ButtonText>
+                    </Button>
+                  </ButtonGroup>
+                </VStack>
+              </>
+            ) : (
+              <>
+                <ActionsheetDragIndicatorWrapper>
+                  <ActionsheetDragIndicator />
+                  <ActionsheetSectionHeaderText>
+                    Disposition Status
+                  </ActionsheetSectionHeaderText>
+                </ActionsheetDragIndicatorWrapper>
+                <Pressable className="w-full">
+                  <Card variant="outline">
+                    <VStack space="md">
+                      <Badge
+                        className="self-start"
+                        action={dispositionStatus.action}
+                      >
+                        <BadgeText>{dispositionStatus.label}</BadgeText>
+                      </Badge>
+                      <Text>
+                        {customer.disposition_status_notes || "No notes"}
+                      </Text>
+                      <Button
+                        action="secondary"
+                        onPress={() => setIsEditing(true)}
+                      >
+                        <ButtonText>Change</ButtonText>
+                      </Button>
+                    </VStack>
+                  </Card>
+                </Pressable>
+              </>
+            )}
+          </ActionsheetContent>
+        </KeyboardAvoidingView>
       </Actionsheet>
     </Fragment>
   );

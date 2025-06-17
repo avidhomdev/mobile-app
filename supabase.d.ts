@@ -664,6 +664,7 @@ export type Database = {
           created_at: string
           creator_id: string
           disposition_status: string | null
+          disposition_status_notes: string | null
           email: string
           full_name: string
           id: number
@@ -683,6 +684,7 @@ export type Database = {
           created_at?: string
           creator_id: string
           disposition_status?: string | null
+          disposition_status_notes?: string | null
           email: string
           full_name: string
           id?: number
@@ -702,6 +704,7 @@ export type Database = {
           created_at?: string
           creator_id?: string
           disposition_status?: string | null
+          disposition_status_notes?: string | null
           email?: string
           full_name?: string
           id?: number

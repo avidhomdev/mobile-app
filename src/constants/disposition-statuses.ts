@@ -53,4 +53,8 @@ export const DISPOSITION_STATUSES = {
     icon: CalendarClock,
     label: "Pitched Follow Up",
   },
-};
+} as const;
+
+export function getDispositionStatus(status: DISPOSITION_STATUS_KEYS) {
+  return DISPOSITION_STATUSES[status] || DISPOSITION_STATUSES.NEW;
+}
