@@ -39,7 +39,12 @@ import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Home, MapPin, Trash2 } from "lucide-react-native";
 import { Fragment, useCallback, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
 
@@ -211,7 +216,8 @@ function ScheduleRow({
 }
 
 export default function ScheduleScreen() {
-  const { location } = useUserContext();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { location, refreshData } = useUserContext();
   const router = useRouter();
   const params = useLocalSearchParams<{
     selectedDate?: string;
@@ -253,7 +259,19 @@ export default function ScheduleScreen() {
   );
 
   return (
-    <ScrollView contentContainerClassName="gap-y-2">
+    <ScrollView
+      contentContainerClassName="gap-y-2"
+      refreshControl={
+        <RefreshControl
+          onRefresh={async () => {
+            setIsRefreshing(true);
+            await refreshData();
+            setIsRefreshing(false);
+          }}
+          refreshing={isRefreshing}
+        />
+      }
+    >
       <Box className="p-6 bg-background-50">
         <Heading size="xl">Schedule</Heading>
         <Text size="sm" className="text-gray-400">
