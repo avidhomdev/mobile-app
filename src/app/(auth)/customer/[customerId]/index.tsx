@@ -103,6 +103,7 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  MessageCircleMore,
   Phone,
   Plus,
   Settings,
@@ -1328,6 +1329,31 @@ export default function Screen() {
             <CustomerBids />
           </>
         )}
+        <VStack className="px-6" space="xl">
+          <HStack className="items-center" space="sm">
+            <Icon
+              as={MessageCircleMore}
+              className="text-typography-500"
+              size="lg"
+            />
+            <Divider orientation="vertical" />
+            <VStack>
+              <Heading size="md">Notes</Heading>
+              <Text className="text-typography-500" size="xs">
+                Notes on the customer
+              </Text>
+            </VStack>
+          </HStack>
+          {customer.notes ? (
+            <Text>{customer.notes}</Text>
+          ) : (
+            <Card variant="filled">
+              <VStack space="lg">
+                <Text className="text-center">No notes found.</Text>
+              </VStack>
+            </Card>
+          )}
+        </VStack>
         <ScreenEnd />
       </ScrollView>
       {location.is_closer && <PlusButtonActionSheet />}
