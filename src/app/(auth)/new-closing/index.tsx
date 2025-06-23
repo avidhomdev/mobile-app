@@ -217,7 +217,6 @@ export default function NewClosingScreen() {
           "business_appointment_profiles.profile_id",
           (closers ?? []).map((c) => c.id)
         )
-        .eq("location_id", location.id)
         .gte(
           "start_datetime",
           selectedDayJs.startOf("day").format(SERVER_DATE_TIME_FORMAT)
