@@ -63,6 +63,7 @@ export interface ILocationCustomer
   extends Tables<"business_location_customers"> {
   appointments: Tables<"business_appointments">[];
   bids: ILocationCustomerBid[];
+  creator?: Tables<"profiles">;
   closer?: Tables<"profiles">;
   disposition_status: DISPOSITION_STATUS_KEYS;
   jobs: ILocationJob[];
@@ -169,6 +170,7 @@ const fetchUserContextData = async (
         ),
         customers: business_location_customers(
           *,
+          creator: creator_id(*),
           appointments: business_appointments(*),
           bids: business_location_customer_bids(
             *,
