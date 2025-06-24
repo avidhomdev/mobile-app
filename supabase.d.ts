@@ -92,6 +92,7 @@ export type Database = {
           location_id: number | null
           name: string | null
           start_datetime: string
+          type: string
         }
         Insert: {
           business_id: string
@@ -104,6 +105,7 @@ export type Database = {
           location_id?: number | null
           name?: string | null
           start_datetime: string
+          type?: string
         }
         Update: {
           business_id?: string
@@ -116,6 +118,7 @@ export type Database = {
           location_id?: number | null
           name?: string | null
           start_datetime?: string
+          type?: string
         }
         Relationships: [
           {
@@ -1757,18 +1760,21 @@ export type Database = {
       }
       business_profiles: {
         Row: {
+          availability: Json
           business_id: string
           created_at: string
           profile_id: string
           role: Database["public"]["Enums"]["business_roles"]
         }
         Insert: {
+          availability?: Json
           business_id: string
           created_at?: string
           profile_id: string
           role?: Database["public"]["Enums"]["business_roles"]
         }
         Update: {
+          availability?: Json
           business_id?: string
           created_at?: string
           profile_id?: string
