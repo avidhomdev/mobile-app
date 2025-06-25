@@ -99,11 +99,11 @@ import {
   Ellipsis,
   Eye,
   HardHat,
+  Info,
   LockIcon,
   Mail,
   MapPin,
   MessageCircle,
-  MessageCircleMore,
   Phone,
   Plus,
   Settings,
@@ -402,14 +402,11 @@ function CustomerDisposition() {
   const dispositionStatus = getDispositionStatus(customer.disposition_status);
   return (
     <Fragment>
-      <Pressable
-        className="ml-auto"
-        onPress={() => setIsActionSheetVisible(true)}
-      >
+      <Pressable className="grow" onPress={() => setIsActionSheetVisible(true)}>
         <Badge
           action={customerDisposition.action}
           size="lg"
-          className="gap-x-1"
+          className="gap-x-1 justify-center"
         >
           <BadgeIcon as={customerDisposition.icon} />
           <BadgeText>{customerDisposition.label}</BadgeText>
@@ -1277,7 +1274,7 @@ export default function Screen() {
     <Fragment>
       <HStack
         className="items-center border-b-8 border-gray-500 px-4 pb-4"
-        space="sm"
+        space="lg"
         style={{ paddingBlockStart: top }}
       >
         <BackHeaderButton
@@ -1285,9 +1282,9 @@ export default function Screen() {
         />
         <CustomerDisposition />
         <Pressable
-          onPress={() => router.push("/(auth)/customer/[customerId]/settings")}
+          onPress={() => router.push("/(auth)/customer/[customerId]/info")}
         >
-          <Icon as={Settings} className="text-typography-600" size="xl" />
+          <Icon as={Info} className="text-typography-600" size="xl" />
         </Pressable>
       </HStack>
       <ScrollView contentContainerClassName="gap-y-6">
@@ -1329,31 +1326,6 @@ export default function Screen() {
             <CustomerBids />
           </>
         )}
-        <VStack className="px-6" space="xl">
-          <HStack className="items-center" space="sm">
-            <Icon
-              as={MessageCircleMore}
-              className="text-typography-500"
-              size="lg"
-            />
-            <Divider orientation="vertical" />
-            <VStack>
-              <Heading size="md">Notes</Heading>
-              <Text className="text-typography-500" size="xs">
-                Notes on the customer
-              </Text>
-            </VStack>
-          </HStack>
-          {customer.notes ? (
-            <Text>{customer.notes}</Text>
-          ) : (
-            <Card variant="filled">
-              <VStack space="lg">
-                <Text className="text-center">No notes found.</Text>
-              </VStack>
-            </Card>
-          )}
-        </VStack>
         <ScreenEnd />
       </ScrollView>
       {location.is_closer && <PlusButtonActionSheet />}
