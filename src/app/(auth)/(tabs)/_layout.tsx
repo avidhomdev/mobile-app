@@ -25,6 +25,7 @@ import {
   DrawerHeader,
 } from "@/src/components/ui/drawer";
 import { Heading } from "@/src/components/ui/heading";
+import { HStack } from "@/src/components/ui/hstack";
 import { Icon } from "@/src/components/ui/icon";
 import { Menu, MenuItem, MenuItemLabel } from "@/src/components/ui/menu";
 import { Text } from "@/src/components/ui/text";
@@ -36,7 +37,7 @@ import {
   ParamListBase,
   TabNavigationState,
 } from "@react-navigation/native";
-import { Tabs, usePathname, useRouter } from "expo-router";
+import { Link, Tabs, usePathname, useRouter } from "expo-router";
 import {
   Calendar1,
   CalendarClock,
@@ -63,6 +64,7 @@ function ScreenHeader() {
   const { location, changeLocation } = useLocationContext();
   const { locations, profile } = useUserContext();
   const { signOut } = useSession();
+  const closeDrawer = () => setShowDrawer(false);
   return (
     <View
       className="bg-black px-4 pb-4 flex-row items-center justify-evenly gap-x-6"
@@ -103,19 +105,19 @@ function ScreenHeader() {
         <TouchableOpacity onPress={() => setShowDrawer(true)}>
           <Avatar className="bg-gray-700" size="md">
             <AvatarFallbackText>{profile.full_name}</AvatarFallbackText>
-            <AvatarImage
-              source={{
-                uri: profile.avatar_url ?? undefined,
-              }}
-            />
+            {profile.avatar_url && (
+              <AvatarImage
+                source={{
+                  uri: profile.avatar_url,
+                }}
+              />
+            )}
           </Avatar>
         </TouchableOpacity>
       </View>
       <Drawer
         isOpen={showDrawer}
-        onClose={() => {
-          setShowDrawer(false);
-        }}
+        onClose={closeDrawer}
         size="lg"
         anchor="right"
       >
@@ -146,10 +148,12 @@ function ScreenHeader() {
           </DrawerHeader>
           <Divider className="my-4" />
           <DrawerBody contentContainerClassName="gap-2">
-            <TouchableOpacity className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md">
-              <Icon as={User} size="lg" className="text-typography-600" />
-              <Text>My Profile</Text>
-            </TouchableOpacity>
+            <Link href={{ pathname: "/(auth)/profile" }} onPress={closeDrawer}>
+              <HStack className="items-center" space="sm">
+                <Icon as={User} size="lg" className="text-typography-600" />
+                <Text>My Profile</Text>
+              </HStack>
+            </Link>
           </DrawerBody>
           <DrawerFooter>
             <Button
