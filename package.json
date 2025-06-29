@@ -50,7 +50,7 @@
     "babel-plugin-module-resolver": "^5.0.2",
     "base64-arraybuffer": "^1.0.2",
     "dayjs": "^1.11.13",
-    "expo": "~52.0.46",
+    "expo": "~52.0.47",
     "expo-asset": "~11.0.1",
     "expo-font": "~13.0.2",
     "expo-image-picker": "~16.0.6",
