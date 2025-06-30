@@ -65,6 +65,7 @@ export default function Login() {
                 autoComplete="off"
                 autoCapitalize="none"
                 autoCorrect={false}
+                keyboardType="email-address"
                 onChangeText={setEmail}
                 placeholder="johndoe@exmaple.com"
                 value={email}
