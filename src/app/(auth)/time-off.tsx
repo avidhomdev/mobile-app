@@ -7,7 +7,6 @@ import {
   ActionsheetDragIndicatorWrapper,
   ActionsheetSectionHeaderText,
 } from "@/src/components/ui/actionsheet";
-import { Avatar, AvatarFallbackText } from "@/src/components/ui/avatar";
 import { Badge, BadgeText } from "@/src/components/ui/badge";
 import { Button, ButtonText } from "@/src/components/ui/button";
 import { Card } from "@/src/components/ui/card";
@@ -312,24 +311,14 @@ function AppointmentCard({
         </VStack>
         <VStack className="flex-1" space="sm">
           <VStack>
-            <Heading size="md">Event name</Heading>
+            <Heading size="md">{appointment.name}</Heading>
             <Badge action="info" className="self-start">
-              <BadgeText>Vacation</BadgeText>
+              <BadgeText>{appointment.type}</BadgeText>
             </Badge>
           </VStack>
-          <HStack className="justify-between items-center">
-            <HStack>
-              <Avatar size="sm">
-                <AvatarFallbackText>Jon Do</AvatarFallbackText>
-              </Avatar>
-              <Avatar size="sm">
-                <AvatarFallbackText>Jon Do</AvatarFallbackText>
-              </Avatar>
-            </HStack>
-            <Text>{`${startDayjs.format(TIME_FORMAT)}-${endDayjs.format(
-              TIME_FORMAT
-            )}`}</Text>
-          </HStack>
+          <Text>{`${startDayjs.format(TIME_FORMAT)}-${endDayjs.format(
+            TIME_FORMAT
+          )}`}</Text>
         </VStack>
       </HStack>
     </Card>
