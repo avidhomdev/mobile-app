@@ -29,6 +29,7 @@ import { HStack } from "@/src/components/ui/hstack";
 import { Icon } from "@/src/components/ui/icon";
 import { Menu, MenuItem, MenuItemLabel } from "@/src/components/ui/menu";
 import { Text } from "@/src/components/ui/text";
+import { VStack } from "@/src/components/ui/vstack";
 import { useSession } from "@/src/contexts/auth-context";
 import { useLocationContext } from "@/src/contexts/location-context";
 import { useUserContext } from "@/src/contexts/user-context";
@@ -41,6 +42,8 @@ import { Link, Tabs, usePathname, useRouter } from "expo-router";
 import {
   Calendar1,
   CalendarClock,
+  CalendarClockIcon,
+  CalendarDays,
   ChevronDown,
   HardHat,
   HomeIcon,
@@ -147,13 +150,44 @@ function ScreenHeader() {
             </View>
           </DrawerHeader>
           <Divider className="my-4" />
-          <DrawerBody contentContainerClassName="gap-2">
-            <Link href={{ pathname: "/(auth)/profile" }} onPress={closeDrawer}>
-              <HStack className="items-center" space="sm">
-                <Icon as={User} size="lg" className="text-typography-600" />
-                <Text>My Profile</Text>
-              </HStack>
-            </Link>
+          <DrawerBody>
+            <VStack space="lg">
+              <Link
+                href={{ pathname: "/(auth)/profile" }}
+                onPress={closeDrawer}
+              >
+                <HStack className="items-center" space="sm">
+                  <Icon as={User} size="lg" className="text-typography-600" />
+                  <Text>My Profile</Text>
+                </HStack>
+              </Link>
+              <Link
+                href={{ pathname: "/(auth)/time-off" }}
+                onPress={closeDrawer}
+              >
+                <HStack className="items-center" space="sm">
+                  <Icon
+                    as={CalendarClockIcon}
+                    size="lg"
+                    className="text-typography-600"
+                  />
+                  <Text>Time Off</Text>
+                </HStack>
+              </Link>
+              <Link
+                href={{ pathname: "/(auth)/availability" }}
+                onPress={closeDrawer}
+              >
+                <HStack className="items-center" space="sm">
+                  <Icon
+                    as={CalendarDays}
+                    size="lg"
+                    className="text-typography-600"
+                  />
+                  <Text>Availability</Text>
+                </HStack>
+              </Link>
+            </VStack>
           </DrawerBody>
           <DrawerFooter>
             <Button
