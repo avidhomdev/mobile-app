@@ -7,6 +7,7 @@ import { Heading } from "@/src/components/ui/heading";
 import { HStack } from "@/src/components/ui/hstack";
 import { Text } from "@/src/components/ui/text";
 import { VStack } from "@/src/components/ui/vstack";
+import { DAYS_OF_WEEK } from "@/src/constants/days-of-week";
 import { useUserContext } from "@/src/contexts/user-context";
 import { supabase } from "@/src/lib/supabase";
 import dayjs from "dayjs";
@@ -191,16 +192,6 @@ const AvailabilityProvider = ({
 };
 
 function DaySelector() {
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-
   return (
     <ScrollView
       className="flex-1"
@@ -209,7 +200,7 @@ function DaySelector() {
       showsHorizontalScrollIndicator={false}
     >
       <HStack space="md">
-        {days.map((day) => (
+        {DAYS_OF_WEEK.map((day) => (
           <DayOfWeek key={day} day={day} />
         ))}
       </HStack>
