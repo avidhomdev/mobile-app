@@ -53,13 +53,17 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function AddTimeOff({ refresh }: { refresh: () => void }) {
+function AddTimeOffAcitonSheet({
+  refresh,
+  close,
+}: {
+  refresh: () => void;
+  close: () => void;
+}) {
   const { bottom } = useSafeAreaInsets();
   const { profile, location, refreshData } = useUserContext();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
-  const handleClose = () => setIsActionSheetVisible(false);
   const [isAllDay, setIsAllDay] = useState(true);
 
   const [type, setType] = useState("vacation");
@@ -81,7 +85,7 @@ function AddTimeOff({ refresh }: { refresh: () => void }) {
 
   const onTimeChange = useCallback(
     (range: string) => (_: DateTimePickerEvent, time?: Date) =>
-      setTimeRange((prevState) => ({ ...prevState, [range]: time })),
+      setTimeRange((prevState) => ({ ...prevState, [range]: dayjs(time) })),
     []
   );
 
@@ -130,9 +134,10 @@ function AddTimeOff({ refresh }: { refresh: () => void }) {
       )
       .then(refreshData)
       .then(refresh)
-      .then(handleClose)
+      .then(close)
       .then(() => setIsSubmitting(false));
   }, [
+    close,
     isAllDay,
     location.business_id,
     profile.id,
@@ -145,116 +150,125 @@ function AddTimeOff({ refresh }: { refresh: () => void }) {
   ]);
 
   return (
-    <>
-      {isActionSheetVisible && (
-        <Actionsheet isOpen onClose={handleClose}>
-          <ActionsheetBackdrop />
-          <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
-            <ActionsheetDragIndicatorWrapper>
-              <ActionsheetDragIndicator />
-              <ActionsheetSectionHeaderText>
-                Add Time Off
-              </ActionsheetSectionHeaderText>
-            </ActionsheetDragIndicatorWrapper>
-            <VStack className="w-full" space="lg">
-              <FormControl>
+    <Actionsheet isOpen onClose={close}>
+      <ActionsheetBackdrop />
+      <ActionsheetContent style={{ paddingBlockEnd: bottom }}>
+        <ActionsheetDragIndicatorWrapper>
+          <ActionsheetDragIndicator />
+          <ActionsheetSectionHeaderText>
+            Add Time Off
+          </ActionsheetSectionHeaderText>
+        </ActionsheetDragIndicatorWrapper>
+        <VStack className="w-full" space="lg">
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>Date</FormControlLabelText>
+            </FormControlLabel>
+            <DateTimePicker
+              value={timeOffDate.toDate()}
+              mode="date"
+              is24Hour={true}
+              onChange={onChange}
+            />
+          </FormControl>
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText>All Day</FormControlLabelText>
+            </FormControlLabel>
+            <Switch size="md" value={isAllDay} onToggle={setIsAllDay} />
+          </FormControl>
+          {isAllDay ? null : (
+            <HStack>
+              <FormControl className="grow">
                 <FormControlLabel>
-                  <FormControlLabelText>Date</FormControlLabelText>
+                  <FormControlLabelText>Start</FormControlLabelText>
                 </FormControlLabel>
                 <DateTimePicker
-                  value={timeOffDate.toDate()}
-                  mode="date"
                   is24Hour={true}
-                  onChange={onChange}
+                  minuteInterval={15}
+                  minimumDate={timeOffDate.toDate()}
+                  maximumDate={timeRange.end.toDate()}
+                  mode="time"
+                  onChange={onTimeChange("start")}
+                  value={timeRange.start.toDate()}
                 />
               </FormControl>
-              <FormControl>
+              <FormControl className="grow">
                 <FormControlLabel>
-                  <FormControlLabelText>All Day</FormControlLabelText>
+                  <FormControlLabelText>End</FormControlLabelText>
                 </FormControlLabel>
-                <Switch size="md" value={isAllDay} onToggle={setIsAllDay} />
+                <DateTimePicker
+                  is24Hour={true}
+                  minuteInterval={30}
+                  minimumDate={timeOffDate.toDate()}
+                  mode="time"
+                  onChange={onTimeChange("end")}
+                  value={timeRange.end.toDate()}
+                />
               </FormControl>
-              {isAllDay ? null : (
-                <HStack>
-                  <FormControl className="grow">
-                    <FormControlLabel>
-                      <FormControlLabelText>Start</FormControlLabelText>
-                    </FormControlLabel>
-                    <DateTimePicker
-                      is24Hour={true}
-                      minuteInterval={15}
-                      minimumDate={timeOffDate.toDate()}
-                      maximumDate={timeRange.end.toDate()}
-                      mode="time"
-                      onChange={onTimeChange("start")}
-                      value={timeRange.start.toDate()}
-                    />
-                  </FormControl>
-                  <FormControl className="grow">
-                    <FormControlLabel>
-                      <FormControlLabelText>End</FormControlLabelText>
-                    </FormControlLabel>
-                    <DateTimePicker
-                      is24Hour={true}
-                      minuteInterval={30}
-                      minimumDate={timeOffDate.toDate()}
-                      mode="time"
-                      onChange={onTimeChange("end")}
-                      value={timeRange.end.toDate()}
-                    />
-                  </FormControl>
-                </HStack>
-              )}
-              <FormControl isRequired>
-                <FormControlLabel>
-                  <FormControlLabelText size="md">Type:</FormControlLabelText>
-                </FormControlLabel>
-                <Select
-                  className="bg-background-100"
-                  isDisabled={isSubmitting}
-                  onValueChange={setType}
-                  selectedValue={type}
-                  initialLabel="Vacation"
-                >
-                  <SelectTrigger>
-                    <SelectInput
-                      placeholder="Select option"
-                      className="flex-1"
-                    />
-                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent style={{ paddingBlockEnd: bottom }}>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      <SelectSectionHeaderText>
-                        Select the appointment duration
-                      </SelectSectionHeaderText>
-                      <SelectItem label="Vacation" value="vacation" />
-                      <SelectItem label="Sick" value="sick" />
-                      <SelectItem label="Other" value="other" />
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                <FormControlHelper>
-                  <FormControlHelperText>
-                    Tell us more about the time off
-                  </FormControlHelperText>
-                </FormControlHelper>
-              </FormControl>
-              <Button
-                className="self-end w-full"
-                disabled={isSubmitting}
-                onPress={handleSubmitTimeOff}
-                size="lg"
-              >
-                <ButtonText>Add time off</ButtonText>
-              </Button>
-            </VStack>
-          </ActionsheetContent>
-        </Actionsheet>
+            </HStack>
+          )}
+          <FormControl isRequired>
+            <FormControlLabel>
+              <FormControlLabelText size="md">Type:</FormControlLabelText>
+            </FormControlLabel>
+            <Select
+              className="bg-background-100"
+              isDisabled={isSubmitting}
+              onValueChange={setType}
+              selectedValue={type}
+              initialLabel="Vacation"
+            >
+              <SelectTrigger>
+                <SelectInput placeholder="Select option" className="flex-1" />
+                <SelectIcon className="mr-3" as={ChevronDownIcon} />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectBackdrop />
+                <SelectContent style={{ paddingBlockEnd: bottom }}>
+                  <SelectDragIndicatorWrapper>
+                    <SelectDragIndicator />
+                  </SelectDragIndicatorWrapper>
+                  <SelectSectionHeaderText>
+                    Select the appointment duration
+                  </SelectSectionHeaderText>
+                  <SelectItem label="Vacation" value="vacation" />
+                  <SelectItem label="Sick" value="sick" />
+                  <SelectItem label="Other" value="other" />
+                </SelectContent>
+              </SelectPortal>
+            </Select>
+            <FormControlHelper>
+              <FormControlHelperText>
+                Tell us more about the time off
+              </FormControlHelperText>
+            </FormControlHelper>
+          </FormControl>
+          <Button
+            className="self-end w-full"
+            disabled={isSubmitting}
+            onPress={handleSubmitTimeOff}
+            size="lg"
+          >
+            <ButtonText>Add time off</ButtonText>
+          </Button>
+        </VStack>
+      </ActionsheetContent>
+    </Actionsheet>
+  );
+}
+
+function AddTimeOff({ refresh }: { refresh: () => void }) {
+  const { bottom } = useSafeAreaInsets();
+  const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
+
+  return (
+    <>
+      {isActionSheetVisible && (
+        <AddTimeOffAcitonSheet
+          refresh={refresh}
+          close={() => setIsActionSheetVisible(false)}
+        />
       )}
       <Fab
         onPress={() => setIsActionSheetVisible(true)}
