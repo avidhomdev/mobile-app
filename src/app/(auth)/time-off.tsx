@@ -100,6 +100,16 @@ function AddTimeOff({ refresh }: { refresh: () => void }) {
         .set("minute", timeRange.start.get("minute"))
         .format(SERVER_DATE_TIME_FORMAT_TZ),
       type,
+      ...(isAllDay
+        ? {
+            end_datetime: dayjs(timeOffDate)
+              .startOf("day")
+              .format(SERVER_DATE_TIME_FORMAT_TZ),
+            start_datetime: dayjs(timeOffDate)
+              .endOf("day")
+              .format(SERVER_DATE_TIME_FORMAT_TZ),
+          }
+        : {}),
     };
 
     return supabase
@@ -123,6 +133,7 @@ function AddTimeOff({ refresh }: { refresh: () => void }) {
       .then(handleClose)
       .then(() => setIsSubmitting(false));
   }, [
+    isAllDay,
     location.business_id,
     profile.id,
     refresh,
