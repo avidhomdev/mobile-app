@@ -1,6 +1,6 @@
 import { Text } from "@/src/components/ui/text";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, TouchableOpacity } from "react-native";
 
 import HorizontalDaySelector from "@/src/components/HorizontalDaySelector";
@@ -30,6 +30,7 @@ import { useRouter } from "expo-router";
 import { Calendar, Clock, User2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
+import { DAYS_OF_WEEK } from "@/src/constants/days-of-week";
 
 const CLOSING_DURATION = 60;
 
@@ -202,11 +203,27 @@ interface IAppointment extends Tables<"business_appointments"> {
 export default function NewClosingScreen() {
   const { location } = useLocationContext();
   const { closers } = useUserContext();
-  const closerIds = (closers ?? [])?.map((c) => c.id);
+  const closerIds = useMemo(() => (closers ?? [])?.map((c) => c.id), [closers]);
   const [appointments, setAppointments] = useState<IAppointment[]>([]);
   const [selectedDayJs, setSelectedDayJs] = useState(dayjs());
+  const [availability, setAvailability] = useState();
 
   useEffect(() => {
+    const fetchCloserAvailability = async () =>
+      supabase
+        .from("business_profiles")
+        .select("*")
+        .eq("business_id", location.business_id)
+        .in("profile_id", closerIds)
+        .then(({ data }) => {
+          if (!data) return;
+          const closerAvailabilityDictionary = data.reduce((agg, cur) => {
+            agg[cur.profile_id] = cur.availability;
+            return agg;
+          }, {});
+
+          return setAvailability(closerAvailabilityDictionary);
+        });
     const fetchTodaysAppointments = async () =>
       supabase
         .from("business_appointments")
@@ -230,7 +247,8 @@ export default function NewClosingScreen() {
           if (data) setAppointments(data);
         });
     fetchTodaysAppointments();
-  }, [location.id, selectedDayJs, closers]);
+    fetchCloserAvailability();
+  }, [location.id, selectedDayJs, closers, location.business_id, closerIds]);
 
   const timeArr = Array.from({ length: 25 }, (_, num) =>
     selectedDayJs
@@ -273,9 +291,17 @@ export default function NewClosingScreen() {
               : [];
           });
 
-          const [closer] = (closers ?? []).filter(
-            (c) => !busyProfiles.includes(c.id)
-          );
+          const notBusyProfiles = (closers ?? []).filter((c) => {
+            const profileAvailability = availability && availability[c.id];
+            if (!profileAvailability) return;
+            const selectedDayOfWeek = DAYS_OF_WEEK[selectedDayJs.get("day")];
+            const dayAvailability = profileAvailability[selectedDayOfWeek];
+            const slotAvailable = dayAvailability[time.get("hour")];
+
+            return slotAvailable && !busyProfiles.includes(c.id);
+          });
+
+          const [closer] = notBusyProfiles;
 
           return (
             <TimeSlotRow
