@@ -10,20 +10,29 @@ import { Text } from "@/src/components/ui/text";
 import { useSession } from "@/src/contexts/auth-context";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView } from "react-native";
+import { KeyboardAvoidingView, Pressable } from "react-native";
 
 import { Alert, AlertText } from "@/src/components/ui/alert";
 import { Button, ButtonText } from "@/src/components/ui/button";
 import { Heading } from "@/src/components/ui/heading";
-import { Input, InputField } from "@/src/components/ui/input";
+import {
+  Input,
+  InputField,
+  InputIcon,
+  InputSlot,
+} from "@/src/components/ui/input";
 import { VStack } from "@/src/components/ui/vstack";
-import { AlertCircleIcon } from "lucide-react-native";
+import { AlertCircleIcon, Eye, EyeOff } from "lucide-react-native";
+import { toggleState } from "../utils/toggle-state";
 
 export default function Login() {
   const { signIn, session } = useSession();
   const [email, setEmail] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const PasswordInputIcon = isPasswordVisible ? EyeOff : Eye;
 
   const handleLogin = () =>
     signIn!({ email, password }).then(({ error: signInError }) => {
@@ -83,9 +92,14 @@ export default function Login() {
             <Input variant="outline" size="lg">
               <InputField
                 onChangeText={setPassword}
-                type="password"
+                type={isPasswordVisible ? "text" : "password"}
                 value={password}
               />
+              <InputSlot>
+                <Pressable onPress={toggleState(setIsPasswordVisible)}>
+                  <InputIcon as={PasswordInputIcon} className="mr-3" />
+                </Pressable>
+              </InputSlot>
             </Input>
             <FormControlError>
               <FormControlErrorIcon as={AlertCircleIcon} />
