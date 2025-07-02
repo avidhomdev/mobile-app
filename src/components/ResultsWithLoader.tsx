@@ -3,7 +3,7 @@ import { Text } from "./ui/text";
 import { ActivityIndicator } from "react-native";
 
 type ResultsWithLoaderProps = PropsWithChildren<{
-  isFetching: boolean;
+  isFetching?: boolean;
   hasResults: boolean;
 }>;
 

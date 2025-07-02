@@ -33,7 +33,7 @@ export interface ILocationCustomerBid
   products: ILocationCustomerBidProduct[];
 }
 
-interface IJobProduct extends Tables<"business_location_job_products"> {
+export interface IJobProduct extends Tables<"business_location_job_products"> {
   product: Tables<"business_products">;
   quantity: number;
   price: number;

@@ -91,6 +91,7 @@ import {
   Circle,
   CircleCheck,
   EllipsisVertical,
+  EyeIcon,
   EyeOff,
   File,
   HardHat,
@@ -254,6 +255,22 @@ function HeaderMenu() {
             >
               <Icon as={HardHat} size="lg" className="text-typography-600" />
               <Text>Schedule</Text>
+            </Pressable>
+            <Pressable
+              className="gap-3 flex-row items-center hover:bg-background-50 p-2 rounded-md"
+              onPress={() => {
+                setIsDrawerVisible(false);
+                router.push({
+                  pathname: "/customer/[customerId]/job/[jobId]/preview",
+                  params: {
+                    customerId: customerId as string,
+                    jobId: jobId as string,
+                  },
+                });
+              }}
+            >
+              <Icon as={EyeIcon} size="lg" className="text-typography-600" />
+              <Text>Preview</Text>
             </Pressable>
           </DrawerBody>
           {location.is_closer && (
