@@ -1,4 +1,3 @@
-import map from "@/assets/images/map.jpg";
 import BackHeaderButton from "@/src/components/BackHeaderButton";
 import { BidRequirementsList } from "@/src/components/BidRequirementsList";
 import ScreenEnd from "@/src/components/ScreenEnd";
@@ -43,7 +42,6 @@ import {
 import { Heading } from "@/src/components/ui/heading";
 import { HStack } from "@/src/components/ui/hstack";
 import { Icon } from "@/src/components/ui/icon";
-import { Image } from "@/src/components/ui/image";
 import {
   Select,
   SelectBackdrop,
@@ -118,7 +116,6 @@ import {
   Pressable,
   ScrollView,
   TouchableOpacity,
-  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { twMerge } from "tailwind-merge";
@@ -1288,10 +1285,7 @@ export default function Screen() {
         </Pressable>
       </HStack>
       <ScrollView contentContainerClassName="gap-y-6">
-        <View className="w-full aspect-video border-gray-500 border-b-8">
-          <Image alt="Map" source={map} size="full" />
-        </View>
-        <VStack className="px-6" space="sm">
+        <VStack className="px-6 pt-6" space="sm">
           <VStack>
             <Heading size="2xl">{customer?.full_name}</Heading>
             <Text size="sm">{customer?.address}</Text>
