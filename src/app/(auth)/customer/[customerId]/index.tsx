@@ -371,9 +371,9 @@ function CustomerDisposition() {
     setIsActionSheetVisible(false);
   };
 
-  const customerDisposition = customer?.disposition_status
-    ? DISPOSITION_STATUSES[customer.disposition_status]
-    : DISPOSITION_STATUSES.NEW;
+  const customerDisposition = getDispositionStatus(
+    customer?.disposition_status
+  );
   const { refreshData } = useUserContext();
   const [status, setStatus] = useState<DISPOSITION_STATUS_KEYS>(
     customer.disposition_status
